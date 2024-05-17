@@ -46,7 +46,7 @@ module.exports = {
             cooldown.endsAt - Date.now(),
             { secondsDecimalDigits: 0 }
           )}*`,
-          `NHold on a minute! \n*${prettyMs(cooldown.endsAt - Date.now(), {
+          `Hold on a minute! \n*${prettyMs(cooldown.endsAt - Date.now(), {
             secondsDecimalDigits: 0,
           })}*`,
           `Being so over eager isn't good! Calm yourself! \n*${prettyMs(
