@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
-const Cooldown = require("../../schemas/Cooldown");
-const UserProfile = require("../../schemas/UserProfile");
+const Cooldown = require("../../../schemas/Cooldown");
+const UserProfile = require("../../../schemas/UserProfile");
 
 function getRandomNumber(x, y) {
   const range = y - x + 1;

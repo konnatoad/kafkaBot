@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
-const UserProfile = require("../../schemas/UserProfile");
+const UserProfile = require("../../../schemas/UserProfile");
 
 module.exports = {
   deleted: false,

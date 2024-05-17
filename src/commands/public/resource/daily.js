@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
-const UserProfile = require("../../schemas/UserProfile");
+const UserProfile = require("../../../schemas/UserProfile");
 
 const dailyAmount = 25;
 
@@ -23,12 +23,12 @@ module.exports = {
 
       let userProfile = await UserProfile.findOne({
         userId: interaction.member.id,
-        Guild: interaction.guild.id
+        Guild: interaction.guild.id,
       });
 
       if (userProfile) {
         const lastDailyDate = userProfile.lastDailyCollected?.toString();
-        const currentDate = new Date().toLocaleDateString('fi-FI');
+        const currentDate = new Date().toLocaleDateString("fi-FI");
 
         if (lastDailyDate === currentDate) {
           interaction.editReply({
@@ -40,12 +40,12 @@ module.exports = {
       } else {
         userProfile = new UserProfile({
           userId: interaction.member.id,
-          Guild: interaction.guild.id
+          Guild: interaction.guild.id,
         });
       }
 
       userProfile.balance += dailyAmount;
-      userProfile.lastDailyCollected = new Date().toLocaleDateString('fi-FI');
+      userProfile.lastDailyCollected = new Date().toLocaleDateString("fi-FI");
 
       await userProfile.save();
 

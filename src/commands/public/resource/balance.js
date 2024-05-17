@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
-const UserProfile = require("../../schemas/UserProfile");
+const UserProfile = require("../../../schemas/UserProfile");
 
 module.exports = {
   deleted: false,
@@ -20,7 +20,7 @@ module.exports = {
     try {
       let userProfile = await UserProfile.findOne({
         userId: targetUserId,
-        Guild: interaction.guild.id
+        Guild: interaction.guild.id,
       });
 
       if (!userProfile) {
