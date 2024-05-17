@@ -6,14 +6,13 @@ const path = require("path");
 
 const client = new Client({
   intents: [
-    Object.keys(GatewayIntentBits)
-    //IntentsBitField.Flags.Guilds,
-    //IntentsBitField.Flags.GuildMembers,
-    //IntentsBitField.Flags.GuildMessages,
-    //IntentsBitField.Flags.MessageContent,
-    //IntentsBitField.Flags.GuildMessageReactions,
-    //IntentsBitField.Flags.GuildModeration,
-    //IntentsBitField.Flags.GuildModeration,
+    IntentsBitField.Flags.Guilds,
+    IntentsBitField.Flags.GuildMembers,
+    IntentsBitField.Flags.GuildMessages,
+    IntentsBitField.Flags.MessageContent,
+    IntentsBitField.Flags.GuildMessageReactions,
+    IntentsBitField.Flags.GuildModeration,
+    IntentsBitField.Flags.GuildModeration,
   ],
   partials: [
     Partials.Channel,
