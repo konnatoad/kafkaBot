@@ -4,7 +4,7 @@ const {
   PermissionFlagsBits,
   SlashCommandBuilder,
 } = require("discord.js");
-const AutoRole = require("../../schemas/AutoRole");
+const AutoRole = require("../../../schemas/AutoRole");
 
 module.exports = {
   /**

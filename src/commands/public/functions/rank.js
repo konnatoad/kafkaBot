@@ -3,7 +3,7 @@ const {
   EmbedBuilder,
   AttachmentBuilder,
 } = require("discord.js");
-const levelSchema = require("../../schemas/level");
+const levelSchema = require("../../../schemas/level");
 const Canvacord = require("canvacord");
 const { RankCardBuilder, Font } = require("canvacord");
 

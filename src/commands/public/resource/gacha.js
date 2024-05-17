@@ -5,8 +5,8 @@ const {
   PermissionFlagsBits,
   EmbedBuilder,
 } = require("discord.js");
-const UserProfile = require("../../schemas/UserProfile");
-const Cooldown = require("../../schemas/Cooldown");
+const UserProfile = require("../../../schemas/UserProfile");
+const Cooldown = require("../../../schemas/Cooldown");
 
 function getRandomNumber(x, y) {
   const range = y - x + 1;
