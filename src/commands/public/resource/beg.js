@@ -39,6 +39,24 @@ module.exports = {
             cooldown.endsAt - Date.now(),
             { secondsDecimalDigits: 0 }
           )}*`,
+          `You're not ready yet. \n*${prettyMs(cooldown.endsAt - Date.now(), {
+            secondsDecimalDigits: 0,
+          })}*`,
+          `Maybe you should rethink about that one for a bit longer. \n*${prettyMs(
+            cooldown.endsAt - Date.now(),
+            { secondsDecimalDigits: 0 }
+          )}*`,
+          `NHold on a minute! \n*${prettyMs(cooldown.endsAt - Date.now(), {
+            secondsDecimalDigits: 0,
+          })}*`,
+          `Being so over eager isn't good! Calm yourself! \n*${prettyMs(
+            cooldown.endsAt - Date.now(),
+            { secondsDecimalDigits: 0 }
+          )}*`,
+          `This is a perfect time to rethink your life decisions and what made you to behave this way. \n*${prettyMs(
+            cooldown.endsAt - Date.now(),
+            { secondsDecimalDigits: 0 }
+          )}*`,
           `You should cool off for a little while! \n*${prettyMs(
             cooldown.endsAt - Date.now(),
             { secondsDecimalDigits: 0 }
@@ -55,9 +73,15 @@ module.exports = {
             cooldown.endsAt - Date.now(),
             { secondsDecimalDigits: 0 }
           )}*`,
-          `Hold on, I'm busy! \n*${prettyMs(cooldown.endsAt - Date.now())}*`,
-          `Ugh. Not now! \n*${prettyMs(cooldown.endsAt - Date.now())}*`,
-          `Already? \n*${prettyMs(cooldown.endsAt - Date.now())}*`,
+          `Hold on, I'm busy! \n*${prettyMs(cooldown.endsAt - Date.now(), {
+            secondsDecimalDigits: 0,
+          })}*`,
+          `Ugh. Not now! \n*${prettyMs(cooldown.endsAt - Date.now(), {
+            secondsDecimalDigits: 0,
+          })}*`,
+          `Already? \n*${prettyMs(cooldown.endsAt - Date.now(), {
+            secondsDecimalDigits: 0,
+          })}*`,
           `I get that you want me but you have to wait a while! \n*${prettyMs(
             cooldown.endsAt - Date.now(),
             { secondsDecimalDigits: 0 }
@@ -124,6 +148,20 @@ module.exports = {
           "You're making me uncomfortable...",
           "You have some deep rooted issues you need to sort out.",
           "Have you considered not doing that?",
+          "Are you that desperate? Oh well, I'm hardly surprised.",
+          "No! Quiet, sit!",
+          "I'm gonna have to say no. Nice try though!",
+          "Does your family know this is what you do on your free time?",
+          "Don't you have any shame?",
+          "It's interesting how you have no value as a human and yet you keep devaluing yourself with your actions.",
+          "You do realize everyone's gonna know you said that, right?",
+          "This is getting old.",
+          "You've got to be more creative next time!",
+          "Simp!",
+          "You caught me in a bad mood!",
+          "Are you aware how dumb you look right now?",
+          "Bark for me!",
+          "Meow for me!",
         ];
         const randomloss =
           lossoptions[Math.floor(Math.random() * lossoptions.length)];
@@ -151,6 +189,12 @@ module.exports = {
         `Ugh, fine! If it stops you from bothering me. \n*+${amount} rice grains.*`,
         `Fine but just this once, okay? \n*+${amount} rice grains.*`,
         `Oh I love it when you do that! \n*+${amount} rice grains.*`,
+        `Oh wow! That was surprisingly good! \n*+${amount} rice grains.*`,
+        `You're oathetic! I like it. \n*+${amount} rice grains.*`,
+        `Oh, you learned a new trick? Good puppy! \n*+${amount} rice grains.*`,
+        `Fine, but I'm going to tell everyone you did that! \n*+${amount} rice grains.*`,
+        `You know what? I'm feeling generous today! \n*+${amount} rice grains.*`,
+        `You caught me in a good mood! \n*+${amount} rice grains.*`,
       ];
       const randomwin =
         winnerchicken[Math.floor(Math.random() * winnerchicken.length)];
