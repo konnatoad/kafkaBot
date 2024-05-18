@@ -5,7 +5,8 @@ module.exports = {
   deleted: false,
   data: new SlashCommandBuilder()
     .setName("kafka")
-    .setDescription("Sends random kafka picture."),
+    .setDescription("Sends random kafka picture.")
+    .setNSFW(true),
 
   run: async ({ interaction }) => {
     let files = fs.readdirSync("src/static/kafka");

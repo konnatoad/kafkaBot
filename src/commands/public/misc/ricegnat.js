@@ -16,6 +16,6 @@ module.exports = {
       files: [`./src/static/ricegnat/${picture}`],
     });
   },
-  devOnly: true,
+  devOnly: false,
   testOnly: true,
 };
