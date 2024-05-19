@@ -9,6 +9,10 @@ module.exports = {
     .setNSFW(true),
 
   run: async ({ interaction }) => {
+    if (!interaction.channel.nsfw)
+      return interaction.reply(
+        "This channel is not NSFW and this command cannot be ran here!"
+      );
     let files = fs.readdirSync("src/static/kafka");
     let picture = files[Math.floor(Math.random() * files.length)];
     await interaction.reply({

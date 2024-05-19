@@ -5,9 +5,9 @@ module.exports = (client) => {
     status: "dnd",
     activities: [
       {
-        type: ActivityType.Watching,
-        name: "/beg",
-        state: '/daily for free starter grains.',
+        type: ActivityType.Listening,
+        name: "you /beg",
+        state: "/daily for free starter grains.",
       },
     ],
   });

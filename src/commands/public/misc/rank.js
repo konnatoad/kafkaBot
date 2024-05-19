@@ -45,7 +45,7 @@ module.exports = {
 
     const rank = new RankCardBuilder()
       .setFonts(font)
-      .setAvatar(member.displayAvatarURL({ forseStatic: true }))
+      .setAvatar(member.displayAvatarURL({ forceStatic: true }))
       .setOverlay(true)
       .setBackground(`https://vou.s-ul.eu/UlU1YgmA`)
       .setCurrentXP(Data.XP)
