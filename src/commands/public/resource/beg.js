@@ -190,7 +190,7 @@ module.exports = {
         `Fine but just this once, okay? \n*+${amount} rice grains.*`,
         `Oh I love it when you do that! \n*+${amount} rice grains.*`,
         `Oh wow! That was surprisingly good! \n*+${amount} rice grains.*`,
-        `You're oathetic! I like it. \n*+${amount} rice grains.*`,
+        `You're pathetic! I like it. \n*+${amount} rice grains.*`,
         `Oh, you learned a new trick? Good puppy! \n*+${amount} rice grains.*`,
         `Fine, but I'm going to tell everyone you did that! \n*+${amount} rice grains.*`,
         `You know what? I'm feeling generous today! \n*+${amount} rice grains.*`,
