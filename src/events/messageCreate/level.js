@@ -45,7 +45,7 @@ module.exports = async (message) => {
     if (!userProfile) {
       userProfile = new UserProfile({
         userId: author.id,
-        balance: 0
+        balance: 0,
       });
     }
 

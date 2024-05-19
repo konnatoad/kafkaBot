@@ -42,7 +42,8 @@ module.exports = async (message) => {
       value: `> ${message.channel} (${message.channel.id})`,
     })
     .setFooter({
-      text: "Message deleted log",
+      text: "Message delete log",
+      iconURL: "https://vou.s-ul.eu/ts9RQjxl",
     })
     .setTimestamp();
 

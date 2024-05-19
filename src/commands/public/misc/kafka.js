@@ -19,5 +19,5 @@ module.exports = {
       files: [`./src/static/kafka/${picture}`],
     });
   },
-  testOnly: true,
+  testOnly: false,
 };

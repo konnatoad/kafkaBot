@@ -12,7 +12,10 @@ module.exports = {
     startTyping(interaction.channel);
 
     setTimeout(async () => {
-      await interaction.channel.send({ content: "kafka supremacy", ephemeral: true });
+      await interaction.channel.send({
+        content: "Kafka supremacy",
+        ephemeral: true,
+      });
     }, 2000);
   },
 };
