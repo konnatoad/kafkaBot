@@ -7,7 +7,7 @@ const {
 const ms = require("ms");
 
 module.exports = {
-  deleted: false,
+  deleted: true,
 
   data: new SlashCommandBuilder()
     .setName("tempban")
