@@ -1,5 +1,13 @@
 require("dotenv").config();
-const { Client, IntentsBitField, Partials, GatewayIntentBits, AuditLogEvent, Events, MessageManager } = require("discord.js");
+const {
+  Client,
+  IntentsBitField,
+  Partials,
+  GatewayIntentBits,
+  AuditLogEvent,
+  Events,
+  MessageManager,
+} = require("discord.js");
 const mongoose = require("mongoose");
 const { CommandHandler } = require("djs-commander");
 const path = require("path");
@@ -21,7 +29,6 @@ const client = new Client({
   ],
 });
 
-
 new CommandHandler({
   client,
   commandsPath: path.join(__dirname, "commands"),
@@ -41,4 +48,3 @@ new CommandHandler({
     console.log(`Error: ${error}`);
   }
 })();
-

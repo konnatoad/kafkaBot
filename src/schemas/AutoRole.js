@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+const { Schema, model } = require("mongoose");
 
 const autoRoleSchema = new Schema({
   guildId: {
@@ -12,4 +12,4 @@ const autoRoleSchema = new Schema({
   },
 });
 
-module.exports = model('AutoRole', autoRoleSchema);
+module.exports = model("AutoRole", autoRoleSchema);
