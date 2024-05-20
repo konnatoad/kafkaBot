@@ -18,8 +18,8 @@ module.exports = async (message) => {
     message.channelId === "449531223702896651" ||
     message.channelId === "584825921274511376" ||
     message.channelId === "509506521193906218" ||
-    message.channelId === "895273892120252437" ||
-    message.guild.id === "721847737339084865"
+    message.channelId === "895273892120252437" //||
+    // message.guild.id === "721847737339084865"
   )
     return;
 
@@ -38,14 +38,16 @@ module.exports = async (message) => {
       });
     }
 
-    let userProfile = await UserProfile.findOne({
+    const userProfile = await UserProfile.findOne({
       userId: author.id,
+      Guild: guild.id,
     });
 
     if (!userProfile) {
-      userProfile = new UserProfile({
+      UserProfile.create({
         userId: author.id,
-        balance: 0,
+        Guild: guild.id,
+        balance: 25,
       });
     }
 
