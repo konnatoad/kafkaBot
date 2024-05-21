@@ -6,8 +6,8 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("rice")
     .setDescription("fun images")
-    .setNSFW(true),
-  //.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setNSFW(true)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   run: async ({ interaction }) => {
     if (!interaction.channel.nsfw)
