@@ -11,7 +11,8 @@ module.exports = {
   devOnly: true,
   data: new SlashCommandBuilder()
     .setName("server-list")
-    .setDescription("Get a list of all the servers the bot is in"),
+    .setDescription("Get a list of all the servers the bot is in")
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   run: async ({ interaction, client }) => {
     await interaction.deferReply({ ephemeral: true });
@@ -62,7 +63,7 @@ module.exports = {
     if (listBin.ok) {
       var { key } = await listBin.json();
       await sendMessage(
-        `**My server list:**\n\nI am currently in\`${client.guilds.cache.size}\` servers-- I have compiled this list into a sourcebin below consisting of the server names and IDs`,
+        `**My server list:**\n\nI am currently in \`${client.guilds.cache.size}\` servers-- I have compiled this list into a sourcebin below consisting of the server names and IDs`,
         key
       );
     } else {
