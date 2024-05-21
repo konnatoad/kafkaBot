@@ -5,6 +5,7 @@ const {
 } = require("discord.js");
 
 module.exports = {
+  deleted: false,
   devOnly: true,
   data: new SlashCommandBuilder()
     .setName("server-leave")
