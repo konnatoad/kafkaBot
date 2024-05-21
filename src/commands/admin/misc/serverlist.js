@@ -10,6 +10,7 @@ const {
 module.exports = {
   deleted: false,
   devOnly: true,
+  testOnly: true,
   data: new SlashCommandBuilder()
     .setName("server-list")
     .setDescription("Get a list of all the servers the bot is in")

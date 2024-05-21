@@ -7,6 +7,7 @@ const {
 module.exports = {
   deleted: false,
   devOnly: true,
+  testOnly: true,
   data: new SlashCommandBuilder()
     .setName("server-leave")
     .setDescription("Leave a guild")
