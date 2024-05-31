@@ -8,7 +8,6 @@ module.exports = async (message) => {
   });
   if (!data) return;
   else {
-    if (message.author.bot) return;
     message.react(data.Emoji).catch(async (err) => {
       const owner = await message.guild.members.cache.get(
         message.guild.ownerId
