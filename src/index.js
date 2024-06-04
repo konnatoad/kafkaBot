@@ -1,4 +1,5 @@
 require("dotenv").config();
+
 const {
   Client,
   IntentsBitField,
@@ -8,8 +9,11 @@ const {
   Events,
   MessageManager,
 } = require("discord.js");
+
 const mongoose = require("mongoose");
+
 const { CommandHandler } = require("djs-commander");
+
 const path = require("path");
 
 const client = new Client({
@@ -36,15 +40,20 @@ new CommandHandler({
   validationsPath: path.join(__dirname, "validations"),
   functions: path.join(__dirname, "functions"),
   //testServer: process.env.TESTSERVER,
+  // Optional test server configuration
 });
 
 (async () => {
   try {
+    // Try to connect to the MongoDB database
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("connected to DB.");
+    // Log a success message if the connection is established
 
     client.login(process.env.TOKEN);
+    // Log in to the Discord bot client with the provided token
   } catch (error) {
     console.log(`Error: ${error}`);
+    // Log any errors that occur during the connection or login process
   }
 })();
