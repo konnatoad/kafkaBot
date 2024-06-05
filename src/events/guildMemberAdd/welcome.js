@@ -32,11 +32,9 @@ module.exports = async (member) => {
   if (existingSetup.useEmbed) {
     const embed = new EmbedBuilder()
       .setColor("Random")
-      .setTimestamp()
-      .setTitle("Welcome")
-      .setThumbnail(userAvatar)
-      .setFooter({ text: interaction.guild.name })
-      .setDescription(messageContent);
+      .setTitle("Welcome to server.")
+      .setDescription(messageContent)
+      .setTimestamp();
 
     channel.send({ content: `<@${member.id}>`, embeds: [embed] });
   } else {
