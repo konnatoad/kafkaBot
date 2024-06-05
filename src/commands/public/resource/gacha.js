@@ -32,8 +32,8 @@ module.exports = {
 
     try {
       const riceballs = [
-        "an onigiri 🍙",
-        "a sushi 🍣",
+        "an onigiri <:onigiri:1247789847700045864>",
+        "a sushi <:shushi:1247789962066133002>",
         "a gimbap <:gimbap:1240412036744216646>",
         "a jumeok-bap <:jumeokbap:1240424388260663308>",
         "an arancini <:arancini:1240412387425910794>",
@@ -42,8 +42,8 @@ module.exports = {
       ];
 
       const riceballer = [
-        "onigiri 🍙",
-        "sushi 🍣",
+        "onigiri <:onigiri:1247789847700045864>",
+        "sushi <:shushi:1247789962066133002>",
         "gimbap <:gimbap:1240412036744216646>",
         "jumeok-bap <:jumeokbap:1240424388260663308>",
         "arancini <:arancini:1240412387425910794>",
@@ -51,11 +51,24 @@ module.exports = {
         "zongzi <:zongzi:1240412100849832007>",
       ];
 
+      const goldballers = [
+        "onigiri <:gold_onigiri:1242492990732112044>",
+        "sushi <:gold_sushi:1242493139990745151>",
+        "gimbap <:gold_gimbap:1242493521890639874>",
+        "jumeok-bap <:gold_jumeokbap:1242493357926776872>",
+        "arancini <:gold_arancini:1242493771371778139>",
+        "cifantuan <:gold_cifantuan:1242493645530206372>",
+        "zongzi <:gold_zongzi:1242493857577566260>",
+      ];
+
       const randomrice =
         riceballs[Math.floor(Math.random() * riceballs.length)];
 
       const ricegnat =
         riceballer[Math.floor(Math.random() * riceballer.length)];
+
+      const singsong =
+        goldballers[Math.floor(Math.random() * goldballers.length)];
 
       await interaction.deferReply();
 
@@ -112,7 +125,7 @@ module.exports = {
         await Promise.all([cooldown.save(), userProfile.save()]);
 
         await interaction.editReply({
-          content: `Wow! You got a rare golden ${ricegnat}!\n*+500 rice grains.*`,
+          content: `Wow! You got a rare golden ${singsong}!\n*+500 rice grains.*`,
         });
         return;
       }
