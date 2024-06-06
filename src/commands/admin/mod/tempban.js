@@ -2,146 +2,130 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
-  AttachmentBuilder,
 } = require("discord.js");
-const ms = require("ms");
+const Ban = require("../../../schemas/banschema");
+
+const slashCommand = new SlashCommandBuilder()
+  .setName("tempban")
+  .setDescription("Temporarily ban a user")
+  .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
+  .addUserOption((option) =>
+    option.setName("user").setDescription("The user to ban").setRequired(true)
+  )
+  .addIntegerOption((option) =>
+    option.setName("weeks").setDescription("The number of weeks")
+  )
+  .addIntegerOption((option) =>
+    option.setName("days").setDescription("The number of days")
+  )
+  .addIntegerOption((option) =>
+    option.setName("hours").setDescription("The number of hours")
+  )
+  .addIntegerOption((option) =>
+    option.setName("minutes").setDescription("The number of minutes")
+  )
+  .addStringOption((option) =>
+    option.setName("reason").setDescription("The reason for the ban")
+  );
 
 module.exports = {
-  deleted: true,
-
-  data: new SlashCommandBuilder()
-    .setName("tempban")
-    .setDescription("temporarily bans a user")
-    .addMentionableOption((option) =>
-      option
-        .setName("target-user")
-        .setDescription("user you want to ban")
-        .setRequired(true)
-    )
-    .addStringOption((option) =>
-      option
-        .setName("time")
-        .setRequired(true)
-        .setDescription("Time you want ban user for.")
-        .addChoices(
-          { name: "30 sec", value: "30s" },
-          { name: "30 mins", value: "30m" },
-          { name: "1 hour", value: "1h" },
-          { name: "2 hours", value: "2h" },
-          { name: "3 hours", value: "3h" },
-          { name: "5 hours", value: "5h" },
-          { name: "10 hours", value: "10h" },
-          { name: "1 day", value: "1d" },
-          { name: "2 days", value: "2 days" },
-          { name: "3 days", value: "3 days" },
-          { name: "5 days", value: "5 days" },
-          { name: "1 week", value: "1w" },
-          { name: "1 month", value: "2629746000" }
-        )
-    )
-    .addStringOption((option) =>
-      option.setName("reason").setDescription("reason for the ban")
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
-  /**
-   *
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
-
+  data: slashCommand,
   run: async ({ interaction }) => {
-    const targetUserId = interaction.options.getUser("target-user");
+    const user = interaction.options.getUser("user");
+    const durationOptions = ["weeks", "days", "hours", "minutes"];
+    const providedDurations = durationOptions.filter(
+      (option) => interaction.options.getInteger(option) !== null
+    );
+    const durationValues = providedDurations.map((option) =>
+      interaction.options.getInteger(option)
+    );
     const reason =
-      interaction.options.get("reason")?.value || "no reason provided";
-    const time = interaction.options.getString("time");
-    const targetUser = await interaction.guild.members.fetch(targetUserId);
+      interaction.options.getString("reason") || "No reason provided";
 
-    await interaction.deferReply();
-
-    if (!targetUser) {
-      await interaction.editReply("that user doesn't exist on this server");
+    // Ensure at least one duration option is provided
+    if (providedDurations.length === 0) {
+      await interaction.reply({
+        content: "You must specify at least one duration option.",
+        ephemeral: true,
+      });
       return;
     }
 
-    if (targetUser.id === interaction.guild.ownerId) {
-      await interaction.editReply("you can't ban server owner");
-      return;
-    }
+    // Calculate total duration in minutes
+    const totalDuration = providedDurations.reduce((total, option, index) => {
+      const value = durationValues[index];
+      switch (option) {
+        case "weeks":
+          return total + value * 7 * 24 * 60;
+        case "days":
+          return total + value * 24 * 60;
+        case "hours":
+          return total + value * 60;
+        case "minutes":
+          return total + value;
+        default:
+          return total;
+      }
+    }, 0);
 
-    const targetUserRolePosition = targetUser.roles.highest.position;
-    // const requestUserRolePosition = interaction.member.roles.highest.position;
-    const botRolePosition = interaction.guild.members.me.roles.highest.position;
+    // Calculate expiration time
+    const expirationTime = new Date();
+    expirationTime.setMinutes(expirationTime.getMinutes() + totalDuration);
 
-    // if (targetUserRolePosition >= requestUserRolePosition) {
-    //     await interaction.editReply("you can't ban a member that has the same or higher role than you");
-    //     return;
-    // }
+    await Ban.create({
+      userId: user.id,
+      expirationTime,
+      guildId: interaction.guildId,
+      reason,
+    });
 
-    if (targetUserRolePosition >= botRolePosition) {
-      await interaction.editReply(
-        "i can't ban a member that has the same or higher role than me"
-      );
-      return;
-    }
+    const formattedDuration = providedDurations
+      .map((option, index) => {
+        const value = durationValues[index];
+        if (value === 0) return null;
+        return `${value} ${value === 1 ? option.slice(0, -1) : option}`;
+      })
+      .filter((duration) => duration !== null)
+      .join(", ");
+
+    const embed = new EmbedBuilder()
+      .setColor("#ff0000")
+      .setTitle("User Temporarily Banned")
+      .setDescription(
+        `**${user.tag}** has been temporarily banned from the server.`
+      )
+      .addFields(
+        { name: "Duration", value: `\`${formattedDuration}\`` },
+        { name: "Reason", value: `\`${reason}\`` },
+        { name: "User ID", value: `\`${user.id}\`` }
+      )
+      .setFooter({
+        text: `Banned by ${interaction.user.tag}`,
+        iconURL: interaction.user.displayAvatarURL(),
+      })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+
+    const dmEmbed = new EmbedBuilder()
+      .setColor("#ff0000")
+      .setTitle("You Have Been Temporarily Banned")
+      .setDescription(
+        `You have been temporarily banned from **${interaction.guild.name}**.`
+      )
+      .addFields(
+        { name: "Duration", value: `\`${formattedDuration}\`` },
+        { name: "Reason", value: `\`${reason}\`` },
+        { name: "Server", value: `\`${interaction.guild.name}\`` }
+      )
+      .setTimestamp();
 
     try {
-      //await interaction.editReply("-");
-      //await interaction.deleteReply();
-      const banEmbed = new EmbedBuilder()
-        .setTitle("**Ban**")
-        .setColor("Red")
-        .setDescription(`User ${targetUser} was banned.`)
-        .addFields(
-          {
-            name: "Duration:",
-            value: `${time}`,
-          },
-          {
-            name: "Reason:",
-            value: `${reason}`,
-          }
-        )
-        .setTimestamp()
-        .setFooter({
-          text: "Temporary ban",
-          iconURL: "https://vou.s-ul.eu/ts9RQjxl",
-        });
-
-      await interaction.editReply({
-        embeds: [banEmbed],
-      });
-      await targetUser.ban({ reason });
-
-      setTimeout(async () => {
-        const unbanembed = new EmbedBuilder()
-          .setTitle("**Unban**")
-          .setColor("Green")
-          .setDescription(`${targetUser} has been unbanned.`)
-          .addFields(
-            {
-              name: "Ban duration:",
-              value: `${time}`,
-            },
-            {
-              name: "User was banned with reason:",
-              value: `${reason}`,
-            }
-          )
-          .setTimestamp()
-          .setFooter({
-            text: "Temporary ban",
-            iconURL: "https://vou.s-ul.eu/ts9RQjxl",
-          });
-        await interaction.channel.send({
-          embeds: [unbanembed],
-        });
-        await interaction.guild.members.unban(targetUserId);
-      }, ms(time));
+      await user.send({ embeds: [dmEmbed] });
     } catch (error) {
-      console.log(`there was an error banning ${error}`);
+      console.error(`Could not send DM to ${user.tag}: ${error.message}`);
     }
+
+    await interaction.guild.members.ban(user, { reason });
   },
 };
-
-//`User ${targetUser} has been unbanned after ${time}.`
-//`user ${targetUser} was banned\nreason: ${reason}`
