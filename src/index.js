@@ -48,12 +48,10 @@ new CommandHandler({
     // Try to connect to the MongoDB database
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("connected to DB.");
-    // Log a success message if the connection is established
 
     client.login(process.env.TOKEN);
     // Log in to the Discord bot client with the provided token
   } catch (error) {
     console.log(`Error: ${error}`);
-    // Log any errors that occur during the connection or login process
   }
 })();
