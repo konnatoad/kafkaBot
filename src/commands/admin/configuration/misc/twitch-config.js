@@ -1,10 +1,11 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
 const Notification = require("../../../../schemas/twitchNotificationSchema");
 const https = require("https");
 
 const twitchNotificationCommand = new SlashCommandBuilder()
   .setName("twitchnotify")
   .setDescription("Setup or remove Twitch live notification system")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addSubcommand((subcommand) =>
     subcommand
       .setName("setup")
