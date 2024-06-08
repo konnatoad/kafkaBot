@@ -18,55 +18,41 @@ module.exports = {
         .setRequired(true)
     ),
   run: async ({ interaction }) => {
-    const giver = interaction.user;
-    const receiver = interaction.options.getUser("user");
-    const amount = interaction.options.getInteger("amount");
-    const guildId = interaction.guildId;
+    try {
+      const giver = interaction.user;
+      const receiver = interaction.options.getUser("user");
+      const amount = interaction.options.getInteger("amount");
+      const guildId = interaction.guildId;
 
-    if (giver.id === receiver.id) {
-      return interaction.reply("You cannot give rice grains to yourself!");
-    }
+      if (giver.id === receiver.id) {
+        return interaction.reply("You cannot give rice grains to yourself!");
+      }
 
-    if (amount <= 0) {
-      return interaction.reply("Stealing is illegal!");
-    }
+      if (amount <= 0) {
+        return interaction.reply("Stealing is illegal!");
+      }
 
-    let giverProfile = await UserProfile.findOne({
-      userId: giver.id,
-      Guild: guildId,
-    });
-    if (!giverProfile) {
-      giverProfile = new UserProfile({
-        userId: giver.id,
-        Guild: guildId,
-        balance: 0,
+      await UserProfile.findOneAndUpdate(
+        { userId: receiver.id, Guild: guildId },
+        { $inc: { balance: amount } },
+        { new: true, upsert: true }
+      );
+
+      await UserProfile.findOneAndUpdate(
+        { userId: giver.id, Guild: guildId },
+        { $inc: { balance: -amount } },
+        { new: true, upsert: true }
+      );
+
+      return interaction.reply({
+        content: `${giver.toString()} has given ${amount} rice grains to ${receiver.toString()}!`,
+      });
+    } catch (error) {
+      console.error(`Error giving rice grains: ${error}`);
+      return interaction.reply({
+        content: "An error occurred while processing your request.",
+        ephemeral: true,
       });
     }
-
-    if (giverProfile.balance < amount) {
-      return interaction.reply("You do not have enough rice grains.");
-    }
-
-    let receiverProfile = await UserProfile.findOne({
-      userId: receiver.id,
-      Guild: guildId,
-    });
-    if (!receiverProfile) {
-      receiverProfile = new UserProfile({
-        userId: receiver.id,
-        Guild: guildId,
-        balance: 0,
-      });
-    }
-
-    giverProfile.balance -= amount;
-    receiverProfile.balance += amount;
-
-    await giverProfile.save();
-    await receiverProfile.save();
-
-    return interaction.reply({
-      content: `${giver.toString()} has given ${amount} rice grains to ${receiver.toString()}!`,
-    });
   },
 };

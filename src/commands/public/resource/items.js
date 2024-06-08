@@ -29,21 +29,21 @@ module.exports = {
         .setTimestamp()
         .setFooter({ text: "Store", iconURL: "https://vou.s-ul.eu/ts9RQjxl" });
 
-      // Add each role with its price as a field in the embed
-      storeItems.forEach((item) => {
+      // Add each role with its price and ID as a field in the embed
+      for (const item of storeItems) {
         const role = interaction.guild.roles.cache.get(item.roleId);
         if (role) {
           const roleName = role.name;
           const cost = item.cost;
           embed.addFields({
             name: `• **${roleName}**`,
-            value: `Cost: **${cost}** rice grains`,
+            value: `Cost: **${cost}** rice grains\nRole ID: **${item.roleId}**`,
             inline: false,
           });
         } else {
           console.error(`Role with ID ${item.roleId} not found in guild.`);
         }
-      });
+      }
 
       return interaction.reply({ embeds: [embed], ephemeral: true });
     } catch (error) {
