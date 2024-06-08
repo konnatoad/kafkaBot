@@ -106,7 +106,7 @@ async function setupTwitchNotification(interaction) {
     });
 
     await interaction.followUp({
-      content: `Notification system set up for ${twitchChannel}. Custom message: ${formattedCustomMessage}. Notifications will be sent to ${notificationChannel}.`,
+      content: `Notification system set up for ${twitchChannel} \nCustom message: ${formattedCustomMessage} \nNotifications will be sent to ${notificationChannel}.`,
       ephemeral: true,
     });
   } catch (error) {
