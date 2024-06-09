@@ -9,36 +9,36 @@ module.exports = async (message) => {
   }
 
   if (
-    content.includes("gn") ||
-    content.includes("goodnight") ||
-    content.includes("good night")
+    /\bgn\b/.test(content) ||
+    /\bgoodnight\b/.test(content) ||
+    /\bgood night\b/.test(content)
   ) {
     message.reply("Goodnight!");
     return;
   }
 
   if (
-    content.includes("gm") ||
-    content.includes("goodmorning") ||
-    content.includes("good morning")
+    /\bgm\b/.test(content) ||
+    /\bgoodmorning\b/.test(content) ||
+    /\bgood morning\b/.test(content)
   ) {
     message.reply("Good morning!");
     return;
   }
 
   if (
-    content.includes("meow") ||
-    content.includes("nya") ||
-    content.includes("purr")
+    /\bmeow\b/.test(content) ||
+    /\bnya\b/.test(content) ||
+    /\bpurr\b/.test(content)
   ) {
     message.reply("Good kitty!");
     return;
   }
 
   if (
-    content.includes("woof") ||
-    content.includes("arf") ||
-    content.includes("bark")
+    /\bwoof\b/.test(content) ||
+    /\barf\b/.test(content) ||
+    /\bbark\b/.test(content)
   ) {
     message.reply("Good puppy!");
     return;
