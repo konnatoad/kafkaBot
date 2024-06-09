@@ -6,6 +6,7 @@ const {
 const reactor = require("../../../../schemas/reactorschema");
 
 module.exports = {
+  deleted: false,
   data: new SlashCommandBuilder()
     .setName("reactor")
     .setDescription("Manage your auto reaction system")
@@ -15,8 +16,8 @@ module.exports = {
         .setDescription("Setup your auto reactor system")
         .addStringOption((option) =>
           option
-            .setName("emoji")
-            .setDescription("The emoji you want to auto react with")
+            .setName("emojis")
+            .setDescription("The emojis you want to auto react with")
             .setRequired(true)
         )
         .addChannelOption((option) =>
@@ -31,7 +32,7 @@ module.exports = {
     .addSubcommand((command) =>
       command
         .setName("disable")
-        .setDescription("Disable yor auto reactor for one channel")
+        .setDescription("Disable your auto reactor for one channel")
         .addChannelOption((option) =>
           option
             .setName("channel")
@@ -65,12 +66,12 @@ module.exports = {
             ephemeral: true,
           });
         } else {
-          const emoji = options.getString("emoji");
+          const emojis = options.getString("emojis").split(" ");
 
           await reactor.create({
             Guild: interaction.guild.id,
             Channel: channel.id,
-            Emoji: emoji,
+            Emojis: emojis,
           });
 
           const embed = new EmbedBuilder()
