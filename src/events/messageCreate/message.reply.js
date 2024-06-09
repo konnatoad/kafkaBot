@@ -22,12 +22,25 @@ module.exports = async (message) => {
     content.includes("goodmorning") ||
     content.includes("good morning")
   ) {
-    message.reply("Goodmorning!");
+    message.reply("Good morning!");
     return;
   }
 
-  if (content.includes("meow") || content.includes("nya")) {
+  if (
+    content.includes("meow") ||
+    content.includes("nya") ||
+    content.includes("purr")
+  ) {
     message.reply("Good kitty!");
+    return;
+  }
+
+  if (
+    content.includes("woof") ||
+    content.includes("arf") ||
+    content.includes("bark")
+  ) {
+    message.reply("Good puppy!");
     return;
   }
 };
