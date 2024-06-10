@@ -90,6 +90,20 @@ async function setupTwitchNotification(interaction) {
     return;
   }
 
+  // Check for existing notification in the same guild for the same Twitch channel
+  const existingNotification = await Notification.findOne({
+    guildId: interaction.guildId,
+    twitchUsername: twitchChannel,
+  });
+
+  if (existingNotification) {
+    await interaction.followUp({
+      content: `A notification setup for ${twitchChannel} already exists in this guild.`,
+      ephemeral: true,
+    });
+    return;
+  }
+
   try {
     // Replace placeholders in the custom message
     const formattedCustomMessage = customMessage
