@@ -72,7 +72,7 @@ module.exports = {
         })
         .setTimestamp()
         .setFooter({
-          text: "Warning kick",
+          text: "Kick",
           iconURL: "https://vou.s-ul.eu/ts9RQjxl",
         });
       await targetUser.kick({ reason });
