@@ -18,13 +18,13 @@ async function run({ interaction }) {
     const targetCustomMessage = interaction.options.getString("custom-message");
 
     const duplicateExists = await NotificationConfig.exists({
-      notificationChannelId: targetNotificationChannel.id,
+      guildId: interaction.guildId,
       ytChannelId: targetYtChannelId,
     });
 
     if (duplicateExists) {
-      interaction.followUp(
-        "That youtube channel has already been configured for that text channel."
+      await interaction.followUp(
+        "That YouTube channel has already been configured for notifications in this guild."
       );
       return;
     }
