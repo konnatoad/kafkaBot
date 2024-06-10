@@ -40,7 +40,6 @@ const getRandomQuote = async (interaction, user) => {
   }
 };
 
-// Slash command data
 const data = new SlashCommandBuilder()
   .setName("randomquote")
   .setDescription("Get a random quote")
@@ -51,7 +50,6 @@ const data = new SlashCommandBuilder()
       .setRequired(false)
   );
 
-// Export the command data and execution function
 module.exports = {
   data,
   async run({ interaction }) {

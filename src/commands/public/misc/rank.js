@@ -41,7 +41,6 @@ module.exports = {
     const Required = Data.Level * Data.Level * 20 + 20;
 
     const font = await Font.fromFile("src/static/Roboto-BoldItalic.ttf");
-    //const font = Font.loadDefault();
 
     const rank = new RankCardBuilder()
       .setFonts(font)
@@ -50,7 +49,6 @@ module.exports = {
       .setBackground(`https://vou.s-ul.eu/UlU1YgmA`)
       .setCurrentXP(Data.XP)
       .setRequiredXP(Required)
-      //.setRank(counter, "Rank", false)
       .setLevel(Data.Level, "Level")
       .setUsername(member.user.username);
 

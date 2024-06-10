@@ -12,10 +12,10 @@ async function removeBalance(userId, amount) {
     userProfile.balance -= amount;
     await userProfile.save();
 
-    return true; // Indicate successful deduction
+    return true;
   } catch (error) {
     console.error("Error removing balance:", error.message);
-    return false; // Indicate failure to deduct balance
+    return false;
   }
 }
 
@@ -29,7 +29,7 @@ async function getUserBalance(userId) {
     return userProfile.balance;
   } catch (error) {
     console.error("Error retrieving user balance:", error.message);
-    return 0; // Return 0 balance if an error occurs
+    return 0;
   }
 }
 
@@ -49,7 +49,6 @@ module.exports = {
     const userId = interaction.user.id;
     const guildId = interaction.guild.id; // Get the guild ID
 
-    // Find the role in the store
     const storeItem = await StoreItem.findOne({ guildId, roleId: roleToBuyId });
     if (!storeItem) {
       return interaction.reply("This role is not available for purchase.");
@@ -57,7 +56,6 @@ module.exports = {
 
     const userBalance = await getUserBalance(userId);
 
-    // Check if the user can afford the role
     if (userBalance < storeItem.cost) {
       return interaction.reply(
         "You do not have enough rice grains to buy this role."
@@ -74,7 +72,6 @@ module.exports = {
     const member = await interaction.guild.members.fetch(userId);
     try {
       await member.roles.add(roleToBuyId);
-      // Fetch the role object and mention it in the reply
       const roleToAdd = interaction.guild.roles.cache.get(roleToBuyId);
       return interaction.reply(
         `Congratulations! You have successfully purchased the ${roleToAdd.toString()} role.`
