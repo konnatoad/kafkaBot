@@ -1,6 +1,6 @@
 # kafkaBot
 
-kafkaBot is a multi-purpose Discord bot with youtube upload notifications, automated join roles, reaction roles, fun commands, logs, utilites, and more.
+kafkaBot is a multi-purpose Discord bot with youtube upload notifications and twitch live notifications, automated join roles, reaction roles, fun commands, logs, utilites, and more.
 
 **Links**
 
