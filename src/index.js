@@ -39,18 +39,14 @@ new CommandHandler({
   eventsPath: path.join(__dirname, "events"),
   validationsPath: path.join(__dirname, "validations"),
   functions: path.join(__dirname, "functions"),
-  //testServer: process.env.TESTSERVER,
-  // Optional test server configuration
 });
 
 (async () => {
   try {
-    // Try to connect to the MongoDB database
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("connected to DB.");
 
     client.login(process.env.TOKEN);
-    // Log in to the Discord bot client with the provided token
   } catch (error) {
     console.log(`Error: ${error}`);
   }
