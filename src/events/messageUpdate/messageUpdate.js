@@ -7,7 +7,8 @@ module.exports = async (newMessage, message, member) => {
     !message.author ||
     message.author.bot ||
     !newMessage ||
-    message.channelId === "895273892120252437"
+    message.channelId === "895273892120252437" ||
+    newMessage.content === message.content
   )
     return;
 
