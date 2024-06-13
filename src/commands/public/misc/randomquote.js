@@ -1,21 +1,29 @@
 const { SlashCommandBuilder } = require("discord.js");
 const Quote = require("../../../schemas/quoteSchema");
 
-// Function to handle errors
 const handleError = async (interaction, message) => {
   console.error(message);
   await interaction.reply({ content: message, ephemeral: true });
 };
 
-// Function to get a random quote from the database
+const recentlyUsedQuotesBuffer = new Set();
+
+const getBufferSize = (totalQuotes) => {
+  const targetProbability = 0.0005;
+  let bufferSize = Math.max(1, Math.ceil(targetProbability * totalQuotes));
+  return bufferSize;
+};
+
 const getRandomQuote = async (interaction, user) => {
   try {
     let query = { guildId: interaction.guildId };
     if (user) {
-      query.authorId = user.id; // Change to authorId
+      query.authorId = user.id;
     }
 
-    const count = await Quote.countDocuments(query);
+    const quotes = await Quote.find(query).exec();
+    const count = quotes.length;
+
     if (count === 0) {
       return handleError(
         interaction,
@@ -23,16 +31,37 @@ const getRandomQuote = async (interaction, user) => {
       );
     }
 
-    const randomIndex = Math.floor(Math.random() * count);
-    const quote = await Quote.findOne(query).skip(randomIndex);
+    const bufferSize = getBufferSize(count);
 
-    let content = quote.content.replace(/<@(\d+)>/g, (match, userID) => {
-      const user = interaction.guild.members.cache.get(userID);
-      return user ? `@${user.displayName}` : match;
+    const weights = quotes.map((quote) => {
+      return recentlyUsedQuotesBuffer.has(quote._id.toString()) ? 1 : 10;
     });
 
-    const formattedDate = quote.date.toLocaleDateString();
-    const formattedQuote = `**Author:** ${quote.author}\n**Content:** ${content}\n**Date:** ${formattedDate}`;
+    const cumulativeWeights = [];
+    weights.reduce((acc, weight, index) => {
+      cumulativeWeights[index] = acc + weight;
+      return cumulativeWeights[index];
+    }, 0);
+
+    const randomWeight =
+      Math.random() * cumulativeWeights[cumulativeWeights.length - 1];
+    const selectedQuoteIndex = cumulativeWeights.findIndex(
+      (cumulativeWeight) => cumulativeWeight >= randomWeight
+    );
+    const selectedQuote = quotes[selectedQuoteIndex];
+
+    recentlyUsedQuotesBuffer.add(selectedQuote._id.toString());
+
+    let content = selectedQuote.content.replace(
+      /<@(\d+)>/g,
+      (match, userID) => {
+        const user = interaction.guild.members.cache.get(userID);
+        return user ? `@${user.displayName}` : match;
+      }
+    );
+
+    const formattedDate = selectedQuote.date.toLocaleDateString();
+    const formattedQuote = `**Author:** ${selectedQuote.author}\n**Content:** ${content}\n**Date:** ${formattedDate}`;
     await interaction.reply({ content: formattedQuote });
   } catch (error) {
     console.error("Database query error:", error);
