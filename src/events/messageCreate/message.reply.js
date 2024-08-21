@@ -1,5 +1,10 @@
 module.exports = async (message) => {
-  if (message.author.bot) return;
+  if (
+    message.author.bot ||
+    message.guild.id === "853479679914409994" ||
+    message.guild.id === "721847737339084865"
+  )
+    return;
 
   const content = message.content.toLowerCase();
 
