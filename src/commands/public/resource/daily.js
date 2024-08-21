@@ -1,7 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
 
-const dailyAmount = 25;
+const baseDailyAmount = 10;
+const maxDailyAmount = 100;
+const dailyIncrement = 5;
 
 module.exports = {
   deleted: false,
@@ -44,11 +46,36 @@ module.exports = {
           });
           return;
         }
+
+        // Handle streak calculation
+        const lastCollectedDate = new Date(
+          lastDailyDate.split(".").reverse().join("-")
+        );
+        const previousDay = new Date();
+        previousDay.setDate(previousDay.getDate() - 1);
+
+        if (
+          lastCollectedDate.toLocaleDateString("fi-FI") ===
+          previousDay.toLocaleDateString("fi-FI")
+        ) {
+          userProfile.dailyStreak = (userProfile.dailyStreak || 0) + 1;
+        } else {
+          userProfile.dailyStreak = 0;
+        }
       } else {
         userProfile = new UserProfile({
           userId: interaction.member.id,
           Guild: interaction.guild.id,
+          balance: 0,
+          dailyStreak: 0, // Initialize streak if it's a new profile
         });
+      }
+
+      // Calculate daily reward based on streak
+      let dailyAmount =
+        baseDailyAmount + userProfile.dailyStreak * dailyIncrement;
+      if (dailyAmount > maxDailyAmount) {
+        dailyAmount = maxDailyAmount;
       }
 
       userProfile.balance += dailyAmount;
@@ -57,7 +84,7 @@ module.exports = {
       await userProfile.save();
 
       interaction.editReply({
-        content: `${dailyAmount} was added to your balance.\nNew balance: ${userProfile.balance} rice grains`,
+        content: `${dailyAmount} was added to your balance.\nNew balance: ${userProfile.balance} rice grains\nStreak: ${userProfile.dailyStreak} days`,
       });
     } catch (error) {
       console.log(`Error handling /daily: ${error}`);
