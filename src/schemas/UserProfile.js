@@ -17,6 +17,10 @@ const userProfileSchema = new Schema(
     lastDailyCollected: {
       type: String,
     },
+    dailyStreak: {
+      type: Number,
+      default: 0, // New field to track the streak of consecutive daily collections
+    },
   },
   { timestamps: true }
 );
