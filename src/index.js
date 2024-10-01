@@ -1,14 +1,6 @@
 require("dotenv").config();
 
-const {
-  Client,
-  IntentsBitField,
-  Partials,
-  GatewayIntentBits,
-  AuditLogEvent,
-  Events,
-  MessageManager,
-} = require("discord.js");
+const { Client, IntentsBitField, Partials } = require("discord.js");
 
 const mongoose = require("mongoose");
 
