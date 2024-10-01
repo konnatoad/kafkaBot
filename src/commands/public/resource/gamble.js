@@ -37,7 +37,7 @@ module.exports = {
       return;
     }
 
-    const didWin = Math.random() > 0.6;
+    const didWin = Math.random() > 0.55;
 
     if (!didWin) {
       userProfile.balance -= amount;
