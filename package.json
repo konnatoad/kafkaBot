@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.56",
     "canvacord": "^6.0.2",
     "colors": "^1.4.0",
     "discord.js": "^14.15.3",
