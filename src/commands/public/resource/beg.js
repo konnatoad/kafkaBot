@@ -139,6 +139,7 @@ module.exports = {
           "Ew, gross!",
           "Oh you're a funny one! Wait, you were serious?",
           "What am I, a charity?",
+          "You should be grateful I even gave you a chance!",
           "Lick my boots and maybe I'll reconsider.",
           "Grovel at my feet!",
           "Did you perhaps miss out on motherly love when you were a child?",
@@ -153,6 +154,7 @@ module.exports = {
           "No! Quiet, sit!",
           "I'm gonna have to say no. Nice try though!",
           "You're not even trying, are you?",
+          "You're not even trying, are you? I hope not.",
           "I'm not sure what's more pathetic, you or your attempt.",
           "Does your family know this is what you do on your free time?",
           "Don't you have any shame?",
@@ -162,12 +164,14 @@ module.exports = {
           "You've got to be more creative next time!",
           "I'm not sure what's more sad, you or your life choices.",
           "Simp!",
+          "You're not even a good simp.",
           "You caught me in a bad mood!",
           "Are you aware how dumb you look right now?",
           "Bark for me!",
           "Meow for me!",
           "Fatherless behaviour.",
           "Reconsider.",
+          "You're not even worth my time.",
         ];
         const randomloss =
           lossoptions[Math.floor(Math.random() * lossoptions.length)];

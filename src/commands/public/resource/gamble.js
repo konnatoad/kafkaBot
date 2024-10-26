@@ -47,6 +47,10 @@ module.exports = {
       const lossoptios = [
         "Oh would you look at that, you lost! Better luck next time!",
         "Next time you lose I'll make you my pet, so please do try again!",
+        "You suck at this.",
+        "You really should stop gambling. It's not really going too well for you is it?",
+        "You're so bad at this.",
+        "Maybe it's time to quit before you go bankrupt.",
       ];
 
       const randomreply =

@@ -33,6 +33,7 @@ module.exports = {
         "Hey don't get too greedy! Come back tomorrow for more.",
         "You know, they're called dailies for a reason. That means you can only get them once per day. Try again tomorrow!",
         "Did you forget, you already claimed that today. Come back tomorrow!",
+        "You can't just collect dailies whenever you want. That's not how it works",
       ];
       const dailycooldown = dailies[Math.floor(Math.random() * dailies.length)];
 
