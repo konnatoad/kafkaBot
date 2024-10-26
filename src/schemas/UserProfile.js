@@ -21,6 +21,10 @@ const userProfileSchema = new Schema(
       type: Number,
       default: 0, // New field to track the streak of consecutive daily collections
     },
+    reminderTime: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );
