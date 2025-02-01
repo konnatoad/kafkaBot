@@ -61,7 +61,7 @@ const getRandomQuote = async (interaction, user) => {
     );
 
     const formattedDate = selectedQuote.date.toLocaleDateString();
-    const formattedQuote = `**Author:** ${selectedQuote.author}\n**Content:** ${content}\n**Date:** ${formattedDate}`;
+    const formattedQuote = `**Content:** ${content}\n**Author:** ${selectedQuote.author}\n**Date:** ${formattedDate}`;
     await interaction.reply({ content: formattedQuote });
   } catch (error) {
     console.error("Database query error:", error);
