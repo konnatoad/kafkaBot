@@ -63,4 +63,34 @@ module.exports = {
             .setDescription("Disable the daily quote feature")
         )
     ),
+
+  async run({ interaction }) {
+    try {
+      const subcommand = interaction.options.getSubcommand();
+
+      if (subcommand === "enable") {
+        const channel = interaction.options.getChannel("channel");
+        await DailyQuote.findOneAndUpdate(
+          { guildId: interaction.guildId },
+          { channelId: channel.id },
+          { upsert: true }
+        );
+        await interaction.reply({
+          content: `Daily quotes enabled! Quotes will be sent to ${channel}.`,
+          ephemeral: true,
+        });
+      } else if (subcommand === "disable") {
+        await DailyQuote.findOneAndDelete({ guildId: interaction.guildId });
+        await interaction.reply({
+          content: "Daily quotes have been disabled.",
+          ephemeral: true,
+        });
+      }
+    } catch (error) {
+      console.error("An error occurred:", error);
+      handleError(interaction, "Something went wrong. Please try again.");
+    }
+  },
+
+  scheduleDailyQuote,
 };
