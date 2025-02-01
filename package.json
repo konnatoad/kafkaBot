@@ -21,6 +21,6 @@
     "nodemon": "^3.1.7",
     "pretty-ms": "^9.2.0",
     "rss-parser": "^3.13.0",
-    "undici": "^7.3.0"
+    "undici": "^7.2.3"
   }
 }
