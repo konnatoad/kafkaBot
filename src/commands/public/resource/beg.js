@@ -164,7 +164,6 @@ module.exports = {
           "You've got to be more creative next time!",
           "I'm not sure what's more sad, you or your life choices.",
           "Simp!",
-          "You're not even a good simp.",
           "You caught me in a bad mood!",
           "Are you aware how dumb you look right now?",
           "Bark for me!",
