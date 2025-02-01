@@ -41,7 +41,6 @@ const scheduleDailyQuote = async (client) => {
 };
 
 module.exports = {
-  deleted: true,
   data: new SlashCommandBuilder()
     .setName("dailyquote")
     .setDescription("Manage the daily quote feature")
