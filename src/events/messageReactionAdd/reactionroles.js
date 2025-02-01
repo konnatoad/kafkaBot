@@ -1,32 +1,40 @@
-const {
-  Client,
-  Events,
-  EmbedBuilder,
-  Message,
-  MessageReaction,
-} = require("discord.js");
+const { Client, Events } = require("discord.js");
 const reactions = require("../../schemas/reactions");
 
-module.exports = async (reaction, user, client) => {
+module.exports = async (reaction, user) => {
+  const client = reaction.message.client;
+
   if (!reaction.message.guildId) return;
+
   if (user.bot) return;
 
-  let cID = `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
-  if (!reaction.emoji.id) cID = reaction.emoji.name;
+  let emojiID = reaction.emoji.id
+    ? `<:${reaction.emoji.name}:${reaction.emoji.id}>`
+    : reaction.emoji.name;
+
+  if (reaction.emoji.animated) {
+    emojiID = `<a:${reaction.emoji.name}:${reaction.emoji.id}>`;
+  }
 
   const data = await reactions.findOne({
     Guild: reaction.message.guildId,
     Message: reaction.message.id,
-    Emoji: cID,
+    Emoji: emojiID,
   });
+
   if (!data) return;
 
-  const guild = await client.guilds.cache.get(reaction.message.guildId);
-  const member = await guild.members.cache.get(user.id);
-
   try {
+    const guild = await client.guilds.fetch(reaction.message.guildId);
+    if (!guild) return;
+
+    const member = await guild.members.fetch(user.id);
+    if (!member) return;
+
+    if (!member || !data.Role) return;
+
     await member.roles.add(data.Role);
-  } catch (e) {
-    return;
+  } catch (error) {
+    console.error("Error in processing the reaction:", error);
   }
 };

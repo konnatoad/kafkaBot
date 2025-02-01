@@ -1,11 +1,8 @@
 require("dotenv").config();
 
 const { Client, IntentsBitField, Partials } = require("discord.js");
-
 const mongoose = require("mongoose");
-
 const { CommandHandler } = require("djs-commander");
-
 const path = require("path");
 
 const client = new Client({
@@ -33,13 +30,22 @@ new CommandHandler({
   functions: path.join(__dirname, "functions"),
 });
 
+console.log("TOKEN:", process.env.TOKEN ? "✅ Loaded" : "❌ Missing");
+console.log(
+  "MONGODB_URI:",
+  process.env.MONGODB_URI ? "✅ Loaded" : "❌ Missing"
+);
+
 (async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log("connected to DB.");
-
-    client.login(process.env.TOKEN);
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("✅ Successfully connected to MongoDB!");
   } catch (error) {
-    console.log(`Error: ${error}`);
+    console.error("❌ MongoDB Connection Error:", error);
   }
+
+  client.login(process.env.TOKEN);
 })();

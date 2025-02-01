@@ -93,26 +93,23 @@ module.exports = {
           await reaction.create({
             Guild: guild.id,
             Message: message.id,
-            Emoji: emoji,
+            Emoji: emoji, // Store emoji as it is (whether normal or animated)
             Role: role.id,
           });
 
-          const embed = new EmbedBuilder()
-            .setColor("Blurple")
-            .setDescription(
-              `I have added a reaction role to ${message.url} with ${emoji} and the role ${role}`
-            );
-
           await message.react(emoji).catch((err) => {});
 
-          await interaction.reply({ embeds: [embed], ephemeral: true });
+          await interaction.reply({
+            content: `Successfully added reaction role to the message.`,
+            ephemeral: true,
+          });
         }
-
         break;
+
       case "remove":
         if (!data) {
           return await interaction.reply({
-            content: `It doesnt look like that reaction role exists`,
+            content: `It doesn't look like that reaction role exists`,
             ephemeral: true,
           });
         } else {
@@ -122,14 +119,12 @@ module.exports = {
             Emoji: emoji,
           });
 
-          const embed = new EmbedBuilder()
-            .setColor("Blurple")
-            .setDescription(
-              `I have removed the reaction role from ${message.url} with ${emoji}`
-            );
-
-          await interaction.reply({ embeds: [embed], ephemeral: true });
+          await interaction.reply({
+            content: `I have removed the reaction role from ${message.url} with ${emoji}`,
+            ephemeral: true,
+          });
         }
+        break;
     }
   },
 };
