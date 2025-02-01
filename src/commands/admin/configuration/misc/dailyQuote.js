@@ -2,11 +2,6 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
 const Quote = require("../../../../schemas/quoteSchema");
 const DailyQuote = require("../../../../schemas/dailyQuoteSchema");
 
-const handleError = async (interaction, message) => {
-  console.error(message);
-  await interaction.reply({ content: message, ephemeral: true });
-};
-
 const sendDailyQuote = async (client) => {
   const guilds = await DailyQuote.find();
   for (const guild of guilds) {
@@ -29,15 +24,15 @@ const sendDailyQuote = async (client) => {
 const scheduleDailyQuote = async (client) => {
   const now = new Date();
   const nextRun = new Date();
-  nextRun.setUTCHours(10, 0, 0, 0); // Set to 10:00 UTC
+  nextRun.setUTCHours(10, 0, 0, 0); // 12 PM EEST (UTC+3)
   if (now >= nextRun) {
-    nextRun.setUTCDate(nextRun.getUTCDate() + 1); // If today is after 10:00 UTC, set to tomorrow
+    nextRun.setUTCDate(nextRun.getUTCDate() + 1);
   }
   const delay = nextRun.getTime() - now.getTime();
   setTimeout(async function run() {
     await sendDailyQuote(client);
-    setTimeout(run, 24 * 60 * 60 * 1000); // Run every 24 hours
-  }, delay); // Run the first time after the delay
+    setTimeout(run, 24 * 60 * 60 * 1000);
+  }, delay);
 };
 
 module.exports = {
@@ -47,20 +42,19 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((subcommand) =>
       subcommand
-        .setName("Enable")
-        .setDescription("Enable the daily quote feature")
+        .setName("enable")
+        .setDescription("Enable daily quotes and set a channel")
         .addChannelOption((option) =>
           option
             .setName("channel")
-            .setDescription("The channel to send the daily quote in")
+            .setDescription("Channel to send quotes to")
             .setRequired(true)
-            .addChannelTypes(ChannelType.GuildText)
         )
-        .addSubcommand((subcommand) =>
-          subcommand
-            .setName("Disable")
-            .setDescription("Disable the daily quote feature")
-        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("disable")
+        .setDescription("Disable daily quotes for this server")
     ),
 
   async run({ interaction }) {
@@ -87,7 +81,6 @@ module.exports = {
       }
     } catch (error) {
       console.error("An error occurred:", error);
-      handleError(interaction, "Something went wrong. Please try again.");
     }
   },
 
