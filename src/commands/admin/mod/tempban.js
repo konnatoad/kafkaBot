@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
+  MessageFlags,
 } = require("discord.js");
 const Ban = require("../../../schemas/banschema");
 
@@ -46,7 +47,7 @@ module.exports = {
     if (providedDurations.length === 0) {
       await interaction.reply({
         content: "You must specify at least one duration option.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

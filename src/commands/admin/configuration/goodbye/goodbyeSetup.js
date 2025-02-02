@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
+  MessageFlags,
 } = require("discord.js");
 
 const GoodbyeSetup = require("../../../../schemas/goodbyeSchema");
@@ -28,7 +29,7 @@ module.exports = {
         return await interaction.reply({
           // If a setup exists, reply to the interaction with an ephemeral message
           content: "goodbye setup already exists for this server.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
       await GoodbyeSetup.create({

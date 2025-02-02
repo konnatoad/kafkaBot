@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
 
 module.exports = {
@@ -17,7 +17,7 @@ module.exports = {
     if (!interaction.inGuild()) {
       interaction.reply({
         content: "This command can only be executed inside a server.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -28,7 +28,7 @@ module.exports = {
     if (!timeFormat.test(reminderTime)) {
       interaction.reply({
         content: "Invalid time format. Please use HH:MM.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

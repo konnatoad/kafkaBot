@@ -3,6 +3,7 @@ const {
   Interaction,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  MessageFlags,
 } = require("discord.js");
 const AutoRole = require("../../../../schemas/AutoRole");
 
@@ -14,7 +15,7 @@ module.exports = {
    */
   run: async ({ client, interaction }) => {
     try {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       if (!(await AutoRole.exists({ guildId: interaction.guild.id }))) {
         interaction.editReply(

@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
   PermissionFlagsBits,
+  MessageFlags,
 } = require("discord.js");
 const reaction = require("../../../../schemas/reactions");
 
@@ -67,12 +68,12 @@ module.exports = {
     if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator))
       return await interaction.reply({
         content: "you dont have permissions to use this system",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     if (e)
       return await interaction.reply({
         content: `be sure to get a message from ${channel}!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
 
     const data = await reaction.findOne({
@@ -86,7 +87,7 @@ module.exports = {
         if (data) {
           return await interaction.reply({
             content: `It looks like you already have this reaction setup using ${emoji} on this message`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         } else {
           const role = options.getRole("role");
@@ -101,7 +102,7 @@ module.exports = {
 
           await interaction.reply({
             content: `Successfully added reaction role to the message.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
         break;
@@ -110,7 +111,7 @@ module.exports = {
         if (!data) {
           return await interaction.reply({
             content: `It doesn't look like that reaction role exists`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         } else {
           await reaction.deleteMany({
@@ -121,7 +122,7 @@ module.exports = {
 
           await interaction.reply({
             content: `I have removed the reaction role from ${message.url} with ${emoji}`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
         break;

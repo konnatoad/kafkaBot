@@ -1,3 +1,4 @@
+const { MessageFlags } = require("discord.js");
 module.exports = async (interaction, client) => {
   if (interaction.customId) {
     if (interaction.customId.includes("bugSolved - ")) {
@@ -13,7 +14,7 @@ module.exports = async (interaction, client) => {
         .catch((err) => {});
       await interaction.reply({
         content: `I have notified the member that their report is now solved`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       await interaction.message.delete().catch((err) => {});
     }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const StoreItem = require("../../../schemas/Store");
 const { EmbedBuilder } = require("discord.js");
 
@@ -18,7 +18,7 @@ module.exports = {
       if (!storeItems || storeItems.length === 0) {
         return interaction.reply({
           content: "There are no roles available for purchase in the store.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -45,12 +45,15 @@ module.exports = {
         }
       }
 
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+      return interaction.reply({
+        embeds: [embed],
+        flags: MessageFlags.Ephemeral,
+      });
     } catch (error) {
       console.error("Error fetching store items:", error);
       return interaction.reply({
         content: "An error occurred while fetching store items.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

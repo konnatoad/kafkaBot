@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
+  MessageFlags,
 } = require("discord.js");
 const reactor = require("../../../../schemas/reactorschema");
 
@@ -63,7 +64,7 @@ module.exports = {
         if (data) {
           return await interaction.reply({
             content: `You already have this system setup for ${channel}`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         } else {
           const emojis = options.getString("emojis").split(" ");
@@ -80,7 +81,10 @@ module.exports = {
               `The auto reactor system has been enabled for ${channel}`
             );
 
-          await interaction.reply({ embeds: [embed], ephemeral: true });
+          await interaction.reply({
+            embeds: [embed],
+            flags: MessageFlags.Ephemeral,
+          });
         }
 
         break;
@@ -88,7 +92,7 @@ module.exports = {
         if (!data) {
           return await interaction.reply({
             content: `You don't have this system setup yet for ${channel}`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         } else {
           await reactor.deleteMany({
@@ -102,7 +106,10 @@ module.exports = {
               `The auto reactor system has been disabled for ${channel}`
             );
 
-          await interaction.reply({ embeds: [embed], ephemeral: true });
+          await interaction.reply({
+            embeds: [embed],
+            flags: MessageFlags.Ephemeral,
+          });
         }
 
         break;
@@ -113,7 +120,7 @@ module.exports = {
         if (!removedata) {
           return await interaction.reply({
             content: `It looks like this system has not been yet setup in this server`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         } else {
           await reactor.deleteMany({ Guild: interaction.guild.id });
@@ -124,7 +131,10 @@ module.exports = {
               `The auto reactor system has been disabled for the entire server`
             );
 
-          await interaction.reply({ embeds: [embed], ephemeral: true });
+          await interaction.reply({
+            embeds: [embed],
+            flags: MessageFlags.Ephemeral,
+          });
         }
     }
   },

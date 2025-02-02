@@ -1,9 +1,9 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const Quote = require("../../../schemas/quoteSchema");
 
 const handleError = async (interaction, message) => {
   console.error(message);
-  await interaction.reply({ content: message, ephemeral: true });
+  await interaction.reply({ content: message, flags: MessageFlags.Ephemeral });
 };
 
 const recentlyUsedQuotesBuffer = new Set();

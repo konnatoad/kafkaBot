@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const Cooldown = require("../../../schemas/Cooldown");
 const UserProfile = require("../../../schemas/UserProfile");
 
@@ -53,7 +53,7 @@ module.exports = {
 
         return interaction.reply({
           content: `You can use this command again in ${formattedCooldownDuration}.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 

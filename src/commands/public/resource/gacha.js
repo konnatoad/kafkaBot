@@ -4,6 +4,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
+  MessageFlags,
 } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
 const Cooldown = require("../../../schemas/Cooldown");
@@ -25,7 +26,7 @@ module.exports = {
     if (!interaction.inGuild()) {
       await interaction.reply({
         content: "You can only run this command in a server!",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
+  MessageFlags,
 } = require("discord.js");
 const warningSchema = require("../../../schemas/warnschema");
 
@@ -49,7 +50,7 @@ module.exports = {
     } else {
       interaction.reply({
         content: `**${target}** has no warnings to be cleared`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

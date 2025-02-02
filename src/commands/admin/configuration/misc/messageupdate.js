@@ -3,6 +3,7 @@ const {
   EmbedBuilder,
   ChannelType,
   PermissionFlagsBits,
+  MessageFlags,
 } = require("discord.js");
 const log = require("../../../../schemas/messageupdate");
 
@@ -40,7 +41,10 @@ module.exports = {
         .setColor("Blurple")
         .setDescription(message);
 
-      await interaction.reply({ embeds: [embed], ephemeral: true });
+      await interaction.reply({
+        embeds: [embed],
+        flags: MessageFlags.Ephemeral,
+      });
     }
 
     switch (sub) {

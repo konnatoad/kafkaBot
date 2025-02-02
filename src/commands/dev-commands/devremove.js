@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
 const UserProfile = require("../../schemas/UserProfile");
 
 module.exports = {
@@ -31,7 +35,7 @@ module.exports = {
     if (amount <= 0) {
       return interaction.reply({
         content: "You must specify a positive amount of rice grains to remove.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -43,14 +47,14 @@ module.exports = {
     if (!receiverProfile) {
       return interaction.reply({
         content: "The specified user does not have a profile.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     if (receiverProfile.balance < amount) {
       return interaction.reply({
         content: `The specified user does not have enough rice grains. Their current balance is ${receiverProfile.balance}.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -62,7 +66,7 @@ module.exports = {
       content: `Successfully removed ${amount} rice grains from ${receiver.toString()}. Their new balance is ${
         receiverProfile.balance
       }.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

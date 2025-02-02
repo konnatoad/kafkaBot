@@ -3,6 +3,7 @@ const {
   ButtonStyle,
   ActionRowBuilder,
   ButtonBuilder,
+  MessageFlags,
 } = require("discord.js");
 const Quote = require("../../../../schemas/quoteSchema");
 
@@ -41,7 +42,10 @@ const createPaginationButtons = (currentPage, totalPages, uniqueId, user) => {
 const handleError = async (interaction, message) => {
   console.error(message);
   try {
-    await interaction.reply({ content: message, ephemeral: true });
+    await interaction.reply({
+      content: message,
+      flags: MessageFlags.Ephemeral,
+    });
   } catch (error) {
     console.error("Failed to send error message:", error);
   }
@@ -195,7 +199,7 @@ const addQuote = async (interaction, messageId) => {
     await quote.save();
     await interaction.reply({
       content: `Quote added: "${message.content}" by ${message.author.tag}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
     handleError(
@@ -211,7 +215,10 @@ const removeQuote = async (interaction, quoteId) => {
     const replyMessage = result
       ? "Quote removed successfully."
       : "Quote not found.";
-    await interaction.reply({ content: replyMessage, ephemeral: true });
+    await interaction.reply({
+      content: replyMessage,
+      flags: MessageFlags.Ephemeral,
+    });
   } catch (error) {
     handleError(
       interaction,
@@ -225,7 +232,7 @@ const removeAllQuotes = async (interaction) => {
     await Quote.deleteMany({ guildId: interaction.guildId });
     await interaction.reply({
       content: "All quotes removed successfully.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
     handleError(interaction, "Failed to remove all quotes.");
@@ -288,7 +295,7 @@ module.exports = {
       } else if (subcommand === "list") {
         const user = interaction.options.getUser("user");
         const uniqueId = `${interaction.user.id}-${Date.now()}`;
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
         await getQuotesPage(interaction, 1, uniqueId, user);
         setupCollector(interaction, uniqueId, user);
       } else if (subcommand === "removeall") {

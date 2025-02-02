@@ -3,6 +3,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = async (interaction, client) => {
@@ -50,7 +51,7 @@ module.exports = async (interaction, client) => {
     await interaction.reply({
       content:
         "Your report has been recorded. My developer will look into this issue, and reach out with any further questions.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 };

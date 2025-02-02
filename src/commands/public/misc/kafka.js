@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const fs = require("fs");
 
 function seededRandom(seed) {
@@ -24,7 +24,7 @@ module.exports = {
       return interaction.reply({
         content:
           "This channel is not NSFW and this command cannot be ran here!",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     let files = fs.readdirSync("src/static/kafka");
     const seed = Date.now() + Math.random();

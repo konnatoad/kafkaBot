@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
 const UserProfile = require("../../schemas/UserProfile");
 
 module.exports = {
@@ -31,7 +35,7 @@ module.exports = {
     if (amount <= 0) {
       return interaction.reply({
         content: "You must specify a positive amount of rice grains.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 

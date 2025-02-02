@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
 const GoodbyeSetup = require("../../../../schemas/goodbyeSchema");
 
 module.exports = {
@@ -34,7 +38,7 @@ module.exports = {
       return await interaction.reply({
         content:
           "Please setup the goodbye system first using `/goodbye-setup`.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
     // Update the goodbye setup with the new message and use embed option
@@ -44,7 +48,7 @@ module.exports = {
     // Reply with a success message
     await interaction.reply({
       content: "Custom goodbye message set succesfully.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

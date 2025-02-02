@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
 const { startTyping } = require("../../extra/sendTyping");
 
 module.exports = {
@@ -14,7 +18,7 @@ module.exports = {
     setTimeout(async () => {
       await interaction.channel.send({
         content: "Kafka supremacy",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }, 2000);
   },

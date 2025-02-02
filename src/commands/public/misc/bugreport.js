@@ -4,6 +4,7 @@ const {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = {
@@ -15,7 +16,7 @@ module.exports = {
     if (!interaction.guild)
       return await interaction.reply({
         content: "Please report this bug within a server!",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
 
     const modal = new ModalBuilder()

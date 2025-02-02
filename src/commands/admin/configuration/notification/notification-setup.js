@@ -3,6 +3,7 @@ const {
   ChannelType,
   EmbedBuilder,
   PermissionFlagsBits,
+  MessageFlags,
 } = require("discord.js");
 const NotificationConfig = require("../../../../schemas/NotificationConfig");
 const Parser = require("rss-parser");
@@ -10,7 +11,7 @@ const parser = new Parser();
 
 async function run({ interaction }) {
   try {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const targetYtChannelId = interaction.options.getString("youtube-id");
     const targetNotificationChannel =

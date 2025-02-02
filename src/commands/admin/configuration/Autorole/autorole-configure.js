@@ -3,6 +3,7 @@ const {
   Client,
   Interaction,
   PermissionFlagsBits,
+  MessageFlags,
 } = require("discord.js");
 const AutoRole = require("../../../../schemas/AutoRole");
 
@@ -21,7 +22,7 @@ module.exports = {
     const targetRoleId = interaction.options.get("role").value;
 
     try {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       let autoRole = await AutoRole.findOne({ guildId: interaction.guild.id });
 

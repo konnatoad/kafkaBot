@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
 const Notification = require("../../../../schemas/twitchNotificationSchema");
 const https = require("https");
 
@@ -47,7 +51,7 @@ module.exports = {
   deleted: false,
   data: twitchNotificationCommand,
   async run({ interaction }) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === "setup") {
@@ -72,7 +76,7 @@ async function setupTwitchNotification(interaction) {
   if (!twitchChannelMatch) {
     await interaction.followUp({
       content: "Invalid Twitch URL. Please provide a valid Twitch channel URL.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -85,7 +89,7 @@ async function setupTwitchNotification(interaction) {
     await interaction.followUp({
       content:
         "Failed to fetch Twitch user data. Please check the Twitch URL and try again.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -99,7 +103,7 @@ async function setupTwitchNotification(interaction) {
   if (existingNotification) {
     await interaction.followUp({
       content: `A notification setup for ${twitchChannel} already exists in this guild.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -121,13 +125,13 @@ async function setupTwitchNotification(interaction) {
 
     await interaction.followUp({
       content: `Notification system set up for ${twitchChannel} \nCustom message: ${formattedCustomMessage} \nNotifications will be sent to ${notificationChannel}.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
     console.error("Error setting up Twitch notification:", error);
     await interaction.followUp({
       content: "Failed to set up Twitch notification. Please try again later.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }
@@ -143,7 +147,7 @@ async function removeTwitchNotification(interaction) {
     await interaction.followUp({
       content:
         "Failed to fetch Twitch user data. Please check the Twitch URL and try again.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -159,12 +163,12 @@ async function removeTwitchNotification(interaction) {
     if (deletedNotification) {
       await interaction.followUp({
         content: `Twitch notification setup for ${twitchUrl} has been removed successfully.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       await interaction.followUp({
         content: `No Twitch notification setup found for ${twitchUrl}.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   } catch (error) {
@@ -172,7 +176,7 @@ async function removeTwitchNotification(interaction) {
     await interaction.followUp({
       content:
         "Failed to remove Twitch notification setup. Please try again later.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }

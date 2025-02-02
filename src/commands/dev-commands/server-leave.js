@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
   PermissionFlagsBits,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = {
@@ -31,7 +32,7 @@ module.exports = {
     const { options } = interaction;
     const guild = options.getString("guild");
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     async function sendMessage(message) {
       const embed = new EmbedBuilder()

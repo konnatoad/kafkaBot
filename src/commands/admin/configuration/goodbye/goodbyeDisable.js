@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
 
 const GoodbyeSetup = require("../../../../schemas/goodbyeSchema");
 
@@ -18,7 +22,7 @@ module.exports = {
     if (!deleteSetup) {
       return await interaction.reply({
         content: "goodbye setup not found",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
     await interaction.reply({

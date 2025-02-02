@@ -6,6 +6,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   EmbedBuilder,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = {
@@ -25,12 +26,12 @@ module.exports = {
       return interaction.reply({
         content:
           "You already have an active help message. Please dismiss it and wait ~5min before running the command again.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     try {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const commandDirectory = path.resolve(__dirname, "../../../commands");
       const commandFiles = readCommandsDirectory(commandDirectory);
@@ -40,7 +41,7 @@ module.exports = {
       if (!embeds.admin.length && !embeds.public.length) {
         return await interaction.editReply({
           content: "No commands found.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -108,7 +109,7 @@ module.exports = {
       console.error("Error processing help command:", error);
       await interaction.editReply({
         content: "An error occurred while processing the help command.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

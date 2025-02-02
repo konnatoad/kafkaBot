@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
 const WelcomeSetup = require("../../../../schemas/welcomeSchema");
 
 module.exports = {
@@ -34,7 +38,7 @@ module.exports = {
       return await interaction.reply({
         content:
           "Please setup the welcome system first using `/welcome-setup`.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
     // Update the welcome setup with the new message and use embed option
@@ -44,7 +48,7 @@ module.exports = {
     // Reply with a success message
     await interaction.reply({
       content: "Custom welcome message set succesfully.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

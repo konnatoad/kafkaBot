@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
 const StoreItem = require("../../../../schemas/Store");
 
 module.exports = {
@@ -52,7 +56,7 @@ module.exports = {
         return interaction.reply({
           content:
             "This role is already in the rice grains store. You can use `/store-setup remove` to remove it.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -66,7 +70,7 @@ module.exports = {
 
       return interaction.reply({
         content: `The role ${roleToAdd.name} has been added to the rice grains store with a cost of ${cost} rice grains.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else if (subcommand === "remove") {
       const roleToRemove = interaction.options.getRole("role");
@@ -79,7 +83,7 @@ module.exports = {
       if (!existingItem) {
         return interaction.reply({
           content: "This role is not in the rice grains store.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -88,7 +92,7 @@ module.exports = {
 
       return interaction.reply({
         content: `The role ${roleToRemove.name} has been removed from the rice grains store.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

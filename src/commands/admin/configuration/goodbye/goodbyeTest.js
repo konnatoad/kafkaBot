@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
+  MessageFlags,
 } = require("discord.js");
 const GoodbyeSetup = require("../../../../schemas/goodbyeSchema");
 
@@ -17,7 +18,7 @@ module.exports = {
     if (!existingSetup) {
       return await interaction.reply({
         content: "No goodbye setup found for this server.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
     const channel = interaction.guild.channels.cache.get(
@@ -27,7 +28,7 @@ module.exports = {
     if (!channel) {
       return await interaction.reply({
         content: "The configured goodbye channel does not exist.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
     const userAvatar = interaction.user.displayAvatarURL({
@@ -63,7 +64,7 @@ module.exports = {
 
     await interaction.reply({
       content: `Goodbye message sent successfully! ${channel}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };
