@@ -19,7 +19,6 @@ const sendDailyQuote = async (client) => {
         continue;
       }
 
-      // Check for permissions to send messages in the channel
       const permissions = channel.permissionsFor(client.user);
       if (!permissions || !permissions.has("SendMessages")) {
         console.log(
@@ -35,8 +34,18 @@ const sendDailyQuote = async (client) => {
       }
 
       const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-      const formattedDate = randomQuote.date.toLocaleDateString();
-      const messageContent = `**Content:** ${randomQuote.content}\n**Author:** ${randomQuote.author}\n**Date:** ${formattedDate}`;
+      const formattedDate = randomQuote.date.toLocaleDateString("fi-FI");
+
+      // Increment the counter and get the updated value
+      const updatedGuild = await DailyQuote.findOneAndUpdate(
+        { guildId: guild.guildId },
+        { $inc: { quoteCount: 1 } },
+        { new: true }
+      );
+
+      const quoteNumber = updatedGuild.quoteCount;
+      const currentDate = new Date().toLocaleDateString("fi-FI");
+      const messageContent = `**Quote of the day #${quoteNumber} \n${currentDate}**\n\n**Content:** ${randomQuote.content}\n**Author:** ${randomQuote.author}\n**Date:** ${formattedDate}`;
 
       await channel.send(messageContent);
       console.log(
@@ -54,7 +63,7 @@ const sendDailyQuote = async (client) => {
 const scheduleDailyQuote = async (client) => {
   const now = new Date();
   const nextRun = new Date();
-  nextRun.setUTCHours(10, 0, 0, 0); // 12 PM EEST (UTC+3)
+  nextRun.setUTCHours(6, 0, 0, 0);
 
   if (now >= nextRun) {
     nextRun.setUTCDate(nextRun.getUTCDate() + 1);
@@ -101,12 +110,12 @@ module.exports = {
       const subcommand = interaction.options.getSubcommand();
 
       if (subcommand === "enable") {
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral }); // Defer the reply
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const channel = interaction.options.getChannel("channel");
         await DailyQuote.findOneAndUpdate(
           { guildId: interaction.guildId },
-          { channelId: channel.id },
+          { channelId: channel.id, $setOnInsert: { quoteCount: 0 } },
           { upsert: true }
         );
 
@@ -114,7 +123,7 @@ module.exports = {
           content: `Daily quotes enabled! Quotes will be sent to ${channel}.`,
         });
       } else if (subcommand === "disable") {
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral }); // Defer the reply
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         await DailyQuote.findOneAndDelete({ guildId: interaction.guildId });
 
@@ -122,7 +131,7 @@ module.exports = {
           content: "Daily quotes have been disabled.",
         });
       } else if (subcommand === "test") {
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral }); // Defer the reply
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         await sendDailyQuote(client);
 
@@ -133,7 +142,6 @@ module.exports = {
     } catch (error) {
       console.error("An error occurred:", error);
 
-      // Check if interaction is already replied or deferred before sending the error reply
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({
           content: "An error occurred while processing the command.",

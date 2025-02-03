@@ -60,7 +60,7 @@ const getRandomQuote = async (interaction, user) => {
       }
     );
 
-    const formattedDate = selectedQuote.date.toLocaleDateString();
+    const formattedDate = selectedQuote.date.toLocaleDateString("fi-FI");
     const formattedQuote = `**Content:** ${content}\n**Author:** ${selectedQuote.author}\n**Date:** ${formattedDate}`;
     await interaction.reply({ content: formattedQuote });
   } catch (error) {
