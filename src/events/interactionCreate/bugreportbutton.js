@@ -1,4 +1,5 @@
 const { MessageFlags } = require("discord.js");
+
 module.exports = async (interaction, client) => {
   if (interaction.customId) {
     if (interaction.customId.includes("bugSolved - ")) {

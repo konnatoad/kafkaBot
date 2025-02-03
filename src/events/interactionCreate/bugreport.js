@@ -1,3 +1,4 @@
+require("dotenv").config();
 const {
   EmbedBuilder,
   ActionRowBuilder,
@@ -17,7 +18,7 @@ module.exports = async (interaction, client) => {
     const member = interaction.member;
     const server = interaction.guild;
 
-    const channel = await client.channels.cache.get("1241652695882797086");
+    const channel = await client.channels.cache.get(process.env.BUG);
 
     const embed = new EmbedBuilder()
       .setColor("Blurple")
