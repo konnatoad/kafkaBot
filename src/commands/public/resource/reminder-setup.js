@@ -5,12 +5,22 @@ module.exports = {
   deleted: true, //change when done
   data: new SlashCommandBuilder()
     .setName("remind")
-    .setDescription("Set a reminder for dailies.")
-    .addStringOption((option) =>
-      option
-        .setName("time")
-        .setDescription("Time to remind you to do dailies.")
-        .setRequired(true)
+    .setDescription("Manage your daily reminders.")
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("set")
+        .setDescription("Set a reminder for dailies.")
+        .addStringOption((option) =>
+          option
+            .setName("time")
+            .setDescription("Time to remind you to do dailies.")
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("disable")
+        .setDescription("Disable your daily reminder.")
     ),
 
   run: async ({ interaction }) => {
@@ -22,16 +32,8 @@ module.exports = {
       return;
     }
 
-    const reminderTime = interaction.options.getString("time");
+    const subcommand = interaction.options.getSubcommand();
 
-    const timeFormat = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeFormat.test(reminderTime)) {
-      interaction.reply({
-        content: "Invalid time format. Please use HH:MM.",
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
-    }
     try {
       await interaction.deferReply();
 
@@ -39,23 +41,54 @@ module.exports = {
         userId: interaction.member.id,
         Guild: interaction.guild.id,
       });
-      if (!userProfile) {
-        userProfile = new UserProfile({
-          userId: interaction.member.id,
-          Guild: interaction.guild.id,
-          balance: 0,
-          dailyStreak: 0,
+
+      if (subcommand === "set") {
+        const reminderTime = interaction.options.getString("time");
+
+        const timeFormat = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        if (!timeFormat.test(reminderTime)) {
+          interaction.editReply({
+            content: "Invalid time format. Please use HH:MM.",
+          });
+          return;
+        }
+
+        if (!userProfile) {
+          userProfile = new UserProfile({
+            userId: interaction.member.id,
+            Guild: interaction.guild.id,
+            balance: 0,
+            dailyStreak: 0,
+          });
+        }
+
+        userProfile.reminderTime = reminderTime;
+        await userProfile.save();
+
+        interaction.editReply({
+          content: `Reminder set for ${reminderTime}.`,
+        });
+      } else if (subcommand === "disable") {
+        if (!userProfile || !userProfile.reminderTime) {
+          interaction.editReply({
+            content: "You don't have a daily reminder set.",
+          });
+          return;
+        }
+
+        userProfile.reminderTime = null;
+        await userProfile.save();
+
+        interaction.editReply({
+          content: "Your daily reminder has been disabled.",
         });
       }
-
-      userProfile.reminderTime = reminderTime;
-      await userProfile.save();
-
-      interaction.editReply({
-        content: `Reminder set for ${reminderTime}.`,
-      });
     } catch (error) {
       console.error(error);
+      interaction.editReply({
+        content:
+          "An error occurred while managing your reminder. Please try again later.",
+      });
     }
   },
 };
