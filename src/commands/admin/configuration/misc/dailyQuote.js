@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   MessageFlags,
+  EmbedBuilder,
 } = require("discord.js");
 const Quote = require("../../../../schemas/quoteSchema");
 const DailyQuote = require("../../../../schemas/dailyQuoteSchema");
@@ -45,9 +46,17 @@ const sendDailyQuote = async (client) => {
 
       const quoteNumber = updatedGuild.quoteCount;
       const currentDate = new Date().toLocaleDateString("fi-FI");
-      const messageContent = `**Quote of the day #${quoteNumber} \n${currentDate}**\n\n**Content:** ${randomQuote.content}\n**Author:** ${randomQuote.author}\n**Date:** ${formattedDate}`;
 
-      await channel.send(messageContent);
+      const embed = new EmbedBuilder()
+        .setTitle(`**Quote of the Day #${quoteNumber}** \n${currentDate}`)
+        .setDescription(`*${randomQuote.content}*`)
+        .setColor("Blurple")
+        .addFields(
+          { name: "Author", value: randomQuote.author, inline: true },
+          { name: "Date", value: formattedDate, inline: true }
+        );
+
+      await channel.send({ embeds: [embed] });
       console.log(
         `Quote sent to channel ${channel.id} in guild ${guild.guildId}.`
       );
@@ -81,6 +90,7 @@ const scheduleDailyQuote = async (client) => {
 };
 
 module.exports = {
+  deleted: false,
   data: new SlashCommandBuilder()
     .setName("dailyquote")
     .setDescription("Manage the daily quote feature")
@@ -100,9 +110,6 @@ module.exports = {
       subcommand
         .setName("disable")
         .setDescription("Disable daily quotes for this server")
-    )
-    .addSubcommand((subcommand) =>
-      subcommand.setName("test").setDescription("Send a test daily quote")
     ),
 
   async run({ interaction, client }) {
@@ -129,14 +136,6 @@ module.exports = {
 
         await interaction.editReply({
           content: "Daily quotes have been disabled.",
-        });
-      } else if (subcommand === "test") {
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-
-        await sendDailyQuote(client);
-
-        await interaction.editReply({
-          content: "A test daily quote has been sent.",
         });
       }
     } catch (error) {
