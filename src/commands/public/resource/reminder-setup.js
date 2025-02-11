@@ -2,7 +2,7 @@ const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
 
 module.exports = {
-  deleted: true, //change when done
+  deleted: false,
   data: new SlashCommandBuilder()
     .setName("remind")
     .setDescription("Manage your daily reminders.")
@@ -35,7 +35,7 @@ module.exports = {
     const subcommand = interaction.options.getSubcommand();
 
     try {
-      await interaction.deferReply();
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       let userProfile = await UserProfile.findOne({
         userId: interaction.member.id,
@@ -49,6 +49,7 @@ module.exports = {
         if (!timeFormat.test(reminderTime)) {
           interaction.editReply({
             content: "Invalid time format. Please use HH:MM.",
+            flags: MessageFlags.Ephemeral,
           });
           return;
         }
@@ -67,6 +68,7 @@ module.exports = {
 
         interaction.editReply({
           content: `Reminder set for ${reminderTime}.`,
+          flags: MessageFlags.Ephemeral,
         });
       } else if (subcommand === "disable") {
         if (!userProfile || !userProfile.reminderTime) {
