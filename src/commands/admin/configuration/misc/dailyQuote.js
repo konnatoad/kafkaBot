@@ -2,10 +2,28 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   MessageFlags,
-  EmbedBuilder,
+  EmbedBuilder
 } = require("discord.js");
 const Quote = require("../../../../schemas/quoteSchema");
 const DailyQuote = require("../../../../schemas/dailyQuoteSchema");
+
+const recentQuotes = {}; // Stores last 20 sent quotes per guild
+
+function seededRandom(seed) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function getRandomInt(seed, max) {
+  return Math.floor(seededRandom(seed) * max);
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
 
 const sendDailyQuote = async (client) => {
   const guilds = await DailyQuote.find();
@@ -28,16 +46,50 @@ const sendDailyQuote = async (client) => {
         continue;
       }
 
-      const quotes = await Quote.find({ guildId: guild.guildId }).exec();
+      let quotes = await Quote.find({ guildId: guild.guildId }).exec();
       if (quotes.length === 0) {
         console.log(`No quotes found for guild ${guild.guildId}. Skipping.`);
         continue;
       }
 
-      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+      // Initialize recentQuotes buffer for the guild if not exists
+      if (!recentQuotes[guild.guildId]) {
+        recentQuotes[guild.guildId] = [];
+      }
+
+      // Filter out recently used quotes
+      let availableQuotes = quotes.filter(
+        (quote) => !recentQuotes[guild.guildId].includes(quote._id.toString())
+      );
+
+      // If all quotes are used, reset buffer
+      if (availableQuotes.length === 0) {
+        console.log(
+          `All quotes used in guild ${guild.guildId}, resetting buffer.`
+        );
+        recentQuotes[guild.guildId] = [];
+        availableQuotes = quotes; // Allow full randomization again
+      }
+
+      // Shuffle for extra randomness
+      shuffle(availableQuotes);
+
+      // Select a random quote with seeded randomness
+      const seed = Date.now() + Math.random();
+      const randomQuote =
+        availableQuotes[getRandomInt(seed, availableQuotes.length)];
+
       const formattedDate = randomQuote.date.toLocaleDateString("fi-FI");
 
-      // Increment the counter and get the updated value
+      // Update buffer with the new quote
+      recentQuotes[guild.guildId].push(randomQuote._id.toString());
+
+      // Limit buffer size (last 20 quotes)
+      if (recentQuotes[guild.guildId].length > 20) {
+        recentQuotes[guild.guildId].shift();
+      }
+
+      // Increment quote count
       const updatedGuild = await DailyQuote.findOneAndUpdate(
         { guildId: guild.guildId },
         { $inc: { quoteCount: 1 } },
@@ -127,7 +179,7 @@ module.exports = {
         );
 
         await interaction.editReply({
-          content: `Daily quotes enabled! Quotes will be sent to ${channel}.`,
+          content: `Daily quotes enabled! Quotes will be sent to ${channel}.`
         });
       } else if (subcommand === "disable") {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -135,7 +187,7 @@ module.exports = {
         await DailyQuote.findOneAndDelete({ guildId: interaction.guildId });
 
         await interaction.editReply({
-          content: "Daily quotes have been disabled.",
+          content: "Daily quotes have been disabled."
         });
       }
     } catch (error) {
@@ -143,16 +195,16 @@ module.exports = {
 
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({
-          content: "An error occurred while processing the command.",
+          content: "An error occurred while processing the command."
         });
       } else {
         await interaction.reply({
           content: "An error occurred while processing the command.",
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     }
   },
 
-  scheduleDailyQuote,
+  scheduleDailyQuote
 };
