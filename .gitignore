@@ -11,3 +11,5 @@ src/.DS_Store
 .DS_Store
 src/validations
 logs
+test.js
+osuAuth.js
