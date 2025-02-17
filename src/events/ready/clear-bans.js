@@ -24,5 +24,5 @@ module.exports = (client) => {
     } catch (error) {
       console.log(`Error clearing bans: ${error}`);
     }
-  }, 120000); // Check every two minute for expired bans
+  }, 60000); // Check every minute for expired bans
 };
