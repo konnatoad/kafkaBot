@@ -2,6 +2,9 @@ const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const axios = require("axios");
 const { getOsuAccessToken } = require("../../../extra/osuAuth");
 require("dotenv").config();
+const { Beatmap, Performance } = require("rosu-pp-js");
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
   deleted: false,
@@ -100,7 +103,7 @@ module.exports = {
       if (!name || !tag) {
         return interaction.editReply({
           content: "Invalid Riot ID format. Use `Player#Tag`.",
-          ephemeral: true
+          ephemeral: true,
         });
       }
 
@@ -115,8 +118,8 @@ module.exports = {
             {
               headers: {
                 Authorization: process.env.VALORANT,
-                "User-Agent": "KafkaBot/1.0"
-              }
+                "User-Agent": "KafkaBot/1.0",
+              },
             }
           );
           accountData = accountResponse.data.data;
@@ -125,7 +128,7 @@ module.exports = {
           if (accountError.response?.data?.errors?.some((e) => e.code === 24)) {
             return interaction.editReply({
               content: "No Data",
-              ephemeral: true
+              ephemeral: true,
             });
           }
 
@@ -136,7 +139,7 @@ module.exports = {
           return interaction.editReply({
             content:
               "An error occurred while retrieving account data. Please check the Riot ID and try again.",
-            ephemeral: true
+            ephemeral: true,
           });
         }
 
@@ -150,8 +153,8 @@ module.exports = {
             {
               headers: {
                 Authorization: process.env.VALORANT,
-                "User-Agent": "KafkaBot/1.0"
-              }
+                "User-Agent": "KafkaBot/1.0",
+              },
             }
           );
           mmrData = mmrResponse.data.data;
@@ -164,7 +167,7 @@ module.exports = {
         // Account Information
         const playerName = `${accountData.name}#${accountData.tag}`;
         const accountLevel = accountData.account_level || "N/A";
-        const playerCard = accountData.card?.large || null;
+        const playerCard = accountData.card?.small || null;
 
         // MMR & Rank Information
         const currentRank =
@@ -189,7 +192,9 @@ module.exports = {
                   ([act, data]) =>
                     `**${act.toUpperCase()}** → ${data.final_rank_patched} (${
                       data.wins
-                    }W / ${data.number_of_games}G)`
+                    }W / ${data.number_of_games - data.wins}L of ${
+                      data.number_of_games
+                    } games)`
                 )
                 .join("\n")
             : "No ranked matches played.";
@@ -205,36 +210,36 @@ module.exports = {
             {
               name: "Account Level",
               value: `${accountLevel}`,
-              inline: true
+              inline: true,
             },
             {
               name: "Current Rank",
               value: `${currentRank}`,
-              inline: true
+              inline: true,
             },
             {
               name: "Rank Progress",
               value: `${rankProgress}/100`,
-              inline: true
+              inline: true,
             },
             { name: "Elo Rating", value: `${elo}`, inline: true },
             {
               name: "MMR Change",
               value: `${mmrChange} MMR`,
-              inline: true
+              inline: true,
             },
             { name: "Highest Rank", value: highestRank, inline: true }
           )
           .setFooter({
             text: "git gud uwu",
-            iconURL: "https://cdn3.emoji.gg/emojis/5007-uwu.png"
+            iconURL: "https://cdn3.emoji.gg/emojis/5007-uwu.png",
           });
 
         if (actHistory) {
           embed.addFields({
             name: "Competitive Act History",
             value: actHistory,
-            inline: false
+            inline: false,
           });
         }
 
@@ -248,7 +253,7 @@ module.exports = {
         await interaction.editReply({
           content:
             "An error occurred while retrieving stats. Please check the Riot ID and try again.",
-          ephemeral: true
+          ephemeral: true,
         });
       }
     }
@@ -262,7 +267,7 @@ module.exports = {
       if (!name || !tag) {
         return interaction.editReply({
           content: "Invalid Riot ID format. Use `Player#Tag`.",
-          ephemeral: true
+          ephemeral: true,
         });
       }
 
@@ -275,7 +280,7 @@ module.exports = {
             name
           )}/${encodeURIComponent(tag)}`,
           {
-            headers: { "X-Riot-Token": process.env.RIOT_API }
+            headers: { "X-Riot-Token": process.env.RIOT_API },
           }
         );
         const puuid = riotAccountResponse.data.puuid;
@@ -296,7 +301,7 @@ module.exports = {
           sg2: "sg2",
           tw2: "tw2",
           vn2: "vn2",
-          id2: "sg2"
+          id2: "sg2",
         };
 
         // Regional API Mapping for Match History
@@ -314,7 +319,7 @@ module.exports = {
           ru: "europe",
           sg2: "asia",
           tw2: "asia",
-          vn2: "asia"
+          vn2: "asia",
         };
 
         const tftApiRegion = regionMapping[region];
@@ -324,7 +329,7 @@ module.exports = {
           console.error(`Invalid region "${region}".`);
           return interaction.editReply({
             content: `Error: The region "${region}" is not supported.`,
-            ephemeral: true
+            ephemeral: true,
           });
         }
 
@@ -337,7 +342,7 @@ module.exports = {
           );
           return interaction.editReply({
             content: `Error: The region "${region}" is not supported. Please select a valid region.`,
-            ephemeral: true
+            ephemeral: true,
           });
         }
 
@@ -347,7 +352,7 @@ module.exports = {
         const summonerResponse = await axios.get(
           `https://${tftApiRegion}.api.riotgames.com/tft/summoner/v1/summoners/by-puuid/${puuid}`,
           {
-            headers: { "X-Riot-Token": process.env.RIOT_API }
+            headers: { "X-Riot-Token": process.env.RIOT_API },
           }
         );
 
@@ -357,7 +362,7 @@ module.exports = {
         const rankResponse = await axios.get(
           `https://${tftApiRegion}.api.riotgames.com/tft/league/v1/entries/by-summoner/${summonerData.id}`,
           {
-            headers: { "X-Riot-Token": process.env.RIOT_API }
+            headers: { "X-Riot-Token": process.env.RIOT_API },
           }
         );
         const rankData = rankResponse.data.find(
@@ -389,7 +394,7 @@ module.exports = {
         const matchHistoryResponse = await axios.get(
           `https://${matchHistoryRegion}.api.riotgames.com/tft/match/v1/matches/by-puuid/${puuid}/ids?count=50`,
           {
-            headers: { "X-Riot-Token": process.env.RIOT_API }
+            headers: { "X-Riot-Token": process.env.RIOT_API },
           }
         );
 
@@ -397,7 +402,7 @@ module.exports = {
         if (!Array.isArray(matchIds) || matchIds.length === 0) {
           return interaction.editReply({
             content: "No recent TFT matches found.",
-            ephemeral: true
+            ephemeral: true,
           });
         }
 
@@ -447,7 +452,7 @@ module.exports = {
         if (matchResults.length === 0) {
           return interaction.editReply({
             content: "No valid match data found.",
-            ephemeral: true
+            ephemeral: true,
           });
         }
 
@@ -502,14 +507,14 @@ module.exports = {
             {
               name: "Total Games",
               value: `${matchResults.length}`,
-              inline: true
+              inline: true,
             },
             { name: "Avg Placement", value: `${avgPlacement}`, inline: true },
             { name: "Top 4 Rate", value: `${top4Rate}`, inline: true },
             {
               name: "1st Place Rate",
               value: `${firstPlaceRate}`,
-              inline: true
+              inline: true,
             },
             { name: "Win Rate", value: `${winRate}`, inline: true }
           )
@@ -521,7 +526,7 @@ module.exports = {
         await interaction.editReply({
           content:
             "Error retrieving TFT stats. Check the Riot ID and try again.",
-          ephemeral: true
+          ephemeral: true,
         });
       }
     }
@@ -537,106 +542,133 @@ module.exports = {
         if (!accessToken) {
           return interaction.editReply({
             content: "Failed to retrieve osu! API token.",
-            ephemeral: true
+            ephemeral: true,
           });
         }
 
-        console.log(`Fetching user data for: ${player}`);
         const userResponse = await axios.get(
           `https://osu.ppy.sh/api/v2/users/${encodeURIComponent(player)}/osu`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-
         const user = userResponse.data;
         if (!user || !user.id) {
           return interaction.editReply({
             content: "User not found on osu!",
-            ephemeral: true
+            ephemeral: true,
           });
         }
 
-        console.log(`Resolved osu! user ID: ${user.id}`);
-
+        // Get scores
         let apiUrl = "";
         if (type === "top") {
           apiUrl = `https://osu.ppy.sh/api/v2/users/${user.id}/scores/best?limit=5`;
         } else if (type === "recent") {
-          apiUrl = `https://osu.ppy.sh/api/v2/users/${user.id}/scores/recent?limit=5`;
+          apiUrl = `https://osu.ppy.sh/api/v2/users/${user.id}/scores/recent?limit=1&include_fails=1`;
         } else {
           return interaction.editReply({
             content: "Invalid type. Use `top` or `recent`.",
-            ephemeral: true
+            ephemeral: true,
           });
         }
 
-        console.log(`Fetching ${type} plays for user ID: ${user.id}`);
         const playsResponse = await axios.get(apiUrl, {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
-
         const plays = playsResponse.data;
-        if (!plays || plays.length === 0) {
+
+        if (!Array.isArray(plays) || plays.length === 0) {
           return interaction.editReply({
             content: `No ${type} plays found for this user.`,
-            ephemeral: true
+            ephemeral: true,
           });
         }
 
-        console.log(`Retrieved ${plays.length} ${type} plays.`);
-
-        // Formatting Embed
         const embed = new EmbedBuilder()
           .setColor("Blue")
           .setTitle(
-            `${user.username}'s ${type === "top" ? "Top" : "Recent"} Plays`
+            `${user.username}'s ${
+              type === "top" ? "Top Plays" : "Most Recent Play"
+            }`
           )
           .setThumbnail(user.avatar_url)
-          .setFooter({ text: `osu! profile`, iconURL: user.avatar_url })
-          .setURL(`https://osu.ppy.sh/users/${user.id}`);
+          .setURL(`https://osu.ppy.sh/users/${user.id}`)
+          .setFooter({ text: "osu! profile", iconURL: user.avatar_url });
 
-        plays.forEach((play, index) => {
+        if (type === "top") {
+          for (const [index, play] of plays.entries()) {
+            const beatmap = play.beatmap;
+            const set = play.beatmapset;
+            const mods = play.mods.length > 0 ? play.mods.join(", ") : "None";
+            const accuracy = (play.accuracy * 100).toFixed(2);
+            const rank = play.rank;
+            const mapURL = `https://osu.ppy.sh/beatmaps/${beatmap.id}`;
+            const officialPp = play.pp ? play.pp.toFixed(2) : "0.00";
+            const fieldName = `#${index + 1} - ${set.artist} - ${set.title} [${
+              beatmap.version
+            }]\n${mapURL}\n`;
+
+            embed.addFields({
+              name: fieldName,
+              value:
+                `▸ **Rank:** ${rank}\n` +
+                `▸ **Score:** ${play.score.toLocaleString()}\n` +
+                `▸ **Combo:** ${play.max_combo}x\n` +
+                `▸ **Mods:** ${mods}\n` +
+                `▸ **Accuracy:** ${accuracy}%\n` +
+                `▸ **PP:** ${officialPp}\n` +
+                `▸ **Hit Counts:** { ${play.statistics.count_300} / ${play.statistics.count_100} / ${play.statistics.count_50} / ${play.statistics.count_miss} }`,
+              inline: false,
+            });
+          }
+        } else {
+          const play = plays[0];
           const beatmap = play.beatmap;
           const set = play.beatmapset;
           const mods = play.mods.length > 0 ? play.mods.join(", ") : "None";
-          const pp = play.pp ? play.pp.toFixed(2) : "N/A";
-
-          let maxPP = "N/A";
-
-          if (type === "top") {
-            // For top plays, calculate the potential max PP as if the score were a perfect 100% SS score
-            const perfectScorePP = (
-              play.pp /
-              (play.weight.percentage / 100)
-            ).toFixed(2);
-
-            // Calculate maxPP considering the mods
-            maxPP = perfectScorePP;
-
-            // Show the estimated max PP when mods are applied
-            if (play.mods && play.mods.length > 0) {
-              maxPP = `${perfectScorePP}`;
-            }
-          } else if (type === "recent") {
-            // Skip max PP calculation for recent plays
-            maxPP = "N/A";
-          }
-
           const accuracy = (play.accuracy * 100).toFixed(2);
           const rank = play.rank;
           const mapURL = `https://osu.ppy.sh/beatmaps/${beatmap.id}`;
 
+          // Download map & compute PP via rosu-pp
+          const beatmapPath = path.join(
+            __dirname,
+            `../../../extra/maps/${beatmap.id}.osu`
+          );
+
+          const downloaded = await downloadBeatmap(beatmap.id, beatmapPath);
+          let ppValue = "N/A";
+
+          if (downloaded) {
+            const beatmapContent = fs.readFileSync(beatmapPath, "utf8");
+            const cleanedContent = beatmapContent.replace(/^\uFEFF/, "").trim();
+
+            const beatmapData = new Beatmap(cleanedContent);
+            const performance = new Performance({
+              mods: play.mods.join(""), // e.g. "HDHR"
+              combo: play.max_combo,
+              n300: play.statistics.count_300,
+              n100: play.statistics.count_100,
+              n50: play.statistics.count_50,
+              misses: play.statistics.count_miss,
+              accuracy: play.accuracy * 100,
+            });
+            const result = performance.calculate(beatmapData);
+            ppValue = result.pp.toFixed(2);
+          }
+
           embed.addFields({
-            name: `#${index + 1} - ${set.artist} - ${set.title} [${
-              beatmap.version
-            }]`,
+            name: `${set.artist} - ${set.title} [${beatmap.version}]\n${mapURL}\n`,
             value:
-              `▸ **Score:** [${play.score.toLocaleString()}](${mapURL})\n` +
-              `▸ **PP:** ${pp} / ${maxPP}\n` +
+              `▸ **Rank:** ${rank}\n` +
+              `▸ **Score:** ${play.score.toLocaleString()}\n` +
+              `▸ **Combo:** ${play.max_combo}x\n` +
+              `▸ **Mods:** ${mods}\n` +
               `▸ **Accuracy:** ${accuracy}%\n` +
-              `▸ **Rank:** ${rank} | **Mods:** ${mods}`,
-            inline: false
+              `▸ **PP (est.):** ${ppValue}\n` +
+              `▸ **Hit Counts:** { ${play.statistics.count_300} / ${play.statistics.count_100} / ${play.statistics.count_50} / ${play.statistics.count_miss} }`,
+            inline: false,
           });
-        });
+        }
 
         await interaction.editReply({ embeds: [embed] });
       } catch (error) {
@@ -646,9 +678,32 @@ module.exports = {
         );
         await interaction.editReply({
           content: "An error occurred while retrieving osu! stats.",
-          ephemeral: true
+          ephemeral: true,
         });
       }
     }
-  }
+  },
 };
+
+async function downloadBeatmap(beatmapId, beatmapPath) {
+  if (!fs.existsSync(beatmapPath)) {
+    console.log(`Downloading beatmap: ${beatmapId}`);
+    try {
+      const beatmapResponse = await axios.get(
+        `https://osu.ppy.sh/osu/${beatmapId}`,
+        { responseType: "arraybuffer" }
+      );
+
+      fs.writeFileSync(beatmapPath, beatmapResponse.data);
+      const fileSize = fs.statSync(beatmapPath).size;
+      if (fileSize === 0) {
+        console.error(`Downloaded beatmap ${beatmapId} is empty!`);
+        return false;
+      }
+    } catch (error) {
+      console.error(`Failed to download beatmap ${beatmapId}:`, error);
+      return false;
+    }
+  }
+  return true;
+}
