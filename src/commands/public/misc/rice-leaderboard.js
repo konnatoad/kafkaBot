@@ -1,9 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-  AttachmentBuilder,
-  PermissionFlagsBits,
-} = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const userProfile = require("../../../schemas/UserProfile");
 
 module.exports = {
