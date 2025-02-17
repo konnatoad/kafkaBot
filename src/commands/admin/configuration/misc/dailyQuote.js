@@ -7,8 +7,6 @@ const {
 const Quote = require("../../../../schemas/quoteSchema");
 const DailyQuote = require("../../../../schemas/dailyQuoteSchema");
 
-const recentQuotes = {}; // Stores last 20 sent quotes per guild
-
 function seededRandom(seed) {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
@@ -52,14 +50,12 @@ const sendDailyQuote = async (client) => {
         continue;
       }
 
-      // Initialize recentQuotes buffer for the guild if not exists
-      if (!recentQuotes[guild.guildId]) {
-        recentQuotes[guild.guildId] = [];
-      }
+      // Fetch recentQuotes from the database
+      let recentQuotes = guild.recentQuotes || [];
 
       // Filter out recently used quotes
       let availableQuotes = quotes.filter(
-        (quote) => !recentQuotes[guild.guildId].includes(quote._id.toString())
+        (quote) => !recentQuotes.includes(quote._id.toString())
       );
 
       // If all quotes are used, reset buffer
@@ -67,8 +63,8 @@ const sendDailyQuote = async (client) => {
         console.log(
           `All quotes used in guild ${guild.guildId}, resetting buffer.`
         );
-        recentQuotes[guild.guildId] = [];
-        availableQuotes = quotes; // Allow full randomization again
+        recentQuotes = [];
+        availableQuotes = quotes;
       }
 
       // Shuffle for extra randomness
@@ -81,13 +77,20 @@ const sendDailyQuote = async (client) => {
 
       const formattedDate = randomQuote.date.toLocaleDateString("fi-FI");
 
-      // Update buffer with the new quote
-      recentQuotes[guild.guildId].push(randomQuote._id.toString());
+      // Update recent quotes buffer
+      recentQuotes.push(randomQuote._id.toString());
 
-      // Limit buffer size (last 20 quotes)
-      if (recentQuotes[guild.guildId].length > 20) {
-        recentQuotes[guild.guildId].shift();
+      // Keep only the last 20 quotes
+      if (recentQuotes.length > 20) {
+        recentQuotes.shift();
       }
+
+      // Save updated recentQuotes buffer to the database
+      await DailyQuote.findOneAndUpdate(
+        { guildId: guild.guildId },
+        { recentQuotes },
+        { new: true }
+      );
 
       // Increment quote count
       const updatedGuild = await DailyQuote.findOneAndUpdate(
@@ -174,7 +177,10 @@ module.exports = {
         const channel = interaction.options.getChannel("channel");
         await DailyQuote.findOneAndUpdate(
           { guildId: interaction.guildId },
-          { channelId: channel.id, $setOnInsert: { quoteCount: 0 } },
+          {
+            channelId: channel.id,
+            $setOnInsert: { quoteCount: 0, recentQuotes: [] }
+          },
           { upsert: true }
         );
 
