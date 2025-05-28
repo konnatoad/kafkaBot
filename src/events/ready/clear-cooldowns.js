@@ -9,11 +9,11 @@ module.exports = () => {
         if (Date.now() < cooldown.endsAt) return;
 
         await Cooldown.deleteOne({
-          _id: cooldown._id,
+          _id: cooldown._id
         });
       }
     } catch (error) {
-      console.log(`Error clearing cooldowns: ${error}`);
+      console.error(`error clearing cooldowns: ${error}`);
     }
   }, 3.6e6);
 };

@@ -16,7 +16,7 @@ module.exports = (client) => {
           const currentTime = new Date().toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
-            hour12: false,
+            hour12: false
           }); // Get current time in HH:MM format (24-hour)
 
           // Check if the current time matches the reminder time
@@ -34,7 +34,7 @@ module.exports = (client) => {
               .fetch(userId)
               .catch(() => null);
             if (!targetMember) {
-              console.log(`Member not found for userId: ${userId}`);
+              console.error(`Member not found for userId: ${userId}`);
               continue;
             }
 
@@ -45,7 +45,7 @@ module.exports = (client) => {
               .catch(() => null);
 
             if (!targetChannel) {
-              console.log(`Failed to send reminder to userId: ${userId}`);
+              console.error(`Failed to send reminder to userId: ${userId}`);
               continue;
             }
 

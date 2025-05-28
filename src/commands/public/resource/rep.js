@@ -28,7 +28,7 @@ module.exports = {
 
       const existingCooldown = await Cooldown.findOne({
         commandName: commandName,
-        userId: giver.id,
+        userId: giver.id
       });
 
       // Get the end date of the current cooldown or set it to null if none exists
@@ -53,7 +53,7 @@ module.exports = {
 
         return interaction.reply({
           content: `You can use this command again in ${formattedCooldownDuration}.`,
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -66,20 +66,20 @@ module.exports = {
         const newCooldown = new Cooldown({
           commandName: commandName,
           userId: giver.id,
-          endsAt: newCooldownEnd,
+          endsAt: newCooldownEnd
         });
         await newCooldown.save();
       }
 
       let receiverProfile = await UserProfile.findOne({
         userId: receiver.id,
-        Guild: interaction.guildId,
+        Guild: interaction.guildId
       });
       if (!receiverProfile) {
         receiverProfile = new UserProfile({
           userId: receiver.id,
           Guild: interaction.guildId,
-          balance: 0,
+          balance: 0
         });
       }
 
@@ -88,10 +88,10 @@ module.exports = {
       await receiverProfile.save();
 
       return interaction.reply({
-        content: `${giver.toString()} has given their daily reputation bonus to ${receiver.toString()}!`,
+        content: `${giver.toString()} has given their daily reputation bonus to ${receiver.toString()}!`
       });
     } catch (error) {
-      console.log(`Error handling /rep: ${error}`);
+      console.error(`error handling /rep: ${error}`);
     }
-  },
+  }
 };

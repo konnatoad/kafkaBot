@@ -3,7 +3,7 @@ const {
   ChannelType,
   EmbedBuilder,
   PermissionFlagsBits,
-  MessageFlags,
+  MessageFlags
 } = require("discord.js");
 const NotificationConfig = require("../../../../schemas/NotificationConfig");
 const Parser = require("rss-parser");
@@ -20,7 +20,7 @@ async function run({ interaction }) {
 
     const duplicateExists = await NotificationConfig.exists({
       guildId: interaction.guildId,
-      ytChannelId: targetYtChannelId,
+      ytChannelId: targetYtChannelId
     });
 
     if (duplicateExists) {
@@ -48,7 +48,7 @@ async function run({ interaction }) {
       ytChannelId: targetYtChannelId,
       customMessage: targetCustomMessage,
       lastChecked: new Date(),
-      lastCheckedVid: null,
+      lastCheckedVid: null
     });
 
     if (feed.items.length) {
@@ -56,7 +56,7 @@ async function run({ interaction }) {
 
       notificationConfig.lastCheckedVid = {
         id: latestVideo.id.split(":")[2],
-        pubDate: latestVideo.pubDate,
+        pubDate: latestVideo.pubDate
       };
     }
 
@@ -79,7 +79,7 @@ async function run({ interaction }) {
         );
       });
   } catch (error) {
-    console.log(`error in ${__filename}:\n`, error);
+    console.error(`error in ${__filename}:\n`, error);
   }
 }
 

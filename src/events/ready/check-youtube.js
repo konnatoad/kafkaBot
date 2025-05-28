@@ -32,7 +32,7 @@ module.exports = (client) => {
 
           if (!targetGuild) {
             await NotificationConfig.findOneAndDelete({
-              _id: notificationConfig._id,
+              _id: notificationConfig._id
             });
             continue;
           }
@@ -47,14 +47,14 @@ module.exports = (client) => {
 
           if (!targetChannel) {
             await NotificationConfig.findOneAndDelete({
-              _id: notificationConfig._id,
+              _id: notificationConfig._id
             });
             continue;
           }
 
           notificationConfig.lastCheckedVid = {
             id: latestVideo.id.split(":")[2],
-            pubDate: latestVideo.pubDate,
+            pubDate: latestVideo.pubDate
           };
 
           notificationConfig
@@ -74,7 +74,7 @@ module.exports = (client) => {
         }
       }
     } catch (error) {
-      console.log(`error in ${__filename}:\n`, error);
+      console.error(`error in ${__filename}:\n`, error);
     }
   }
 };

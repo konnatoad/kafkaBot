@@ -211,15 +211,13 @@ module.exports = {
 
           actHistory = lastActs.length
             ? lastActs
-                .map(
-                  ([act, data]) =>
-                    `**${act.toUpperCase()}** → ${data.final_rank_patched} (${
-                      data.wins
-                    }W / ${data.number_of_games - data.wins}L of ${
-                      data.number_of_games
-                    } games)`
-                )
-                .join("\n")
+              .map(
+                ([act, data]) =>
+                  `**${act.toUpperCase()}** → ${data.final_rank_patched} (${data.wins
+                  }W / ${data.number_of_games - data.wins}L of ${data.number_of_games
+                  } games)`
+              )
+              .join("\n")
             : "No ranked matches played.";
         }
 
@@ -513,7 +511,7 @@ module.exports = {
           "https://ddragon.leagueoflegends.com/api/versions.json"
         );
         const ddragonVersions = await ddragonResponse.json();
-        const latestVersion = ddragonVersions[0]; // Get the latest version
+        const latestVersion = ddragonVersions[0];
 
         // Create Embed Response
         const profileIconId = summonerData.profileIconId;
@@ -529,6 +527,11 @@ module.exports = {
             {
               name: "Region",
               value: region.toUpperCase(),
+              inline: true
+            },
+            {
+              name: "Rank",
+              value: rank,
               inline: true
             },
             {
@@ -613,8 +616,7 @@ module.exports = {
         const embed = new EmbedBuilder()
           .setColor("Blue")
           .setTitle(
-            `${user.username}'s ${
-              type === "top" ? "Top Plays" : "Most Recent Play"
+            `${user.username}'s ${type === "top" ? "Top Plays" : "Most Recent Play"
             }`
           )
           .setThumbnail(user.avatar_url)
@@ -630,9 +632,8 @@ module.exports = {
             const rank = play.rank;
             const mapURL = `https://osu.ppy.sh/beatmaps/${beatmap.id}`;
             const officialPp = play.pp ? play.pp.toFixed(2) : "0.00";
-            const fieldName = `#${index + 1} - ${set.artist} - ${set.title} [${
-              beatmap.version
-            }]\n${mapURL}\n`;
+            const fieldName = `#${index + 1} - ${set.artist} - ${set.title} [${beatmap.version
+              }]\n${mapURL}\n`;
 
             embed.addFields({
               name: fieldName,
@@ -671,7 +672,7 @@ module.exports = {
 
             const beatmapData = new Beatmap(cleanedContent);
             const performance = new Performance({
-              mods: play.mods.join(""), // e.g. "HDHR"
+              mods: play.mods.join(""),
               combo: play.max_combo,
               n300: play.statistics.count_300,
               n100: play.statistics.count_100,

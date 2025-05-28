@@ -1,7 +1,7 @@
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  MessageFlags,
+  MessageFlags
 } = require("discord.js");
 
 module.exports = {
@@ -28,7 +28,7 @@ module.exports = {
     if (!interaction.inGuild()) {
       interaction.reply({
         content: "This command can only be executed inside a server",
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
       return;
     }
@@ -43,17 +43,17 @@ module.exports = {
         await targetUser.send(message);
         await interaction.editReply({
           content: `Successfully sent a DM to ${targetUser.tag}`,
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       } catch (error) {
         console.error(`Error sending DM: ${error}`);
         await interaction.editReply({
           content: `Failed to send a DM to ${targetUser.tag}`,
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     } catch (error) {
-      console.log(`Error handling /senddm: ${error}`);
+      console.error(`error handling /senddm: ${error}`);
     }
-  },
+  }
 };

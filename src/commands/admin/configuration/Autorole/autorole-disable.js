@@ -29,7 +29,7 @@ module.exports = {
         "Auto role has been disabled for this server. Use `/autorole-configure` to set it up again."
       );
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   },
 

@@ -17,6 +17,6 @@ module.exports = async (member) => {
 
     await member.roles.add(autoRole.roleId);
   } catch (error) {
-    console.log(`Error giving role automatically: ${error}`);
+    console.error(`error giving role automatically: ${error}`);
   }
 };

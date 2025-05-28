@@ -47,7 +47,7 @@ module.exports = {
         "Autorole has now been configured. To disable run `/autorole-disable`"
       );
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   },
 

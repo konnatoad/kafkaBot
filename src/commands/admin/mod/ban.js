@@ -1,7 +1,7 @@
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  EmbedBuilder,
+  EmbedBuilder
 } = require("discord.js");
 
 module.exports = {
@@ -68,19 +68,19 @@ module.exports = {
         .setDescription(`User ${targetUser} was banned.`)
         .addFields({
           name: "Reason:",
-          value: `${reason}`,
+          value: `${reason}`
         })
         .setTimestamp()
         .setFooter({
           text: "Perm ban",
-          iconURL: "https://vou.s-ul.eu/ts9RQjxl",
+          iconURL: "https://vou.s-ul.eu/ts9RQjxl"
         });
       await targetUser.ban({ reason });
       await interaction.editReply({
-        embeds: [banEmbed],
+        embeds: [banEmbed]
       });
     } catch (error) {
-      console.log(`there was an error banning ${error}`);
+      console.error(`there was an error banning ${error}`);
     }
-  },
+  }
 };

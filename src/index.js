@@ -1,9 +1,9 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
 const { Client, IntentsBitField, Partials } = require("discord.js");
 const mongoose = require("mongoose");
 const { CommandHandler } = require("djs-commander");
-const path = require("path");
 
 const client = new Client({
   intents: [
@@ -12,14 +12,14 @@ const client = new Client({
     IntentsBitField.Flags.GuildMessages,
     IntentsBitField.Flags.MessageContent,
     IntentsBitField.Flags.GuildMessageReactions,
-    IntentsBitField.Flags.GuildModeration,
+    IntentsBitField.Flags.GuildModeration
   ],
   partials: [
     Partials.Channel,
     Partials.GuildMember,
     Partials.Message,
-    Partials.Reaction,
-  ],
+    Partials.Reaction
+  ]
 });
 
 new CommandHandler({
@@ -27,7 +27,7 @@ new CommandHandler({
   commandsPath: path.join(__dirname, "commands"),
   eventsPath: path.join(__dirname, "events"),
   validationsPath: path.join(__dirname, "validations"),
-  functions: path.join(__dirname, "functions"),
+  functions: path.join(__dirname, "functions")
 });
 
 console.log("TOKEN:", process.env.TOKEN ? "✅ Loaded" : "❌ Missing");

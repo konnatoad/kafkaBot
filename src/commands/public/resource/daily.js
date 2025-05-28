@@ -15,7 +15,7 @@ module.exports = {
     if (!interaction.inGuild()) {
       interaction.reply({
         content: "This command can only be executed inside a server",
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
       return;
     }
@@ -25,7 +25,7 @@ module.exports = {
 
       let userProfile = await UserProfile.findOne({
         userId: interaction.member.id,
-        Guild: interaction.guild.id,
+        Guild: interaction.guild.id
       });
 
       const dailies = [
@@ -33,7 +33,7 @@ module.exports = {
         "Hey don't get too greedy! Come back tomorrow for more.",
         "You know, they're called dailies for a reason. That means you can only get them once per day. Try again tomorrow!",
         "Did you forget, you already claimed that today. Come back tomorrow!",
-        "You can't just collect dailies whenever you want. That's not how it works",
+        "You can't just collect dailies whenever you want. That's not how it works"
       ];
       const dailycooldown = dailies[Math.floor(Math.random() * dailies.length)];
 
@@ -43,21 +43,22 @@ module.exports = {
 
         if (lastDailyDate === currentDate) {
           interaction.editReply({
-            content: `${dailycooldown}`,
+            content: `${dailycooldown}`
           });
           return;
         }
 
         // Handle streak calculation
-        const lastCollectedDate = new Date(
-          lastDailyDate.split(".").reverse().join("-")
-        );
+        const lastCollectedDate = lastDailyDate
+          ? new Date(lastDailyDate.split(".").reverse().join("-"))
+          : null;
         const previousDay = new Date();
         previousDay.setDate(previousDay.getDate() - 1);
 
         if (
+          lastCollectedDate &&
           lastCollectedDate.toLocaleDateString("fi-FI") ===
-          previousDay.toLocaleDateString("fi-FI")
+            previousDay.toLocaleDateString("fi-FI")
         ) {
           userProfile.dailyStreak = (userProfile.dailyStreak || 0) + 1;
         } else {
@@ -68,7 +69,7 @@ module.exports = {
           userId: interaction.member.id,
           Guild: interaction.guild.id,
           balance: 0,
-          dailyStreak: 0, // Initialize streak if it's a new profile
+          dailyStreak: 0 // Initialize streak if it's a new profile
         });
       }
 
@@ -85,10 +86,10 @@ module.exports = {
       await userProfile.save();
 
       interaction.editReply({
-        content: `${dailyAmount} was added to your balance.\nNew balance: ${userProfile.balance} rice grains\nStreak: ${userProfile.dailyStreak} days`,
+        content: `${dailyAmount} was added to your balance.\nNew balance: ${userProfile.balance} rice grains\nStreak: ${userProfile.dailyStreak} days`
       });
     } catch (error) {
-      console.log(`Error handling /daily: ${error}`);
+      console.error(`Error handling /daily: ${error}`);
     }
-  },
+  }
 };

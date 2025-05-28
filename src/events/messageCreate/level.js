@@ -83,6 +83,6 @@ module.exports = async (message) => {
       data.save();
     }
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };

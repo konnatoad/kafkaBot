@@ -15,14 +15,14 @@ module.exports = (client) => {
           try {
             await guild.members.unban(ban.userId);
           } catch (error) {
-            console.log(`Error unbanning user ${ban.userId}: ${error}`);
+            console.error(`error unbanning user ${ban.userId}: ${error}`);
           }
         }
 
         await Ban.deleteOne({ _id: ban._id });
       }
     } catch (error) {
-      console.log(`Error clearing bans: ${error}`);
+      console.error(`error clearing bans: ${error}`);
     }
   }, 60000); // Check every minute for expired bans
 };

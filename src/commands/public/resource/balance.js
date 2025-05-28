@@ -7,7 +7,7 @@ module.exports = {
     if (!interaction.inGuild()) {
       interaction.reply({
         content: "This command can only be executed inside a server.",
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
       return;
     }
@@ -20,12 +20,12 @@ module.exports = {
     try {
       let userProfile = await UserProfile.findOne({
         userId: targetUserId,
-        Guild: interaction.guild.id,
+        Guild: interaction.guild.id
       });
 
       if (!userProfile) {
         interaction.editReply({
-          content: `This user doesn't have a record in my database.`,
+          content: `This user doesn't have a record in my database.`
         });
         return;
       }
@@ -33,14 +33,14 @@ module.exports = {
       interaction.editReply(
         targetUserId === interaction.user.id
           ? {
-              content: `You have ${userProfile.balance} rice grains.`,
+              content: `You have ${userProfile.balance} rice grains.`
             }
           : {
-              content: `<@${targetUserId}> has ${userProfile.balance} rice grains.`,
+              content: `<@${targetUserId}> has ${userProfile.balance} rice grains.`
             }
       );
     } catch (error) {
-      console.log(`Error handling /balance ${error}`);
+      console.error(`error handling /balance ${error}`);
     }
   },
 
@@ -51,5 +51,5 @@ module.exports = {
       option
         .setName("target-user")
         .setDescription("The user whose balance you want to see.")
-    ),
+    )
 };

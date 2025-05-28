@@ -2,7 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   ChannelType,
-  MessageFlags,
+  MessageFlags
 } = require("discord.js");
 const NotificationConfig = require("../../../../schemas/NotificationConfig");
 
@@ -16,7 +16,7 @@ async function run({ interaction }) {
 
     const targetChannel = await NotificationConfig.findOne({
       ytChannelId: targetYtChannelId,
-      notifiactionChannelId: targetNotificationChannel.id,
+      notifiactionChannelId: targetNotificationChannel.id
     });
 
     if (!targetChannel) {
@@ -36,7 +36,7 @@ async function run({ interaction }) {
         );
       });
   } catch (error) {
-    console.log(`error in ${__filename}:\n`, error);
+    console.error(`error in ${__filename}:\n`, error);
   }
 }
 
