@@ -24,8 +24,7 @@ module.exports = {
         .setName("amount")
         .setDescription("The amount of rice grains to remove")
         .setRequired(true)
-    )
-    .setDefaultPermission(false), // Hide the command by default
+    ),
   devOnly: true, // Mark this command as developer-only
   run: async ({ interaction }) => {
     const receiver = interaction.options.getUser("user");
@@ -63,9 +62,8 @@ module.exports = {
     await receiverProfile.save();
 
     return interaction.reply({
-      content: `Successfully removed ${amount} rice grains from ${receiver.toString()}. Their new balance is ${
-        receiverProfile.balance
-      }.`,
+      content: `Successfully removed ${amount} rice grains from ${receiver.toString()}. Their new balance is ${receiverProfile.balance
+        }.`,
       flags: MessageFlags.Ephemeral,
     });
   },

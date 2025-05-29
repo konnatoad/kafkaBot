@@ -2,8 +2,6 @@
 
 const {
   SlashCommandBuilder,
-  PermissionFlagsBits,
-  EmbedBuilder,
   MessageFlags
 } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");

@@ -1,6 +1,5 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
   PermissionFlagsBits,
   MessageFlags,
 } = require("discord.js");
@@ -98,7 +97,7 @@ module.exports = {
             Role: role.id,
           });
 
-          await message.react(emoji).catch((err) => {});
+          await message.react(emoji).catch((err) => { });
 
           await interaction.reply({
             content: `Successfully added reaction role to the message.`,

@@ -24,8 +24,7 @@ module.exports = {
         .setName("amount")
         .setDescription("The amount of rice grains to give")
         .setRequired(true)
-    )
-    .setDefaultPermission(false), // Hide the command by default
+    ),
   devOnly: true, // Mark this command as developer-only
   run: async ({ interaction }) => {
     const receiver = interaction.options.getUser("user");

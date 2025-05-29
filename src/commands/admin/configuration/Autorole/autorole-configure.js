@@ -1,7 +1,6 @@
 const {
   SlashCommandBuilder,
   Client,
-  Interaction,
   PermissionFlagsBits,
   MessageFlags,
 } = require("discord.js");

@@ -1,6 +1,5 @@
 const {
   Client,
-  Interaction,
   PermissionFlagsBits,
   SlashCommandBuilder,
   MessageFlags,

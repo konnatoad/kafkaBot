@@ -43,7 +43,6 @@ async function run({ interaction }) {
 const data = new SlashCommandBuilder()
   .setName("notification-remove")
   .setDescription("Turn off youtube notifications for a channel.")
-  .setDMPermission(false)
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addStringOption((option) =>
     option

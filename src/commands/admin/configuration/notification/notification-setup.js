@@ -86,7 +86,6 @@ async function run({ interaction }) {
 const data = new SlashCommandBuilder()
   .setName("notification-setup")
   .setDescription("Setup youtube notifications for a channel")
-  .setDMPermission(false)
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addStringOption((option) =>
     option
