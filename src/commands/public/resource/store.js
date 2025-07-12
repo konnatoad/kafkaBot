@@ -6,7 +6,7 @@ async function removeBalance(userId, amount) {
   try {
     const userProfile = await UserProfile.findOne({ userId });
     if (!userProfile) {
-      throw new Error("User profile not found.");
+      console.error("User profile not found.");
     }
 
     userProfile.balance -= amount;
@@ -23,7 +23,7 @@ async function getUserBalance(userId) {
   try {
     const userProfile = await UserProfile.findOne({ userId });
     if (!userProfile) {
-      throw new Error("User profile not found.");
+      console.error("User profile not found.");
     }
 
     return userProfile.balance;
@@ -88,5 +88,5 @@ module.exports = {
         );
       }
     }
-  },
+  }
 };
