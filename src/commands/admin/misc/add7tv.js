@@ -33,7 +33,7 @@ module.exports = {
       const res = await fetch(`https://7tv.io/v3/emotes/${emoteId}`);
 
       if (!res.ok) {
-        return interaction.editReply("Couldn’t reach the 7TV API 😢");
+        return interaction.editReply("Couldn’t reach the 7TV API");
       }
 
       const emote = await res.json();
