@@ -11,10 +11,10 @@
   "license": "ISC",
   "dependencies": {
     "@napi-rs/canvas": "^0.1.65",
-    "axios": "^1.11.0",
+    "axios": "^1.12.2",
     "canvacord": "^6.0.2",
     "colors": "^1.4.0",
-    "discord.js": "^14.21.0",
+    "discord.js": "^14.22.1",
     "djs-commander": "^0.0.50",
     "dotenv": "^17.2.1",
     "mongoose": "^8.17.0",
