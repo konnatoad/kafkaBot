@@ -1,8 +1,13 @@
 const { EmbedBuilder } = require("discord.js");
 const GoodbyeSetup = require("../../schemas/goodbyeSchema");
 
+const MAIN = process.env.MAIN;
+const ALT = process.env.ALT;
+
 // Export a function that will be called when a new member joins the server
 module.exports = async (member) => {
+  if (member.id === MAIN || ALT) return;
+
   // Get the ID of the guild the member joined
   const guildId = member.guild.id;
 
