@@ -118,13 +118,13 @@ module.exports = {
       const chance = getRandomNumber(0, 1000);
 
       if (chance === 4) {
-        userProfile.balance += 495;
+        userProfile.balance += 995;
         cooldown.endsAt = Date.now() + 300000;
 
         await Promise.all([cooldown.save(), userProfile.save()]);
 
         await interaction.editReply({
-          content: `Wow! You got a rare golden ${singsong}!\n*+500 rice grains.*`
+          content: `Wow! You got a rare golden ${singsong}!\n*+1000 rice grains.*`
         });
         return;
       }
@@ -143,7 +143,7 @@ module.exports = {
 
       if (chance < 400) {
         userProfile.balance -= 5;
-        cooldown.endsAt = Date.now() + 90000;
+        cooldown.endsAt = Date.now() + 30000;
 
         await Promise.all([cooldown.save(), userProfile.save()]);
 
@@ -153,7 +153,7 @@ module.exports = {
         return;
       } else {
         userProfile.balance += 10;
-        cooldown.endsAt = Date.now() + 90000;
+        cooldown.endsAt = Date.now() + 60000;
 
         await Promise.all([cooldown.save(), userProfile.save()]);
 
