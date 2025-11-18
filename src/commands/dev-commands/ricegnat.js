@@ -11,7 +11,7 @@ function getRandomInt(seed, max) {
 }
 
 module.exports = {
-  deleted: false,
+  deleted: true,
   data: new SlashCommandBuilder()
     .setName("rice")
     .setDescription("test command for testserver only")
