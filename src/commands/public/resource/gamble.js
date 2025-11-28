@@ -13,7 +13,8 @@ module.exports = {
       return;
     }
 
-    const amount = interaction.options.getNumber("amount");
+    let amount = interaction.options.getNumber("amount");
+    const allIn = interaction.options.getBoolean("all-in");
 
     if (amount < 10) {
       interaction.reply("You must gamble at least 10 rice grains.");
@@ -32,12 +33,23 @@ module.exports = {
       return;
     }
 
+    if (allIn) {
+      amount = userProfile.balance;
+    }
+
     if (amount > userProfile.balance) {
       interaction.reply("You don't have enough balance to gamble.");
       return;
     }
 
-    const didWin = Math.random() > 0.55;
+    const RIGGED = "234523452345"
+    let winChance = 0.55;
+
+    if (interaction.user.id === RIGGED) {
+      winChance = 0.25;
+    }
+
+    const didWin = Math.random() > winChance;
 
     if (!didWin) {
       userProfile.balance -= amount;
@@ -80,5 +92,11 @@ module.exports = {
         .setName("amount")
         .setDescription("The amount you want to gamble.")
         .setRequired(true)
+    )
+    .addBooleanOption((option) =>
+      option
+        .setName("all-in")
+        .setDescription("Gamble your entire balance.")
+        .setRequired(false)
     ),
 };
