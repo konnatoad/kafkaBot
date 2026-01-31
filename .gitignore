@@ -9,4 +9,4 @@ logs
 test.js
 osuAuth.js
 src/extra
-src/commands/dev-commands
+src/commands/dev-commands/*
