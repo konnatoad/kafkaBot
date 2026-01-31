@@ -1,4 +1,10 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
+} = require("discord.js");
 const axios = require("axios");
 const { getOsuAccessToken } = require("../../../extra/osuAuth");
 require("dotenv").config();
@@ -6,16 +12,112 @@ const { Beatmap, Performance } = require("rosu-pp-js");
 const fs = require("fs");
 const path = require("path");
 
+const VAL_CACHE = new Map(); // key -> { expires, payload }
+const VAL_CACHE_TTL_MS = 30_000;
+
+function fmtNum(n) {
+  if (n === null || n === undefined) return "N/A";
+  const num = Number(n);
+  return Number.isFinite(num) ? num.toLocaleString() : String(n);
+}
+
+function fmtDelta(n) {
+  if (n === null || n === undefined) return "N/A";
+  const num = Number(n);
+  if (!Number.isFinite(num)) return String(n);
+
+  const arrow = num > 0 ? "▲" : num < 0 ? "▼" : "▬";
+  const sign = num > 0 ? "+" : "";
+  return `${arrow} ${sign}${num}`;
+}
+
+function pct(x) {
+  const num = Number(x);
+  if (!Number.isFinite(num)) return "N/A";
+  return `${(num * 100).toFixed(1)}%`;
+}
+
+function safeRiotIdSplit(input) {
+  const raw = String(input || "").trim();
+  const idx = raw.lastIndexOf("#");
+  if (idx === -1) return { name: null, tag: null };
+  const name = raw.slice(0, idx).trim();
+  const tag = raw.slice(idx + 1).trim();
+  return { name: name || null, tag: tag || null };
+}
+
+function padRight(str, n) {
+  str = String(str ?? "");
+  return str.length >= n ? str : str + " ".repeat(n - str.length);
+}
+
+function mkHeadline({ currentRank, rr, lastChange, elo }) {
+  const parts = [];
+  parts.push(`**${currentRank || "Unrated"}**`);
+  if (rr != null) parts.push(`**${rr} RR**`);
+  if (lastChange != null) parts.push(`Last **${fmtDelta(lastChange)} RR**`);
+  if (elo != null && Number(elo) !== 0) parts.push(`Elo **${fmtNum(elo)}**`);
+  return parts.join(" • ");
+}
+
+function mkOverviewBlock({
+  region,
+  platform,
+  accountLevel,
+  peakText,
+  seasonalGames,
+  seasonalWins,
+  seasonalWinrate
+}) {
+  const L = 10;
+  const lines = [
+    `${padRight("Region", L)}: ${String(region).toUpperCase()}`,
+    `${padRight("Platform", L)}: ${String(platform).toUpperCase()}`,
+    `${padRight("Level", L)}: ${fmtNum(accountLevel)}`,
+    `${padRight("Peak", L)}: ${peakText || "N/A"}`,
+    `${padRight("Games", L)}: ${fmtNum(seasonalGames)}`,
+    `${padRight("Wins", L)}: ${fmtNum(seasonalWins)} (${seasonalWinrate})`
+  ];
+  return "```txt\n" + lines.join("\n") + "\n```";
+}
+
+function mkActsBlock(seasonal) {
+  if (!Array.isArray(seasonal) || seasonal.length === 0) {
+    return "```txt\nNo competitive history available.\n```";
+  }
+
+  const lastActs = seasonal.slice(-3).reverse();
+  const lines = lastActs.map((s) => {
+    const act = s.season?.short ? String(s.season.short).toUpperCase() : "UNK";
+    const tier = s.end_tier?.name || "Unrated";
+    const rr = s.end_rr != null ? `${s.end_rr}RR` : "—";
+    const wins = Number(s.wins || 0);
+    const games = Number(s.games || 0);
+    const losses = Math.max(0, games - wins);
+    const wr = games > 0 ? pct(wins / games) : "N/A";
+
+    return `${padRight(act, 6)} ${padRight(tier, 14)} ${padRight(
+      rr,
+      6
+    )} ${padRight(`${wins}W-${losses}L`, 7)} ${wr}`;
+  });
+
+  return "```txt\n" + lines.join("\n") + "\n```";
+}
+
 async function downloadBeatmap(beatmapId, beatmapPath) {
   if (!fs.existsSync(beatmapPath)) {
     console.log(`Downloading beatmap: ${beatmapId}`);
     try {
       const beatmapResponse = await axios.get(
         `https://osu.ppy.sh/osu/${beatmapId}`,
-        { responseType: "arraybuffer" }
+        {
+          responseType: "arraybuffer"
+        }
       );
 
       fs.writeFileSync(beatmapPath, beatmapResponse.data);
+
       const fileSize = fs.statSync(beatmapPath).size;
       if (fileSize === 0) {
         console.error(`Downloaded beatmap ${beatmapId} is empty!`);
@@ -51,8 +153,19 @@ module.exports = {
             .addChoices(
               { name: "Europe", value: "eu" },
               { name: "North America", value: "na" },
+              { name: "LATAM", value: "latam" },
+              { name: "Brazil", value: "br" },
               { name: "APAC", value: "ap" },
               { name: "Korea", value: "kr" }
+            )
+        )
+        .addStringOption((option) =>
+          option
+            .setName("platform")
+            .setDescription("Platform (Default PC)")
+            .addChoices(
+              { name: "PC", value: "pc" },
+              { name: "Console", value: "console" }
             )
         )
     )
@@ -113,42 +226,49 @@ module.exports = {
             )
         )
     ),
+
   async run({ interaction }) {
     const subcommand = interaction.options.getSubcommand();
-
     if (subcommand === "valorant") {
       const player = interaction.options.getString("player");
       const region = interaction.options.getString("region") || "eu";
+      const platform = interaction.options.getString("platform") || "pc";
 
       await interaction.deferReply();
 
-      const [name, tag] = player.split("#");
+      const { name, tag } = safeRiotIdSplit(player);
       if (!name || !tag) {
         return interaction.editReply({
-          content: "Invalid Riot ID format. Use `Player#Tag`.",
+          content:
+            "Invalid Riot ID format. Use `Player#Tag` (example: `TenZ#NA1`).",
           ephemeral: true
         });
       }
 
+      const cacheKey = `${region}:${platform}:${name.toLowerCase()}#${tag.toLowerCase()}`;
+      const cached = VAL_CACHE.get(cacheKey);
+      if (cached && cached.expires > Date.now()) {
+        return interaction.editReply(cached.payload);
+      }
+
+      const headers = {
+        Authorization: process.env.VALORANT,
+        "User-Agent": "KafkaBot/1.0"
+      };
+
       try {
-        // Fetch Account Data
+        // 1) Account (v1)
         let accountData = null;
         try {
-          const accountResponse = await axios.get(
+          const accountRes = await axios.get(
             `https://api.henrikdev.xyz/valorant/v1/account/${encodeURIComponent(
               name
             )}/${encodeURIComponent(tag)}`,
-            {
-              headers: {
-                Authorization: process.env.VALORANT,
-                "User-Agent": "KafkaBot/1.0"
-              }
-            }
+            { headers }
           );
-          accountData = accountResponse.data.data;
-        } catch (accountError) {
-          // Handle Specific API Error Code 24
-          if (accountError.response?.data?.errors?.some((e) => e.code === 24)) {
+          accountData = accountRes.data?.data;
+        } catch (err) {
+          if (err.response?.data?.errors?.some((e) => e.code === 24)) {
             return interaction.editReply({
               content: "No Data",
               ephemeral: true
@@ -156,124 +276,130 @@ module.exports = {
           }
 
           console.error(
-            `Error fetching account data for ${player}:`,
-            accountError.response?.data || accountError.message
+            "Valorant account error:",
+            err.response?.data || err.message
           );
           return interaction.editReply({
             content:
-              "An error occurred while retrieving account data. Please check the Riot ID and try again.",
+              "Couldn’t fetch account info. Check the Riot ID and try again.",
             ephemeral: true
           });
         }
 
-        // Fetch MMR Data
+        // 2) MMR (v3)
         let mmrData = null;
         try {
-          const mmrResponse = await axios.get(
-            `https://api.henrikdev.xyz/valorant/v2/mmr/${region}/${encodeURIComponent(
+          const mmrRes = await axios.get(
+            `https://api.henrikdev.xyz/valorant/v3/mmr/${region}/${platform}/${encodeURIComponent(
               name
             )}/${encodeURIComponent(tag)}`,
-            {
-              headers: {
-                Authorization: process.env.VALORANT,
-                "User-Agent": "KafkaBot/1.0"
-              }
-            }
+            { headers }
           );
-          mmrData = mmrResponse.data.data;
-        } catch (mmrError) {
+          mmrData = mmrRes.data?.data;
+        } catch (err) {
           console.warn(
-            `No competitive MMR data found for ${player}. Defaulting to Unranked.`
+            "Valorant MMR v3 error (continuing):",
+            err.response?.data || err.message
           );
         }
 
-        // Account Information
-        const playerName = `${accountData.name}#${accountData.tag}`;
-        const accountLevel = accountData.account_level || "N/A";
-        const playerCard = accountData.card?.small || null;
+        const riotId = `${accountData?.name ?? name}#${
+          accountData?.tag ?? tag
+        }`;
+        const accountLevel = accountData?.account_level ?? "N/A";
+        const playerCard = accountData?.card?.small || null;
 
-        // MMR & Rank Information
-        const currentRank =
-          mmrData?.current_data?.currenttierpatched || "Unranked";
-        const rankProgress = mmrData?.current_data?.ranking_in_tier ?? "N/A";
-        const elo = mmrData?.current_data?.elo ?? "N/A";
-        const mmrChange =
-          mmrData?.current_data?.mmr_change_to_last_game ?? "N/A";
-        const highestRank = mmrData?.highest_rank?.patched_tier || "N/A";
+        const currentRank = mmrData?.current?.tier?.name || "Unrated";
+        const rr = mmrData?.current?.rr ?? null;
+        const elo = mmrData?.current?.elo ?? null;
+        const lastChange = mmrData?.current?.last_change ?? null;
 
-        // Competitive Act History
-        let actHistory = "No competitive history available.";
-        if (mmrData?.by_season) {
-          const lastActs = Object.entries(mmrData.by_season)
-            .filter(([_, data]) => data.final_rank_patched) // Filter only valid acts
-            .slice(-3) // Get last 3 acts
-            .reverse(); // Show latest first
+        const peakTier = mmrData?.peak?.tier?.name || null;
+        const peakSeason = mmrData?.peak?.season?.short || null;
+        const peakRr = mmrData?.peak?.rr ?? null;
 
-          actHistory = lastActs.length
-            ? lastActs
-              .map(
-                ([act, data]) =>
-                  `**${act.toUpperCase()}** → ${data.final_rank_patched} (${data.wins
-                  }W / ${data.number_of_games - data.wins}L of ${data.number_of_games
-                  } games)`
-              )
-              .join("\n")
-            : "No ranked matches played.";
+        const peakText = peakTier
+          ? `${peakTier}${
+              peakSeason ? ` (${String(peakSeason).toUpperCase()})` : ""
+            }${peakRr != null ? ` • ${peakRr} RR` : ""}`
+          : "N/A";
+
+        const seasonal = Array.isArray(mmrData?.seasonal)
+          ? mmrData.seasonal
+          : [];
+
+        // totals
+        let seasonalGames = 0;
+        let seasonalWins = 0;
+        let seasonalWinrate = "N/A";
+
+        if (seasonal.length) {
+          for (const s of seasonal) {
+            seasonalGames += Number(s.games || 0);
+            seasonalWins += Number(s.wins || 0);
+          }
+          seasonalWinrate =
+            seasonalGames > 0 ? pct(seasonalWins / seasonalGames) : "N/A";
         }
 
-        // Embed Creation
+        const headline = mkHeadline({ currentRank, rr, lastChange, elo });
+        const overview = mkOverviewBlock({
+          region,
+          platform,
+          accountLevel,
+          peakText,
+          seasonalGames,
+          seasonalWins,
+          seasonalWinrate
+        });
+        const acts = mkActsBlock(seasonal);
+
+        const trackerUrl = `https://tracker.gg/valorant/profile/riot/${encodeURIComponent(
+          riotId
+        )}/overview`;
+
         const embed = new EmbedBuilder()
           .setColor("Blurple")
-          .setTitle(`${playerName} - Valorant Stats`)
-          .setThumbnail(playerCard)
+          .setAuthor({
+            name: `${riotId} — Valorant`,
+            iconURL: playerCard || undefined
+          })
+          .setURL(trackerUrl)
+          .setDescription(headline)
+          .setThumbnail(playerCard || null)
           .addFields(
-            { name: "Region", value: region.toUpperCase(), inline: true },
-            {
-              name: "Account Level",
-              value: `${accountLevel}`,
-              inline: true
-            },
-            {
-              name: "Current Rank",
-              value: `${currentRank}`,
-              inline: true
-            },
-            {
-              name: "Rank Progress",
-              value: `${rankProgress}/100`,
-              inline: true
-            },
-            { name: "Elo Rating", value: `${elo}`, inline: true },
-            {
-              name: "MMR Change",
-              value: `${mmrChange} MMR`,
-              inline: true
-            },
-            { name: "Highest Rank", value: highestRank, inline: true }
+            { name: "Overview", value: overview, inline: false },
+            { name: "Recent Acts", value: acts, inline: false }
           )
           .setFooter({
             text: "git gud uwu",
             iconURL: "https://cdn3.emoji.gg/emojis/5007-uwu.png"
-          });
+          })
+          .setTimestamp();
 
-        if (actHistory) {
-          embed.addFields({
-            name: "Competitive Act History",
-            value: actHistory,
-            inline: false
-          });
-        }
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setLabel("Tracker.gg")
+            .setStyle(ButtonStyle.Link)
+            .setURL(trackerUrl)
+        );
 
-        await interaction.editReply({ embeds: [embed] });
+        const payload = { embeds: [embed], components: [row] };
+
+        VAL_CACHE.set(cacheKey, {
+          expires: Date.now() + VAL_CACHE_TTL_MS,
+          payload
+        });
+
+        return interaction.editReply(payload);
       } catch (error) {
         console.error(
           "Error fetching Valorant stats:",
           error.response?.data || error.message
         );
-
-        await interaction.editReply({
+        return interaction.editReply({
           content:
-            "An error occurred while retrieving stats. Please check the Riot ID and try again.",
+            "An error occurred while retrieving Valorant stats. Try again in a bit.",
           ephemeral: true
         });
       }
@@ -284,7 +410,7 @@ module.exports = {
 
       await interaction.deferReply();
 
-      const [name, tag] = player.split("#");
+      const { name, tag } = safeRiotIdSplit(player);
       if (!name || !tag) {
         return interaction.editReply({
           content: "Invalid Riot ID format. Use `Player#Tag`.",
@@ -293,9 +419,6 @@ module.exports = {
       }
 
       try {
-        console.log(`Fetching Riot ID: ${name}#${tag}`);
-
-        // Get PUUID using Riot ID
         const riotAccountResponse = await axios.get(
           `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(
             name
@@ -306,7 +429,6 @@ module.exports = {
         );
         const puuid = riotAccountResponse.data.puuid;
 
-        // Ensure a valid match history region mapping before using it
         const regionMapping = {
           br1: "br1",
           eun1: "eun1",
@@ -325,7 +447,6 @@ module.exports = {
           id2: "sg2"
         };
 
-        // Regional API Mapping for Match History
         const matchHistoryMapping = {
           br1: "americas",
           eun1: "europe",
@@ -347,29 +468,12 @@ module.exports = {
         const matchHistoryRegion = matchHistoryMapping[region];
 
         if (!tftApiRegion || !matchHistoryRegion) {
-          console.error(`Invalid region "${region}".`);
           return interaction.editReply({
             content: `Error: The region "${region}" is not supported.`,
             ephemeral: true
           });
         }
 
-        console.log(`Using API Region: ${tftApiRegion}`);
-        console.log(`Using Match History Region: ${matchHistoryRegion}`);
-
-        if (!matchHistoryRegion) {
-          console.error(
-            `Invalid region "${region}". No match history region available.`
-          );
-          return interaction.editReply({
-            content: `Error: The region "${region}" is not supported. Please select a valid region.`,
-            ephemeral: true
-          });
-        }
-
-        console.log(`Final Match History Region Used: ${matchHistoryRegion}`);
-
-        // Fetch Summoner Data using PUUID
         const summonerResponse = await axios.get(
           `https://${tftApiRegion}.api.riotgames.com/tft/summoner/v1/summoners/by-puuid/${puuid}`,
           {
@@ -379,7 +483,6 @@ module.exports = {
 
         const summonerData = summonerResponse.data;
 
-        // Fetch Ranked Data
         const rankResponse = await axios.get(
           `https://${tftApiRegion}.api.riotgames.com/tft/league/v1/entries/by-summoner/${summonerData.id}`,
           {
@@ -409,9 +512,6 @@ module.exports = {
               : "N/A";
         }
 
-        console.log(`Using match history region: ${matchHistoryRegion}`);
-
-        // Fetch the last 50 match IDs (limit to 50 matches)
         const matchHistoryResponse = await axios.get(
           `https://${matchHistoryRegion}.api.riotgames.com/tft/match/v1/matches/by-puuid/${puuid}/ids?count=50`,
           {
@@ -427,16 +527,12 @@ module.exports = {
           });
         }
 
-        console.log(`Retrieved ${matchIds.length} matches`);
-
-        // Fetch Match Data in Batches
         const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         const batchSize = 5;
         let matchResults = [];
 
         for (let i = 0; i < matchIds.length; i += batchSize) {
           const batch = matchIds.slice(i, i + batchSize);
-          console.log(`Fetching match batch ${i / batchSize + 1}...`);
 
           const batchResults = await Promise.allSettled(
             batch.map((matchId) =>
@@ -447,12 +543,7 @@ module.exports = {
                 )
                 .then((res) => res.data)
                 .catch((err) => {
-                  if (err.response?.status === 429) {
-                    console.warn(
-                      `Rate limit reached! Skipping match ${matchId}`
-                    );
-                    return null; // Skip this request to avoid errors
-                  }
+                  if (err.response?.status === 429) return null;
                   return null;
                 })
             )
@@ -463,12 +554,8 @@ module.exports = {
             .map((result) => result.value);
 
           matchResults.push(...successfulMatches);
-          console.log(`Processed ${matchResults.length} matches so far.`);
-
-          await delay(1200); // 1.2-second delay to avoid Riot API bans
+          await delay(1200);
         }
-
-        console.log(`Successfully processed ${matchResults.length} matches.`);
 
         if (matchResults.length === 0) {
           return interaction.editReply({
@@ -477,7 +564,6 @@ module.exports = {
           });
         }
 
-        // Process Match Data
         let totalPlacement = 0,
           top4Count = 0,
           firstPlaceCount = 0;
@@ -487,17 +573,16 @@ module.exports = {
             (p) => p.puuid === puuid
           );
           if (playerData) {
-            totalPlacement += playerData.placement; // Sum of placements
-            if (playerData.placement <= 4) top4Count++; // Count top 4 placements
-            if (playerData.placement === 1) firstPlaceCount++; // Count 1st place finishes
+            totalPlacement += playerData.placement;
+            if (playerData.placement <= 4) top4Count++;
+            if (playerData.placement === 1) firstPlaceCount++;
           }
         });
 
-        // Calculate the correct average placement based on the actual 50 matches fetched
         const avgPlacement =
           matchResults.length > 0
             ? (totalPlacement / matchResults.length).toFixed(2)
-            : "N/A"; // Ensure the correct calculation of avgPlacement
+            : "N/A";
 
         const top4Rate = matchResults.length
           ? ((top4Count / matchResults.length) * 100).toFixed(2) + "%"
@@ -506,34 +591,23 @@ module.exports = {
           ? ((firstPlaceCount / matchResults.length) * 100).toFixed(2) + "%"
           : "N/A";
 
-        // Fetch the latest DDragon version dynamically
-        const ddragonResponse = await fetch(
+        const ddragonVersionsRes = await axios.get(
           "https://ddragon.leagueoflegends.com/api/versions.json"
         );
-        const ddragonVersions = await ddragonResponse.json();
-        const latestVersion = ddragonVersions[0];
+        const latestVersion = ddragonVersionsRes.data?.[0];
 
-        // Create Embed Response
         const profileIconId = summonerData.profileIconId;
         const profileIcon = profileIconId
           ? `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/profileicon/${profileIconId}.png`
-          : "https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/profileicon/0.png";
+          : `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/profileicon/0.png`;
 
         const embed = new EmbedBuilder()
           .setColor("Blurple")
           .setTitle(`${name}#${tag} - TFT Stats (Last 50 Games)`)
           .setThumbnail(profileIcon)
           .addFields(
-            {
-              name: "Region",
-              value: region.toUpperCase(),
-              inline: true
-            },
-            {
-              name: "Rank",
-              value: rank,
-              inline: true
-            },
+            { name: "Region", value: region.toUpperCase(), inline: true },
+            { name: "Rank", value: `${rank} (${lp})`, inline: true },
             {
               name: "Total Games",
               value: `${matchResults.length}`,
@@ -560,7 +634,6 @@ module.exports = {
         });
       }
     }
-
     if (subcommand === "osu") {
       const player = interaction.options.getString("player");
       const type = interaction.options.getString("type");
@@ -588,7 +661,6 @@ module.exports = {
           });
         }
 
-        // Get scores
         let apiUrl = "";
         if (type === "top") {
           apiUrl = `https://osu.ppy.sh/api/v2/users/${user.id}/scores/best?limit=5`;
@@ -616,7 +688,8 @@ module.exports = {
         const embed = new EmbedBuilder()
           .setColor("Blue")
           .setTitle(
-            `${user.username}'s ${type === "top" ? "Top Plays" : "Most Recent Play"
+            `${user.username}'s ${
+              type === "top" ? "Top Plays" : "Most Recent Play"
             }`
           )
           .setThumbnail(user.avatar_url)
@@ -632,8 +705,9 @@ module.exports = {
             const rank = play.rank;
             const mapURL = `https://osu.ppy.sh/beatmaps/${beatmap.id}`;
             const officialPp = play.pp ? play.pp.toFixed(2) : "0.00";
-            const fieldName = `#${index + 1} - ${set.artist} - ${set.title} [${beatmap.version
-              }]\n${mapURL}\n`;
+            const fieldName = `#${index + 1} - ${set.artist} - ${set.title} [${
+              beatmap.version
+            }]\n${mapURL}\n`;
 
             embed.addFields({
               name: fieldName,
@@ -657,7 +731,6 @@ module.exports = {
           const rank = play.rank;
           const mapURL = `https://osu.ppy.sh/beatmaps/${beatmap.id}`;
 
-          // Download map & compute PP via rosu-pp
           const beatmapPath = path.join(
             __dirname,
             `../../../extra/maps/${beatmap.id}.osu`
