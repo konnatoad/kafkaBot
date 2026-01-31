@@ -10,3 +10,6 @@ test.js
 osuAuth.js
 src/extra
 src/commands/dev-commands/*
+
+# local-only dev commands
+src/commands/dev-commands/
