@@ -4,6 +4,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   MessageFlags,
+  PermissionFlagsBits,
 } = require("discord.js");
 const Quote = require("../../../../schemas/quoteSchema");
 
@@ -104,11 +105,9 @@ const getQuotesPage = async (interaction, page = 1, uniqueId, user) => {
       );
       quoteContent = quoteContent.replace(/```/g, "\\`\\`\\`"); // Escape triple backticks if necessary
       const formattedDate = quote.date.toLocaleDateString();
-      return `\`\`\`text\n${start + index + 1}. Quote ID: ${
-        quote._id
-      }\nAuthor: ${
-        quote.author
-      }\nContent: ${quoteContent}\nDate: ${formattedDate}\n\`\`\``;
+      return `\`\`\`text\n${start + index + 1}. Quote ID: ${quote._id
+        }\nAuthor: ${quote.author
+        }\nContent: ${quoteContent}\nDate: ${formattedDate}\n\`\`\``;
     });
 
     let content = await Promise.all(contentPromises);
@@ -244,6 +243,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("quote")
     .setDescription("Manage quotes")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand((subcommand) =>
       subcommand
         .setName("add")

@@ -9,7 +9,7 @@ const https = require("https");
 const twitchNotificationCommand = new SlashCommandBuilder()
   .setName("twitchnotify")
   .setDescription("Setup or remove Twitch live notification system")
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .addSubcommand((subcommand) =>
     subcommand
       .setName("setup")
