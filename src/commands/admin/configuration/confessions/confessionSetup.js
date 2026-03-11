@@ -40,7 +40,8 @@ module.exports = {
 
         return interaction.reply({
           content:
-            `Confessions are already set up${current ? ` in ${current}` : ""
+            `Confessions are already set up${
+              current ? ` in ${current}` : ""
             }.\n` +
             "Use `/confession-disable` first if you want to change the channel.",
           flags: MessageFlags.Ephemeral
@@ -67,7 +68,7 @@ module.exports = {
         });
       }
 
-      console.log("confession-setup error:", err);
+      console.error("confession-setup error:", err);
       return interaction.reply({
         content: "Failed to save the confessions channel.",
         flags: MessageFlags.Ephemeral

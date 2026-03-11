@@ -32,13 +32,15 @@ const sendDailyQuote = async (client) => {
         .fetch(guild.channelId)
         .catch(() => null);
       if (!channel) {
-        console.log(`Channel not found for guild ${guild.guildId}. Skipping.`);
+        console.error(
+          `Channel not found for guild ${guild.guildId}. Skipping.`
+        );
         continue;
       }
 
       const permissions = channel.permissionsFor(client.user);
       if (!permissions || !permissions.has("SendMessages")) {
-        console.log(
+        console.error(
           `Missing permissions to send messages in channel ${channel.id}.`
         );
         continue;
@@ -46,7 +48,7 @@ const sendDailyQuote = async (client) => {
 
       let quotes = await Quote.find({ guildId: guild.guildId }).exec();
       if (quotes.length === 0) {
-        console.log(`No quotes found for guild ${guild.guildId}. Skipping.`);
+        console.error(`No quotes found for guild ${guild.guildId}. Skipping.`);
         continue;
       }
 
@@ -89,14 +91,14 @@ const sendDailyQuote = async (client) => {
       await DailyQuote.findOneAndUpdate(
         { guildId: guild.guildId },
         { recentQuotes },
-        { new: true }
+        { returnDocument: "after" }
       );
 
       // Increment quote count
       const updatedGuild = await DailyQuote.findOneAndUpdate(
         { guildId: guild.guildId },
         { $inc: { quoteCount: 1 } },
-        { new: true }
+        { returnDocument: "after" }
       );
 
       const quoteNumber = updatedGuild.quoteCount;

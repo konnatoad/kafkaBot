@@ -40,7 +40,7 @@ module.exports = {
         flags: MessageFlags.Ephemeral
       });
     } catch (err) {
-      console.log("confessionsdisable error:", err);
+      console.error("confessionsdisable error:", err);
       return interaction.reply({
         content: "Failed to disable confessions.",
         flags: MessageFlags.Ephemeral

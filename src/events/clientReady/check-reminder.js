@@ -26,7 +26,7 @@ module.exports = (client) => {
               (await client.guilds.fetch(Guild));
 
             if (!targetGuild) {
-              console.log(`Guild not found for userId: ${userId}`);
+              console.error(`Guild not found for userId: ${userId}`);
               continue;
             }
 
