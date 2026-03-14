@@ -3,7 +3,8 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  MessageFlags
 } = require("discord.js");
 const axios = require("axios");
 const { getOsuAccessToken } = require("../../../extra/osuAuth");
@@ -241,7 +242,7 @@ module.exports = {
         return interaction.editReply({
           content:
             "Invalid Riot ID format. Use `Player#Tag` (example: `TenZ#NA1`).",
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -271,7 +272,7 @@ module.exports = {
           if (err.response?.data?.errors?.some((e) => e.code === 24)) {
             return interaction.editReply({
               content: "No Data",
-              ephemeral: true
+              flags: MessageFlags.Ephemeral
             });
           }
 
@@ -282,7 +283,7 @@ module.exports = {
           return interaction.editReply({
             content:
               "Couldn’t fetch account info. Check the Riot ID and try again.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -400,7 +401,7 @@ module.exports = {
         return interaction.editReply({
           content:
             "An error occurred while retrieving Valorant stats. Try again in a bit.",
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
     }
@@ -414,7 +415,7 @@ module.exports = {
       if (!name || !tag) {
         return interaction.editReply({
           content: "Invalid Riot ID format. Use `Player#Tag`.",
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -470,7 +471,7 @@ module.exports = {
         if (!tftApiRegion || !matchHistoryRegion) {
           return interaction.editReply({
             content: `Error: The region "${region}" is not supported.`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -523,7 +524,7 @@ module.exports = {
         if (!Array.isArray(matchIds) || matchIds.length === 0) {
           return interaction.editReply({
             content: "No recent TFT matches found.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -560,7 +561,7 @@ module.exports = {
         if (matchResults.length === 0) {
           return interaction.editReply({
             content: "No valid match data found.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -630,7 +631,7 @@ module.exports = {
         await interaction.editReply({
           content:
             "Error retrieving TFT stats. Check the Riot ID and try again.",
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
     }
@@ -645,7 +646,7 @@ module.exports = {
         if (!accessToken) {
           return interaction.editReply({
             content: "Failed to retrieve osu! API token.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -657,7 +658,7 @@ module.exports = {
         if (!user || !user.id) {
           return interaction.editReply({
             content: "User not found on osu!",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -669,7 +670,7 @@ module.exports = {
         } else {
           return interaction.editReply({
             content: "Invalid type. Use `top` or `recent`.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -681,7 +682,7 @@ module.exports = {
         if (!Array.isArray(plays) || plays.length === 0) {
           return interaction.editReply({
             content: `No ${type} plays found for this user.`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -779,7 +780,7 @@ module.exports = {
         );
         await interaction.editReply({
           content: "An error occurred while retrieving osu! stats.",
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
     }
