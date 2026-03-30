@@ -48,7 +48,7 @@ const twitchNotificationCommand = new SlashCommandBuilder()
   );
 
 module.exports = {
-  deleted: false,
+  deleted: true,
   data: twitchNotificationCommand,
   async run({ interaction }) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
