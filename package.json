@@ -35,6 +35,7 @@
     },
     "@discordjs/rest": {
       "undici": "^6.24.0"
-    }
+    },
+    "lodash": "4.18.1"
   }
 }
