@@ -10,7 +10,7 @@ const ConfessionConfig = require("../../../../schemas/ConfessionConfig");
 module.exports = {
   testOnly: false,
   data: new SlashCommandBuilder()
-    .setName("confession-setup") // matches your screenshot
+    .setName("confession-setup")
     .setDescription("Set the channel where anonymous confessions are posted.")
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addChannelOption((opt) =>

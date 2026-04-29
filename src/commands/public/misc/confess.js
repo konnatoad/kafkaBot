@@ -1,7 +1,12 @@
-const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder,
+} = require("discord.js");
 
 module.exports = {
-  testOnly: true,
   data: new SlashCommandBuilder()
     .setName("confess")
     .setDescription("send an anonymous confession."),
