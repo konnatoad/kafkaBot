@@ -48,7 +48,8 @@ const twitchNotificationCommand = new SlashCommandBuilder()
   );
 
 module.exports = {
-  deleted: true,
+  deleted: false,
+  testOnly: false,
   data: twitchNotificationCommand,
   async run({ interaction }) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -201,13 +202,18 @@ async function fetchTwitchUserData(userLogin) {
       });
 
       res.on("end", () => {
-        try {
-          const userData = JSON.parse(data);
-          resolve(userData.data[0]);
-        } catch (error) {
-          reject(error);
-        }
-      });
+  try {
+    const userData = JSON.parse(data);
+    if (!userData.data) {
+      console.error("Twitch API error:", userData);
+      resolve(null);
+      return;
+    }
+    resolve(userData.data[0]);
+  } catch (error) {
+    reject(error);
+  }
+});
     });
 
     req.on("error", (error) => {

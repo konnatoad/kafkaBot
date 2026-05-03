@@ -21,7 +21,11 @@ async function fetchTwitchData(userLogin) {
       });
 
       res.on("end", () => {
-        resolve(JSON.parse(data));
+        const parsed = JSON.parse(data);
+        if (!parsed.data) {
+          console.error("Twitch API error:", parsed);
+        }
+        resolve(parsed);
       });
     });
 
@@ -40,7 +44,7 @@ async function sendNotification(notificationConfig, userLogin, client) {
 
   if (!targetGuild) {
     console.error(
-      `Guild ${notificationConfig.guildId} not found for ${userLogin}`
+      `Guild ${notificationConfig.guildId} not found for ${userLogin}`,
     );
     return;
   }
@@ -48,12 +52,12 @@ async function sendNotification(notificationConfig, userLogin, client) {
   const targetChannel =
     targetGuild.channels.cache.get(notificationConfig.notificationChannelId) ||
     (await targetGuild.channels.fetch(
-      notificationConfig.notificationChannelId
+      notificationConfig.notificationChannelId,
     ));
 
   if (!targetChannel) {
     console.error(
-      `Notification channel ${notificationConfig.notificationChannelId} not found for ${userLogin}`
+      `Notification channel ${notificationConfig.notificationChannelId} not found for ${userLogin}`,
     );
     return;
   }
