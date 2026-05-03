@@ -5,9 +5,9 @@ module.exports = (client) => {
     status: "online",
     activities: [
       {
-        type: ActivityType.Listening,
-        name: "you /beg",
-        state: "/help for list of commands.",
+        type: ActivityType.Watching,
+        name: "bomzh.fm",
+        state: "/help for commands",
       },
     ],
   });
