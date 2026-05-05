@@ -29,11 +29,12 @@ new CommandHandler({
   functions: path.join(__dirname, "functions"),
 });
 
-console.log("TOKEN:", process.env.TOKEN ? "✅ Loaded" : "❌ Missing");
-console.log(
-  "MONGODB_URI:",
-  process.env.MONGODB_URI ? "✅ Loaded" : "❌ Missing",
-);
+const REQUIRED_ENV = ["TOKEN", "MONGODB_URI", "DEV_ID", "TESTSERVER"];
+const missingEnv = REQUIRED_ENV.filter((key) => !process.env[key]);
+if (missingEnv.length) {
+  console.error(`❌ Missing required environment variables: ${missingEnv.join(", ")}`);
+  process.exit(1);
+}
 
 (async () => {
   try {
@@ -41,6 +42,7 @@ console.log(
     console.log("✅ Successfully connected to MongoDB!");
   } catch (error) {
     console.error("❌ MongoDB Connection Error:", error);
+    process.exit(1);
   }
 
   client.login(process.env.TOKEN);
