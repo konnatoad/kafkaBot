@@ -58,7 +58,7 @@ module.exports = {
       };
       data.Content.push(warnContent);
     }
-    data.save();
+    await data.save();
 
     const embed = new EmbedBuilder()
       .setColor("Blurple")
