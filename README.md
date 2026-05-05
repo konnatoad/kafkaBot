@@ -34,7 +34,6 @@ A multi-purpose Discord bot with YouTube/Twitch notifications, a leveling system
 - **Auto-role** — Assign a role automatically on member join
 - **Logging** — Message deletion and edit logs
 - **Confessions** — Anonymous submissions to a dedicated channel
-- **Fun** — Cat/dog pics, random quotes, random videos
 
 ---
 
