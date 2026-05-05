@@ -13,10 +13,6 @@ function getRandomNumber(x, y) {
   return randomNumber + x;
 }
 
-function getRandomrice(x, y) {
-  const ricegnat = y - x + 1;
-  return ricegnat + x;
-}
 
 module.exports = {
   deleted: false,
