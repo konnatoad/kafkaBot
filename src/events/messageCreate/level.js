@@ -30,7 +30,7 @@ module.exports = async (message) => {
     });
 
     if (!Data) {
-      levelSchema.create({
+      await levelSchema.create({
         Guild: guild.id,
         User: author.id,
         XP: 0,
@@ -38,13 +38,13 @@ module.exports = async (message) => {
       });
     }
 
-    const userProfile = await UserProfile.findOne({
+    let userProfile = await UserProfile.findOne({
       userId: author.id,
       Guild: guild.id,
     });
 
     if (!userProfile) {
-      UserProfile.create({
+      userProfile = await UserProfile.create({
         userId: author.id,
         Guild: guild.id,
         balance: 25,
@@ -80,7 +80,7 @@ module.exports = async (message) => {
       channel.send({ embeds: [embed] });
     } else {
       data.XP += give;
-      data.save();
+      await data.save();
     }
   } catch (error) {
     console.error(error);
