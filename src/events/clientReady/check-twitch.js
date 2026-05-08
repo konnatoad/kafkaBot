@@ -37,29 +37,34 @@ async function fetchTwitchData(userLogin) {
   });
 }
 
-async function sendNotification(notificationConfig, userLogin, client) {
-  const targetGuild =
-    client.guilds.cache.get(notificationConfig.guildId) ||
-    (await client.guilds.fetch(notificationConfig.guildId));
+async function sendNotification(notificationConfig, userLogin, client, guildCache, channelCache) {
+  const { guildId, notificationChannelId } = notificationConfig;
 
+  let targetGuild = guildCache.get(guildId);
   if (!targetGuild) {
-    console.error(
-      `Guild ${notificationConfig.guildId} not found for ${userLogin}`,
-    );
-    return;
+    targetGuild =
+      client.guilds.cache.get(guildId) ||
+      (await client.guilds.fetch(guildId).catch(() => null));
+    if (!targetGuild) {
+      console.error(`Guild ${guildId} not found for ${userLogin}`);
+      return;
+    }
+    guildCache.set(guildId, targetGuild);
   }
 
-  const targetChannel =
-    targetGuild.channels.cache.get(notificationConfig.notificationChannelId) ||
-    (await targetGuild.channels.fetch(
-      notificationConfig.notificationChannelId,
-    ));
-
+  const channelCacheKey = `${guildId}:${notificationChannelId}`;
+  let targetChannel = channelCache.get(channelCacheKey);
   if (!targetChannel) {
-    console.error(
-      `Notification channel ${notificationConfig.notificationChannelId} not found for ${userLogin}`,
-    );
-    return;
+    targetChannel =
+      targetGuild.channels.cache.get(notificationChannelId) ||
+      (await targetGuild.channels.fetch(notificationChannelId).catch(() => null));
+    if (!targetChannel) {
+      console.error(
+        `Notification channel ${notificationChannelId} not found for ${userLogin}`,
+      );
+      return;
+    }
+    channelCache.set(channelCacheKey, targetChannel);
   }
 
   // Construct message with Twitch channel URL
@@ -84,6 +89,9 @@ module.exports = (client) => {
     try {
       const notificationConfigs = await NotificationConfig.find();
 
+      const guildCache = new Map();
+      const channelCache = new Map();
+
       for (const notificationConfig of notificationConfigs) {
         const userLogin = notificationConfig.twitchUsername;
 
@@ -99,7 +107,7 @@ module.exports = (client) => {
         // Check if notification has been sent previously
         if (isLive && !notificationConfig.isLivePreviously) {
           // Send notification
-          await sendNotification(notificationConfig, userLogin, client);
+          await sendNotification(notificationConfig, userLogin, client, guildCache, channelCache);
         } else if (!isLive && notificationConfig.isLivePreviously) {
           // Update isLivePreviously field
           notificationConfig.isLivePreviously = false;

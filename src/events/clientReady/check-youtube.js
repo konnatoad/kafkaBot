@@ -11,6 +11,9 @@ module.exports = (client) => {
     try {
       const notificationConfigs = await NotificationConfig.find();
 
+      const guildCache = new Map();
+      const channelCache = new Map();
+
       for (const notificationConfig of notificationConfigs) {
         const YOUTUBE_RSS_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${notificationConfig.ytChannelId}`;
 
@@ -29,30 +32,35 @@ module.exports = (client) => {
           (latestVideo.id.split(":")[2] !== lastCheckedVid.id &&
             new Date(latestVideo.pubDate) > new Date(lastCheckedVid.pubDate))
         ) {
-          const targetGuild =
-            client.guilds.cache.get(notificationConfig.guildId) ||
-            (await client.guilds.fetch(notificationConfig.guildId));
+          const { guildId, notifiactionChannelId } = notificationConfig;
 
+          let targetGuild = guildCache.get(guildId);
           if (!targetGuild) {
-            await NotificationConfig.findOneAndDelete({
-              _id: notificationConfig._id
-            });
-            continue;
+            targetGuild =
+              client.guilds.cache.get(guildId) ||
+              (await client.guilds.fetch(guildId).catch(() => null));
+            if (!targetGuild) {
+              await NotificationConfig.findOneAndDelete({
+                _id: notificationConfig._id
+              });
+              continue;
+            }
+            guildCache.set(guildId, targetGuild);
           }
 
-          const targetChannel =
-            targetGuild.channels.cache.get(
-              notificationConfig.notifiactionChannelId
-            ) ||
-            (await targetGuild.channels.fetch(
-              notificationConfig.notifiactionChannelId
-            ));
-
+          const channelCacheKey = `${guildId}:${notifiactionChannelId}`;
+          let targetChannel = channelCache.get(channelCacheKey);
           if (!targetChannel) {
-            await NotificationConfig.findOneAndDelete({
-              _id: notificationConfig._id
-            });
-            continue;
+            targetChannel =
+              targetGuild.channels.cache.get(notifiactionChannelId) ||
+              (await targetGuild.channels.fetch(notifiactionChannelId).catch(() => null));
+            if (!targetChannel) {
+              await NotificationConfig.findOneAndDelete({
+                _id: notificationConfig._id
+              });
+              continue;
+            }
+            channelCache.set(channelCacheKey, targetChannel);
           }
 
           notificationConfig.lastCheckedVid = {
