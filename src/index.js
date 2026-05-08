@@ -47,3 +47,13 @@ if (missingEnv.length) {
 
   client.login(process.env.TOKEN);
 })();
+
+async function shutdown(signal) {
+  console.log(`\n${signal} received, shutting down...`);
+  client.destroy();
+  await mongoose.disconnect();
+  process.exit(0);
+}
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
