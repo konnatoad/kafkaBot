@@ -14,7 +14,10 @@ module.exports = (client) => {
       for (const notificationConfig of notificationConfigs) {
         const YOUTUBE_RSS_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${notificationConfig.ytChannelId}`;
 
-        const feed = await parser.parseURL(YOUTUBE_RSS_URL).catch((e) => null);
+        const feed = await parser.parseURL(YOUTUBE_RSS_URL).catch((e) => {
+          console.warn("check-youtube: failed to parse RSS feed:", e.message);
+          return null;
+        });
 
         if (!feed?.items.length) continue;
 
@@ -70,7 +73,9 @@ module.exports = (client) => {
 
               targetChannel.send(targetMessage);
             })
-            .catch((e) => null);
+            .catch((e) => {
+              console.error("check-youtube: failed to save lastCheckedVid:", e);
+            });
         }
       }
     } catch (error) {

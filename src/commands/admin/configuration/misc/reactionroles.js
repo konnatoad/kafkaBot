@@ -97,7 +97,9 @@ module.exports = {
             Role: role.id,
           });
 
-          await message.react(emoji).catch((err) => { });
+          await message.react(emoji).catch((err) => {
+            console.error("reaction-roles: failed to react with emoji:", err);
+          });
 
           await interaction.reply({
             content: `Successfully added reaction role to the message.`,

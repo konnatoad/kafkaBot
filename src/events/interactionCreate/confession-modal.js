@@ -77,6 +77,8 @@ module.exports = async (a, b) => {
       return interaction.reply({
         content: "Something broke while sending", flags: MessageFlags.Ephemeral,
       })
-    } catch (_) { }
+    } catch (replyErr) {
+      console.error("confession-modal: failed to send error reply:", replyErr);
+    }
   }
 }

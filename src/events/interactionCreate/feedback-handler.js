@@ -39,7 +39,9 @@ module.exports = async (interaction, client) => {
       })
       .setTimestamp();
 
-    await feedbackChannel.send({ embeds: [feedbackEmbed] }).catch(() => {}); // Handle any errors silently
+    await feedbackChannel.send({ embeds: [feedbackEmbed] }).catch((err) => {
+      console.error("feedback-handler: failed to send to feedback channel:", err);
+    });
 
     await interaction.reply({
       content:

@@ -12,12 +12,16 @@ module.exports = async (interaction, client) => {
           content:
             "This message was initialized by the developer indicating that the bug you reported has been solved.",
         })
-        .catch((err) => {});
+        .catch((err) => {
+          if (err.code !== 50007) console.error("bugreportbutton: failed to DM member:", err);
+        });
       await interaction.reply({
         content: `I have notified the member that their report is now solved`,
         flags: MessageFlags.Ephemeral,
       });
-      await interaction.message.delete().catch((err) => {});
+      await interaction.message.delete().catch((err) => {
+        if (err.code !== 10008) console.error("bugreportbutton: failed to delete message:", err);
+      });
     }
   }
 };

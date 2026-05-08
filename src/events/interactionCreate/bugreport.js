@@ -48,7 +48,9 @@ module.exports = async (interaction, client) => {
 
     await channel
       .send({ embeds: [embed], components: [button] })
-      .catch((err) => {});
+      .catch((err) => {
+        console.error("bugreport: failed to send to bug channel:", err);
+      });
     await interaction.reply({
       content:
         "Your report has been recorded. My developer will look into this issue, and reach out with any further questions.",

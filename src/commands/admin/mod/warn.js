@@ -75,7 +75,7 @@ module.exports = {
       .setTimestamp();
 
     target.send({ embeds: [embed] }).catch((err) => {
-      return;
+      if (err.code !== 50007) console.error("warn: failed to DM user:", err);
     });
 
     interaction.reply({ embeds: [embed2] });
