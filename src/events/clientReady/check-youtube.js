@@ -13,14 +13,22 @@ module.exports = (client) => {
 
       const guildCache = new Map();
       const channelCache = new Map();
+      const feedCache = new Map();
 
       for (const notificationConfig of notificationConfigs) {
-        const YOUTUBE_RSS_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${notificationConfig.ytChannelId}`;
+        const { ytChannelId } = notificationConfig;
 
-        const feed = await parser.parseURL(YOUTUBE_RSS_URL).catch((e) => {
-          console.warn("check-youtube: failed to parse RSS feed:", e.message);
-          return null;
-        });
+        let feed;
+        if (feedCache.has(ytChannelId)) {
+          feed = feedCache.get(ytChannelId);
+        } else {
+          const YOUTUBE_RSS_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${ytChannelId}`;
+          feed = await parser.parseURL(YOUTUBE_RSS_URL).catch((e) => {
+            console.warn(`check-youtube: failed to parse RSS feed for channel ${ytChannelId}:`, e.message);
+            return null;
+          });
+          feedCache.set(ytChannelId, feed);
+        }
 
         if (!feed?.items.length) continue;
 
