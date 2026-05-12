@@ -6,8 +6,9 @@ const {
   MessageFlags
 } = require("discord.js");
 const NotificationConfig = require("../../../../schemas/NotificationConfig");
-const Parser = require("rss-parser");
-const parser = new Parser();
+const axios = require("axios");
+
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
 async function run({ interaction }) {
   try {
@@ -30,17 +31,17 @@ async function run({ interaction }) {
       return;
     }
 
-    const YOUTUBE_RSS_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${targetYtChannelId}`;
+    const channelRes = await axios
+      .get(`https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${targetYtChannelId}&key=${YOUTUBE_API_KEY}`)
+      .catch(() => null);
 
-    const feed = await parser.parseURL(YOUTUBE_RSS_URL).catch((e) => {
-      interaction.followUp(
-        "There was an error fetching the channel. Ensure the ID is correct."
-      );
-    });
+    const channelData = channelRes?.data?.items?.[0];
+    if (!channelData) {
+      await interaction.followUp("There was an error fetching the channel. Ensure the ID is correct.");
+      return;
+    }
 
-    if (!feed) return;
-
-    const channelName = feed.title;
+    const channelName = channelData.snippet.title;
 
     const notificationConfig = new NotificationConfig({
       guildId: interaction.guildId,
@@ -51,12 +52,16 @@ async function run({ interaction }) {
       lastCheckedVid: null
     });
 
-    if (feed.items.length) {
-      const latestVideo = feed.items[0];
+    const playlistId = "UU" + targetYtChannelId.slice(2);
+    const videosRes = await axios
+      .get(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=1&key=${YOUTUBE_API_KEY}`)
+      .catch(() => null);
 
+    const latestItem = videosRes?.data?.items?.[0];
+    if (latestItem) {
       notificationConfig.lastCheckedVid = {
-        id: latestVideo.id.split(":")[2],
-        pubDate: latestVideo.pubDate
+        id: latestItem.snippet.resourceId.videoId,
+        pubDate: latestItem.snippet.publishedAt
       };
     }
 
@@ -73,7 +78,7 @@ async function run({ interaction }) {
 
         interaction.followUp({ embeds: [embed] });
       })
-      .catch((e) => {
+      .catch(() => {
         interaction.followUp(
           "Unexpected database error. Please try again in a moment."
         );

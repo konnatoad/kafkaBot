@@ -1,7 +1,24 @@
-const Parser = require("rss-parser");
+const axios = require("axios");
 const NotificationConfig = require("../../schemas/NotificationConfig");
 
-const parser = new Parser();
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+
+async function fetchLatestVideo(ytChannelId) {
+  const playlistId = "UU" + ytChannelId.slice(2);
+  const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=1&key=${YOUTUBE_API_KEY}`;
+  const res = await axios.get(url);
+  const item = res.data.items?.[0];
+  if (!item) return null;
+  const snippet = item.snippet;
+  return {
+    id: snippet.resourceId.videoId,
+    title: snippet.title,
+    link: `https://www.youtube.com/watch?v=${snippet.resourceId.videoId}`,
+    pubDate: snippet.publishedAt,
+    channelTitle: snippet.channelTitle,
+    channelLink: `https://www.youtube.com/channel/${ytChannelId}`
+  };
+}
 
 module.exports = (client) => {
   checkYoutube();
@@ -18,26 +35,24 @@ module.exports = (client) => {
       for (const notificationConfig of notificationConfigs) {
         const { ytChannelId } = notificationConfig;
 
-        let feed;
+        let latestVideo;
         if (feedCache.has(ytChannelId)) {
-          feed = feedCache.get(ytChannelId);
+          latestVideo = feedCache.get(ytChannelId);
         } else {
-          const YOUTUBE_RSS_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${ytChannelId}`;
-          feed = await parser.parseURL(YOUTUBE_RSS_URL).catch((e) => {
-            console.warn(`check-youtube: failed to parse RSS feed for channel ${ytChannelId}:`, e.message);
+          latestVideo = await fetchLatestVideo(ytChannelId).catch((e) => {
+            console.warn(`check-youtube: failed to fetch latest video for channel ${ytChannelId}:`, e.message);
             return null;
           });
-          feedCache.set(ytChannelId, feed);
+          feedCache.set(ytChannelId, latestVideo);
         }
 
-        if (!feed?.items.length) continue;
+        if (!latestVideo) continue;
 
-        const latestVideo = feed.items[0];
         const lastCheckedVid = notificationConfig.lastCheckedVid;
 
         if (
           !lastCheckedVid ||
-          (latestVideo.id.split(":")[2] !== lastCheckedVid.id &&
+          (latestVideo.id !== lastCheckedVid.id &&
             new Date(latestVideo.pubDate) > new Date(lastCheckedVid.pubDate))
         ) {
           const { guildId, notifiactionChannelId } = notificationConfig;
@@ -48,9 +63,7 @@ module.exports = (client) => {
               client.guilds.cache.get(guildId) ||
               (await client.guilds.fetch(guildId).catch(() => null));
             if (!targetGuild) {
-              await NotificationConfig.findOneAndDelete({
-                _id: notificationConfig._id
-              });
+              await NotificationConfig.findOneAndDelete({ _id: notificationConfig._id });
               continue;
             }
             guildCache.set(guildId, targetGuild);
@@ -63,16 +76,14 @@ module.exports = (client) => {
               targetGuild.channels.cache.get(notifiactionChannelId) ||
               (await targetGuild.channels.fetch(notifiactionChannelId).catch(() => null));
             if (!targetChannel) {
-              await NotificationConfig.findOneAndDelete({
-                _id: notificationConfig._id
-              });
+              await NotificationConfig.findOneAndDelete({ _id: notificationConfig._id });
               continue;
             }
             channelCache.set(channelCacheKey, targetChannel);
           }
 
           notificationConfig.lastCheckedVid = {
-            id: latestVideo.id.split(":")[2],
+            id: latestVideo.id,
             pubDate: latestVideo.pubDate
           };
 
@@ -83,9 +94,9 @@ module.exports = (client) => {
                 notificationConfig.customMessage
                   ?.replace("{VIDEO_URL}", latestVideo.link)
                   ?.replace("{VIDEO_TITLE}", latestVideo.title)
-                  ?.replace("{CHANNEL_URL}", feed.link)
-                  ?.replace("{CHANNEL_NAME}", feed.title) ||
-                `New upload by ${feed.title}\n${latestVideo.link}`;
+                  ?.replace("{CHANNEL_URL}", latestVideo.channelLink)
+                  ?.replace("{CHANNEL_NAME}", latestVideo.channelTitle) ||
+                `New upload by ${latestVideo.channelTitle}\n${latestVideo.link}`;
 
               targetChannel.send(targetMessage);
             })
