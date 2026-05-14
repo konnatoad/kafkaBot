@@ -22,7 +22,15 @@ module.exports = {
   run: async ({ interaction }) => {
     try {
       const guildId = interaction.guild.id; // Getting the guild ID from the interaction
-      const channelId = interaction.options.getChannel("channel").id; // Getting the channel ID from the interaction options
+
+      const channel = interaction.options.getChannel("channel");
+      const me = interaction.guild.members.me;
+      if (!channel.permissionsFor(me)?.has("SendMessages")) {
+        return await interaction.reply({
+          content: `I don't have permission to send messages in <#${channel.id}>. Please grant me the **Send Messages** permission there first.`,
+          flags: MessageFlags.Ephemeral,
+        });
+      }
 
       const existingSetup = await WelcomeSetup.findOne({ guildId }); // Checking if a welcome setup already exists for the guild
       if (existingSetup) {
@@ -35,12 +43,12 @@ module.exports = {
       await WelcomeSetup.create({
         // If no setup exists, create a new welcome setup
         guildId,
-        channelId,
+        channelId: channel.id,
       });
       const embed = new EmbedBuilder()
         .setColor("Random")
         .setDescription(
-          `Welcome setup completed. Welcome messages will be sent to <#${channelId}>.`
+          `Welcome setup completed. Welcome messages will be sent to <#${channel.id}>.`
         )
         .setTimestamp();
 

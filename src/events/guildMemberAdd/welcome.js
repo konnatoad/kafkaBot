@@ -19,6 +19,12 @@ module.exports = async (member) => {
     return;
   }
 
+  const me = member.guild.members.me;
+  if (!channel.permissionsFor(me)?.has("SendMessages")) {
+    console.error(`Missing SendMessages permission in welcome channel ${existingSetup.channelId} for guild ${guildId}`);
+    return;
+  }
+
   // Get the welcome message content from the database
   let messageContent = existingSetup.welcomeMessage
 
@@ -28,17 +34,19 @@ module.exports = async (member) => {
     .replace("{USER_NAME}", member.user.username)
     .replace("{SERVER_NAME}", member.guild.name);
 
-  // If the setup specifies to use an embed, create a new embed
-  if (existingSetup.useEmbed) {
-    const embed = new EmbedBuilder()
-      .setColor("Random")
-      .setTitle("Welcome to server.")
-      .setDescription(messageContent)
-      .setTimestamp();
+  try {
+    if (existingSetup.useEmbed) {
+      const embed = new EmbedBuilder()
+        .setColor("Random")
+        .setTitle("Welcome to server.")
+        .setDescription(messageContent)
+        .setTimestamp();
 
-    channel.send({ content: `<@${member.id}>`, embeds: [embed] });
-  } else {
-    // If not using an embed, send a plain message to the channel
-    channel.send(messageContent);
+      await channel.send({ content: `<@${member.id}>`, embeds: [embed] });
+    } else {
+      await channel.send(messageContent);
+    }
+  } catch (err) {
+    console.error(`Failed to send welcome message in guild ${guildId}:`, err);
   }
 };

@@ -73,11 +73,14 @@ module.exports = async (message) => {
 
       if (!channel) return;
 
+      const me = guild.members.me;
+      if (!channel.permissionsFor(me)?.has("SendMessages")) return;
+
       const embed = new EmbedBuilder()
         .setColor("Blurple")
         .setDescription(`**${author}, you have reached level ${data.Level}!**`);
 
-      channel.send({ embeds: [embed] });
+      await channel.send({ embeds: [embed] });
     } else {
       data.XP += give;
       await data.save();

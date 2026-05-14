@@ -6,11 +6,21 @@ module.exports = async (message) => {
   )
     return;
 
+  const me = message.guild.members.me;
+  if (!message.channel.permissionsFor(me)?.has("SendMessages")) return;
+
   const content = message.content.toLowerCase();
 
+  const reply = async (text) => {
+    try {
+      await message.reply(text);
+    } catch (err) {
+      console.error(`Failed to reply in channel ${message.channelId}:`, err);
+    }
+  };
+
   if (content === "ping") {
-    message.reply("pong");
-    return;
+    return reply("pong");
   }
 
   if (
@@ -18,8 +28,7 @@ module.exports = async (message) => {
     /\bgoodnight\b/.test(content) ||
     /\bgood night\b/.test(content)
   ) {
-    message.reply("Goodnight!");
-    return;
+    return reply("Goodnight!");
   }
 
   if (
@@ -27,8 +36,7 @@ module.exports = async (message) => {
     /\bgoodmorning\b/.test(content) ||
     /\bgood morning\b/.test(content)
   ) {
-    message.reply("Good morning!");
-    return;
+    return reply("Good morning!");
   }
 
   if (
@@ -36,8 +44,7 @@ module.exports = async (message) => {
     /\bnya\b/.test(content) ||
     /\bpurr\b/.test(content)
   ) {
-    message.reply("Good kitty!");
-    return;
+    return reply("Good kitty!");
   }
 
   if (
@@ -45,7 +52,6 @@ module.exports = async (message) => {
     /\barf\b/.test(content) ||
     /\bbark\b/.test(content)
   ) {
-    message.reply("Good puppy!");
-    return;
+    return reply("Good puppy!");
   }
 };
