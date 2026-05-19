@@ -21,7 +21,7 @@ jobs:
         run: |
           export PATH=/home/konna/.nvm/versions/node/v22.9.0/bin:$PATH
           cd /mnt/disk2-part1/codings/kafkaBot
-          npm ci --omit=dev
+          npm ci
 
       - name: Restart bot
         run: |
