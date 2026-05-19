@@ -11,6 +11,7 @@ jobs:
       - name: Pull latest code
         run: |
           cd /mnt/disk2-part1/codings/kafkaBot
+          git reset --hard HEAD
           git pull origin main
 
       - name: Install dependencies
