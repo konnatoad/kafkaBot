@@ -1,0 +1,26 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Pull latest code
+        run: |
+          cd /mnt/disk2-part1/codings/kafkaBot
+          git pull origin main
+
+      - name: Install dependencies
+        run: |
+          export PATH=/home/konna/.nvm/versions/node/v22.9.0/bin:$PATH
+          cd /mnt/disk2-part1/codings/kafkaBot
+          npm install --omit=dev
+
+      - name: Restart bot
+        run: |
+          export PATH=/home/konna/.nvm/versions/node/v22.9.0/bin:$PATH
+          cd /mnt/disk2-part1/codings/kafkaBot
+          pm2 restart kafka --update-env
