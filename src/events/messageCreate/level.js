@@ -1,26 +1,12 @@
 const { EmbedBuilder } = require("discord.js");
 const levelSchema = require("../../schemas/level");
 const UserProfile = require("../../schemas/UserProfile");
+const { xpIgnoredChannels } = require("../../../config.json");
 
 module.exports = async (message) => {
   const { guild, author } = message;
 
-  if (
-    !guild ||
-    author.bot ||
-    message.channelId === "449527843148267520" ||
-    message.channelId === "1068114218320138271" ||
-    message.channelId === "449527843148267520" ||
-    message.channelId === "527903078553485312" ||
-    message.channelId === "1069003237967011882" ||
-    message.channelId === "727634115238559815" ||
-    message.channelId === "461246929519640576" ||
-    message.channelId === "449531223702896651" ||
-    message.channelId === "584825921274511376" ||
-    message.channelId === "509506521193906218" ||
-    message.channelId === "895273892120252437" //||
-    // message.guild.id === "721847737339084865"
-  )
+  if (!guild || author.bot || xpIgnoredChannels.includes(message.channelId))
     return;
 
   try {
