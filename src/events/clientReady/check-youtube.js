@@ -51,10 +51,12 @@ module.exports = (client) => {
         if (feedCache.has(ytChannelId)) {
           latestVideo = feedCache.get(ytChannelId);
         } else {
-          latestVideo = await fetchLatestVideo(ytChannelId).catch((e) => {
+          try {
+            latestVideo = await fetchLatestVideo(ytChannelId);
+          } catch (e) {
             console.warn(`check-youtube: failed to fetch latest video for channel ${ytChannelId}:`, e.message);
-            return null;
-          });
+            latestVideo = null;
+          }
           feedCache.set(ytChannelId, latestVideo);
         }
 
@@ -99,22 +101,22 @@ module.exports = (client) => {
             pubDate: latestVideo.pubDate
           };
 
-          notificationConfig
-            .save()
-            .then(() => {
-              const targetMessage =
-                notificationConfig.customMessage
-                  ?.replace("{VIDEO_URL}", latestVideo.link)
-                  ?.replace("{VIDEO_TITLE}", latestVideo.title)
-                  ?.replace("{CHANNEL_URL}", latestVideo.channelLink)
-                  ?.replace("{CHANNEL_NAME}", latestVideo.channelTitle) ||
-                `New upload by ${latestVideo.channelTitle}\n${latestVideo.link}`;
+          try {
+            await notificationConfig.save();
+          } catch (e) {
+            console.error("check-youtube: failed to save lastCheckedVid:", e);
+            continue;
+          }
 
-              targetChannel.send(targetMessage);
-            })
-            .catch((e) => {
-              console.error("check-youtube: failed to save lastCheckedVid:", e);
-            });
+          const targetMessage =
+            notificationConfig.customMessage
+              ?.replace("{VIDEO_URL}", latestVideo.link)
+              ?.replace("{VIDEO_TITLE}", latestVideo.title)
+              ?.replace("{CHANNEL_URL}", latestVideo.channelLink)
+              ?.replace("{CHANNEL_NAME}", latestVideo.channelTitle) ||
+            `New upload by ${latestVideo.channelTitle}\n${latestVideo.link}`;
+
+          await targetChannel.send(targetMessage);
         }
       }
     } catch (error) {
