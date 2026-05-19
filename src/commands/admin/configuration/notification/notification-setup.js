@@ -65,24 +65,22 @@ async function run({ interaction }) {
       };
     }
 
-    notificationConfig
-      .save()
-      .then(() => {
-        const embed = new EmbedBuilder()
-          .setColor("Red")
-          .setTitle("Youtube channel configuration success!")
-          .setDescription(
-            `${targetNotificationChannel} will now get notified whenever there's a new upload by ${channelName}`
-          )
-          .setTimestamp();
+    try {
+      await notificationConfig.save();
+    } catch {
+      await interaction.followUp("Unexpected database error. Please try again in a moment.");
+      return;
+    }
 
-        interaction.followUp({ embeds: [embed] });
-      })
-      .catch(() => {
-        interaction.followUp(
-          "Unexpected database error. Please try again in a moment."
-        );
-      });
+    const embed = new EmbedBuilder()
+      .setColor("Red")
+      .setTitle("Youtube channel configuration success!")
+      .setDescription(
+        `${targetNotificationChannel} will now get notified whenever there's a new upload by ${channelName}`
+      )
+      .setTimestamp();
+
+    await interaction.followUp({ embeds: [embed] });
   } catch (error) {
     console.error(`error in ${__filename}:\n`, error);
   }
