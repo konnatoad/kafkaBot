@@ -5,6 +5,7 @@ const {
 } = require("discord.js");
 
 const ConfessionConfig = require("../../../../schemas/ConfessionConfig");
+const logger = require("../../../../extra/logger");
 
 module.exports = {
   testOnly: false,
@@ -40,7 +41,7 @@ module.exports = {
         flags: MessageFlags.Ephemeral
       });
     } catch (err) {
-      console.error("confessionsdisable error:", err);
+      logger.error("confessionsdisable error:", err);
       return interaction.reply({
         content: "Failed to disable confessions.",
         flags: MessageFlags.Ephemeral

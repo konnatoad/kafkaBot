@@ -5,6 +5,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 const AutoRole = require("../../../../schemas/AutoRole");
+const logger = require("../../../../extra/logger");
 
 module.exports = {
   /**
@@ -46,7 +47,7 @@ module.exports = {
         "Autorole has now been configured. To disable run `/autorole-disable`"
       );
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
   },
 

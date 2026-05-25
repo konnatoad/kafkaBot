@@ -1,4 +1,5 @@
 const UserProfile = require("../../schemas/UserProfile");
+const logger = require("../../extra/logger");
 
 module.exports = (client) => {
   checkReminders();
@@ -26,7 +27,7 @@ module.exports = (client) => {
               (await client.guilds.fetch(Guild));
 
             if (!targetGuild) {
-              console.error(`Guild not found for userId: ${userId}`);
+              logger.error(`Guild not found for userId: ${userId}`);
               continue;
             }
 
@@ -34,7 +35,7 @@ module.exports = (client) => {
               .fetch(userId)
               .catch(() => null);
             if (!targetMember) {
-              console.error(`Member not found for userId: ${userId}`);
+              logger.error(`Member not found for userId: ${userId}`);
               continue;
             }
 
@@ -45,18 +46,18 @@ module.exports = (client) => {
               .catch(() => null);
 
             if (!targetChannel) {
-              console.error(`Failed to send reminder to userId: ${userId}`);
+              logger.error(`Failed to send reminder to userId: ${userId}`);
               continue;
             }
 
-            console.log(
+            logger.info(
               `Reminder sent to ${targetMember.user.tag} in ${targetGuild.name}`
             );
           }
         }
       }
     } catch (error) {
-      console.error(`Error in checkReminders:\n`, error);
+      logger.error(`Error in checkReminders:\n`, error);
     }
   }
 };

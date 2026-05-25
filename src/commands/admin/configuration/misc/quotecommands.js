@@ -7,6 +7,7 @@ const {
   PermissionFlagsBits,
 } = require("discord.js");
 const Quote = require("../../../../schemas/quoteSchema");
+const logger = require("../../../../extra/logger");
 
 const quotesPerPage = 4;
 
@@ -41,14 +42,14 @@ const createPaginationButtons = (currentPage, totalPages, uniqueId, user) => {
 };
 
 const handleError = async (interaction, message) => {
-  console.error(message);
+  logger.error(message);
   try {
     await interaction.reply({
       content: message,
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
-    console.error("Failed to send error message:", error);
+    logger.error("Failed to send error message:", error);
   }
 };
 
@@ -130,7 +131,7 @@ const getQuotesPage = async (interaction, page = 1, uniqueId, user) => {
       interaction,
       "Failed to load quotes. Please try again later."
     );
-    console.error("Error fetching quotes:", error);
+    logger.error("Error fetching quotes:", error);
   }
 };
 
@@ -168,7 +169,7 @@ const setupCollector = (interaction, uniqueId, user) => {
         buttonInteraction,
         "Failed to navigate pages. Please try again later."
       );
-      console.error("Error navigating pages:", error);
+      logger.error("Error navigating pages:", error);
     }
   });
 
@@ -178,7 +179,7 @@ const setupCollector = (interaction, uniqueId, user) => {
         components: [],
       });
     } catch (error) {
-      console.error("Error ending collector:", error);
+      logger.error("Error ending collector:", error);
     }
   });
 };
@@ -302,7 +303,7 @@ module.exports = {
         await removeAllQuotes(interaction);
       }
     } catch (error) {
-      console.error("An error occurred:", error);
+      logger.error("An error occurred:", error);
     }
   },
 };

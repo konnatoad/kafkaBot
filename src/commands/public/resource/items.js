@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const StoreItem = require("../../../schemas/Store");
+const logger = require("../../../extra/logger");
 const { EmbedBuilder } = require("discord.js");
 
 module.exports = {
@@ -41,7 +42,7 @@ module.exports = {
             inline: false,
           });
         } else {
-          console.error(`Role with ID ${item.roleId} not found in guild.`);
+          logger.error(`Role with ID ${item.roleId} not found in guild.`);
         }
       }
 
@@ -50,7 +51,7 @@ module.exports = {
         flags: MessageFlags.Ephemeral,
       });
     } catch (error) {
-      console.error("Error fetching store items:", error);
+      logger.error("Error fetching store items:", error);
       return interaction.reply({
         content: "An error occurred while fetching store items.",
         flags: MessageFlags.Ephemeral,

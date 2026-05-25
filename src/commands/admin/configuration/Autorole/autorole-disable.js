@@ -5,6 +5,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 const AutoRole = require("../../../../schemas/AutoRole");
+const logger = require("../../../../extra/logger");
 
 module.exports = {
   /**
@@ -28,7 +29,7 @@ module.exports = {
         "Auto role has been disabled for this server. Use `/autorole-configure` to set it up again."
       );
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
   },
 

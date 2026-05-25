@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const Cooldown = require("../../../schemas/Cooldown");
 const UserProfile = require("../../../schemas/UserProfile");
+const logger = require("../../../extra/logger");
 
 function getRandomNumber(x, y) {
   const range = y - x + 1;
@@ -214,7 +215,7 @@ module.exports = {
         content: `${randomwin}`
       });
     } catch (error) {
-      console.error(`error handling /beg: ${error}`);
+      logger.error(`error handling /beg: ${error}`);
     }
   },
 

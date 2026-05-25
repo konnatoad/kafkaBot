@@ -5,6 +5,7 @@ const {
   MessageFlags
 } = require("discord.js");
 const NotificationConfig = require("../../../../schemas/NotificationConfig");
+const logger = require("../../../../extra/logger");
 
 async function run({ interaction }) {
   try {
@@ -36,7 +37,7 @@ async function run({ interaction }) {
         );
       });
   } catch (error) {
-    console.error(`error in ${__filename}:\n`, error);
+    logger.error(`error in ${__filename}:\n`, error);
   }
 }
 

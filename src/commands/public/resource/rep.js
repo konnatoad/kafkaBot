@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const Cooldown = require("../../../schemas/Cooldown");
 const UserProfile = require("../../../schemas/UserProfile");
+const logger = require("../../../extra/logger");
 
 module.exports = {
   deleted: false,
@@ -91,7 +92,7 @@ module.exports = {
         content: `${giver.toString()} has given their daily reputation bonus to ${receiver.toString()}!`
       });
     } catch (error) {
-      console.error(`error handling /rep: ${error}`);
+      logger.error(`error handling /rep: ${error}`);
     }
   }
 };

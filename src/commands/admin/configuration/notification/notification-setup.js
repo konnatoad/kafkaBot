@@ -7,6 +7,7 @@ const {
 } = require("discord.js");
 const NotificationConfig = require("../../../../schemas/NotificationConfig");
 const axios = require("axios");
+const logger = require("../../../../extra/logger");
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
@@ -82,7 +83,7 @@ async function run({ interaction }) {
 
     await interaction.followUp({ embeds: [embed] });
   } catch (error) {
-    console.error(`error in ${__filename}:\n`, error);
+    logger.error(`error in ${__filename}:\n`, error);
   }
 }
 

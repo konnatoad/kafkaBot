@@ -5,6 +5,7 @@ const {
 } = require("discord.js");
 const Notification = require("../../../../schemas/twitchNotificationSchema");
 const https = require("https");
+const logger = require("../../../../extra/logger");
 
 const twitchNotificationCommand = new SlashCommandBuilder()
   .setName("twitchnotify")
@@ -129,7 +130,7 @@ async function setupTwitchNotification(interaction) {
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
-    console.error("Error setting up Twitch notification:", error);
+    logger.error("Error setting up Twitch notification:", error);
     await interaction.followUp({
       content: "Failed to set up Twitch notification. Please try again later.",
       flags: MessageFlags.Ephemeral,
@@ -173,7 +174,7 @@ async function removeTwitchNotification(interaction) {
       });
     }
   } catch (error) {
-    console.error("Error removing Twitch notification setup:", error);
+    logger.error("Error removing Twitch notification setup:", error);
     await interaction.followUp({
       content:
         "Failed to remove Twitch notification setup. Please try again later.",
@@ -205,7 +206,7 @@ async function fetchTwitchUserData(userLogin) {
   try {
     const userData = JSON.parse(data);
     if (!userData.data) {
-      console.error("Twitch API error:", userData);
+      logger.error("Twitch API error:", userData);
       resolve(null);
       return;
     }

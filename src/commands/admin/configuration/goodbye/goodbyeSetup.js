@@ -6,6 +6,7 @@ const {
 } = require("discord.js");
 
 const GoodbyeSetup = require("../../../../schemas/goodbyeSchema");
+const logger = require("../../../../extra/logger");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -46,7 +47,7 @@ module.exports = {
 
       return await interaction.reply({ embeds: [embed] });
     } catch (error) {
-      console.error("Error", error); // Catching and logging any errors
+      logger.error("Error", error); // Catching and logging any errors
     }
   },
 };

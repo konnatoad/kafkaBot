@@ -7,6 +7,7 @@ const {
   MessageFlags
 } = require("discord.js");
 const axios = require("axios");
+const logger = require("../../../extra/logger");
 const { getOsuAccessToken } = require("../../../extra/osuAuth");
 require("dotenv").config();
 const { Beatmap, Performance } = require("rosu-pp-js");
@@ -113,7 +114,7 @@ async function downloadBeatmap(beatmapId, beatmapPath) {
   if (downloading.has(beatmapId)) return false;
   downloading.add(beatmapId);
   try {
-    console.log(`Downloading beatmap: ${beatmapId}`);
+    logger.info(`Downloading beatmap: ${beatmapId}`);
     const beatmapResponse = await axios.get(
       `https://osu.ppy.sh/osu/${beatmapId}`,
       {
@@ -125,12 +126,12 @@ async function downloadBeatmap(beatmapId, beatmapPath) {
 
     const fileSize = fs.statSync(beatmapPath).size;
     if (fileSize === 0) {
-      console.error(`Downloaded beatmap ${beatmapId} is empty!`);
+      logger.error(`Downloaded beatmap ${beatmapId} is empty!`);
       return false;
     }
     return true;
   } catch (error) {
-    console.error(`Failed to download beatmap ${beatmapId}:`, error);
+    logger.error(`Failed to download beatmap ${beatmapId}:`, error);
     return false;
   } finally {
     downloading.delete(beatmapId);
@@ -281,7 +282,7 @@ module.exports = {
             });
           }
 
-          console.error(
+          logger.error(
             "Valorant account error:",
             err.response?.data || err.message
           );
@@ -303,7 +304,7 @@ module.exports = {
           );
           mmrData = mmrRes.data?.data;
         } catch (err) {
-          console.warn(
+          logger.warn(
             "Valorant MMR v3 error (continuing):",
             err.response?.data || err.message
           );
@@ -399,7 +400,7 @@ module.exports = {
 
         return interaction.editReply(payload);
       } catch (error) {
-        console.error(
+        logger.error(
           "Error fetching Valorant stats:",
           error.response?.data || error.message
         );
@@ -632,7 +633,7 @@ module.exports = {
 
         await interaction.editReply({ embeds: [embed] });
       } catch (error) {
-        console.error("Full API Error:", error.response?.data || error.message);
+        logger.error("Full API Error:", error.response?.data || error.message);
         await interaction.editReply({
           content:
             "Error retrieving TFT stats. Check the Riot ID and try again.",
@@ -779,7 +780,7 @@ module.exports = {
 
         await interaction.editReply({ embeds: [embed] });
       } catch (error) {
-        console.error(
+        logger.error(
           "Error retrieving osu! stats:",
           error.response?.data || error.message
         );

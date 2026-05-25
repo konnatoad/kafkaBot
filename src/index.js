@@ -1,4 +1,5 @@
 const path = require("path");
+const logger = require("./extra/logger");
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 const { Client, IntentsBitField, Partials } = require("discord.js");
 const mongoose = require("mongoose");
@@ -32,7 +33,7 @@ new CommandHandler({
 const REQUIRED_ENV = ["TOKEN", "MONGODB_URI", "DEV_ID", "TESTSERVER"];
 const missingEnv = REQUIRED_ENV.filter((key) => !process.env[key]);
 if (missingEnv.length) {
-  console.error(`❌ Missing required environment variables: ${missingEnv.join(", ")}`);
+  logger.error(`❌ Missing required environment variables: ${missingEnv.join(", ")}`);
   process.exit(1);
 }
 
@@ -43,9 +44,9 @@ if (missingOpt.length) console.warn(`⚠️  Optional env vars not set (features
 (async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log("✅ Successfully connected to MongoDB!");
+    logger.info("✅ Successfully connected to MongoDB!");
   } catch (error) {
-    console.error("❌ MongoDB Connection Error:", error);
+    logger.error("❌ MongoDB Connection Error:", error);
     process.exit(1);
   }
 
@@ -53,7 +54,7 @@ if (missingOpt.length) console.warn(`⚠️  Optional env vars not set (features
 })();
 
 async function shutdown(signal) {
-  console.log(`\n${signal} received, shutting down...`);
+  logger.info(`\n${signal} received, shutting down...`);
   client.destroy();
   await mongoose.disconnect();
   process.exit(0);

@@ -5,6 +5,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 const Ban = require("../../../schemas/banschema");
+const logger = require("../../../extra/logger");
 
 const slashCommand = new SlashCommandBuilder()
   .setName("tempban")
@@ -124,7 +125,7 @@ module.exports = {
     try {
       await user.send({ embeds: [dmEmbed] });
     } catch (error) {
-      console.error(`Could not send DM to ${user.tag}: ${error.message}`);
+      logger.error(`Could not send DM to ${user.tag}: ${error.message}`);
     }
 
     await interaction.guild.members.ban(user, { reason });

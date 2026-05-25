@@ -6,6 +6,7 @@ const {
 } = require("discord.js");
 const Quote = require("../../../../schemas/quoteSchema");
 const DailyQuote = require("../../../../schemas/dailyQuoteSchema");
+const logger = require("../../../../extra/logger");
 
 function seededRandom(seed) {
   const x = Math.sin(seed) * 10000;
@@ -32,7 +33,7 @@ const sendDailyQuote = async (client) => {
         .fetch(guild.channelId)
         .catch(() => null);
       if (!channel) {
-        console.error(
+        logger.error(
           `Channel not found for guild ${guild.guildId}. Skipping.`
         );
         continue;
@@ -40,7 +41,7 @@ const sendDailyQuote = async (client) => {
 
       const permissions = channel.permissionsFor(client.user);
       if (!permissions || !permissions.has("SendMessages")) {
-        console.error(
+        logger.error(
           `Missing permissions to send messages in channel ${channel.id}.`
         );
         continue;
@@ -48,7 +49,7 @@ const sendDailyQuote = async (client) => {
 
       let quotes = await Quote.find({ guildId: guild.guildId }).exec();
       if (quotes.length === 0) {
-        console.error(`No quotes found for guild ${guild.guildId}. Skipping.`);
+        logger.error(`No quotes found for guild ${guild.guildId}. Skipping.`);
         continue;
       }
 
@@ -62,7 +63,7 @@ const sendDailyQuote = async (client) => {
 
       // If all quotes are used, reset buffer
       if (availableQuotes.length === 0) {
-        console.log(
+        logger.info(
           `All quotes used in guild ${guild.guildId}, resetting buffer.`
         );
         recentQuotes = [];
@@ -114,11 +115,11 @@ const sendDailyQuote = async (client) => {
         );
 
       await channel.send({ embeds: [embed] });
-      console.log(
+      logger.info(
         `Quote sent to channel ${channel.id} in guild ${guild.guildId}.`
       );
     } catch (error) {
-      console.error(
+      logger.error(
         `An error occurred while sending a quote to guild ${guild.guildId}:`,
         error
       );
@@ -138,12 +139,12 @@ const scheduleDailyQuote = async (client) => {
   const delay = nextRun.getTime() - now.getTime();
 
   setTimeout(async function run() {
-    console.log("Running daily quote schedule...");
+    logger.info("Running daily quote schedule...");
     await sendDailyQuote(client);
     setTimeout(run, 24 * 60 * 60 * 1000); // Schedule the next run in 24 hours
   }, delay);
 
-  console.log(`Daily quote scheduled to run at ${nextRun.toISOString()}`);
+  logger.info(`Daily quote scheduled to run at ${nextRun.toISOString()}`);
 };
 
 module.exports = {
@@ -199,7 +200,7 @@ module.exports = {
         });
       }
     } catch (error) {
-      console.error("An error occurred:", error);
+      logger.error("An error occurred:", error);
 
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({

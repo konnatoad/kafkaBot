@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const GoodbyeSetup = require("../../schemas/goodbyeSchema");
+const logger = require("../../extra/logger");
 
 const MAIN = process.env.MAIN;
 const ALT = process.env.ALT;
@@ -20,7 +21,7 @@ module.exports = async (member) => {
   const channel = member.guild.channels.cache.get(existingSetup.channelId);
 
   if (!channel) {
-    console.error(`Error: Channel not found for guild ${guildId}`);
+    logger.error(`Error: Channel not found for guild ${guildId}`);
     return;
   }
 

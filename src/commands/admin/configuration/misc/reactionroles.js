@@ -4,6 +4,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 const reaction = require("../../../../schemas/reactions");
+const logger = require("../../../../extra/logger");
 
 module.exports = {
   deleted: false,
@@ -98,7 +99,7 @@ module.exports = {
           });
 
           await message.react(emoji).catch((err) => {
-            console.error("reaction-roles: failed to react with emoji:", err);
+            logger.error("reaction-roles: failed to react with emoji:", err);
           });
 
           await interaction.reply({

@@ -1,5 +1,6 @@
 const NotificationConfig = require("../../schemas/twitchNotificationSchema");
 const https = require("https");
+const logger = require("../../extra/logger");
 
 async function fetchTwitchData(userLogin) {
   return new Promise((resolve, reject) => {
@@ -23,7 +24,7 @@ async function fetchTwitchData(userLogin) {
       res.on("end", () => {
         try {
           const parsed = JSON.parse(data);
-          if (!parsed.data) console.error("Twitch API error:", parsed);
+          if (!parsed.data) logger.error("Twitch API error:", parsed);
           resolve(parsed);
         } catch {
           reject(new Error(`Failed to parse Twitch response: ${data.slice(0, 200)}`));
@@ -48,7 +49,7 @@ async function sendNotification(notificationConfig, userLogin, client, guildCach
       client.guilds.cache.get(guildId) ||
       (await client.guilds.fetch(guildId).catch(() => null));
     if (!targetGuild) {
-      console.error(`Guild ${guildId} not found for ${userLogin}`);
+      logger.error(`Guild ${guildId} not found for ${userLogin}`);
       return;
     }
     guildCache.set(guildId, targetGuild);
@@ -61,7 +62,7 @@ async function sendNotification(notificationConfig, userLogin, client, guildCach
       targetGuild.channels.cache.get(notificationChannelId) ||
       (await targetGuild.channels.fetch(notificationChannelId).catch(() => null));
     if (!targetChannel) {
-      console.error(
+      logger.error(
         `Notification channel ${notificationChannelId} not found for ${userLogin}`,
       );
       return;
@@ -117,7 +118,7 @@ module.exports = (client) => {
         }
       }
     } catch (error) {
-      console.error("Error checking Twitch status:", error);
+      logger.error("Error checking Twitch status:", error);
     }
   }
 

@@ -1,4 +1,5 @@
 const Ban = require("../../schemas/banschema");
+const logger = require("../../extra/logger");
 
 module.exports = (client) => {
   setInterval(async () => {
@@ -15,14 +16,14 @@ module.exports = (client) => {
           try {
             await guild.members.unban(ban.userId);
           } catch (error) {
-            console.error(`error unbanning user ${ban.userId}: ${error}`);
+            logger.error(`error unbanning user ${ban.userId}: ${error}`);
           }
         }
 
         await Ban.deleteOne({ _id: ban._id });
       }
     } catch (error) {
-      console.error(`error clearing bans: ${error}`);
+      logger.error(`error clearing bans: ${error}`);
     }
   }, 60000); // Check every minute for expired bans
 };

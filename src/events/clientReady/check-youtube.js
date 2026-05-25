@@ -1,5 +1,6 @@
 const axios = require("axios");
 const NotificationConfig = require("../../schemas/NotificationConfig");
+const logger = require("../../extra/logger");
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
@@ -54,7 +55,7 @@ module.exports = (client) => {
           try {
             latestVideo = await fetchLatestVideo(ytChannelId);
           } catch (e) {
-            console.warn(`check-youtube: failed to fetch latest video for channel ${ytChannelId}:`, e.message);
+            logger.warn(`check-youtube: failed to fetch latest video for channel ${ytChannelId}:`, e.message);
             latestVideo = null;
           }
           feedCache.set(ytChannelId, latestVideo);
@@ -104,7 +105,7 @@ module.exports = (client) => {
           try {
             await notificationConfig.save();
           } catch (e) {
-            console.error("check-youtube: failed to save lastCheckedVid:", e);
+            logger.error("check-youtube: failed to save lastCheckedVid:", e);
             continue;
           }
 
@@ -120,7 +121,7 @@ module.exports = (client) => {
         }
       }
     } catch (error) {
-      console.error(`error in ${__filename}:\n`, error);
+      logger.error(`error in ${__filename}:\n`, error);
     }
   }
 };

@@ -1,12 +1,13 @@
 const { SlashCommandBuilder } = require("discord.js");
 const StoreItem = require("../../../schemas/Store");
 const UserProfile = require("../../../schemas/UserProfile");
+const logger = require("../../../extra/logger");
 
 async function removeBalance(userId, amount) {
   try {
     const userProfile = await UserProfile.findOne({ userId });
     if (!userProfile) {
-      console.error("User profile not found.");
+      logger.error("User profile not found.");
     }
 
     userProfile.balance -= amount;
@@ -14,7 +15,7 @@ async function removeBalance(userId, amount) {
 
     return true;
   } catch (error) {
-    console.error("Error removing balance:", error.message);
+    logger.error("Error removing balance:", error.message);
     return false;
   }
 }
@@ -23,12 +24,12 @@ async function getUserBalance(userId) {
   try {
     const userProfile = await UserProfile.findOne({ userId });
     if (!userProfile) {
-      console.error("User profile not found.");
+      logger.error("User profile not found.");
     }
 
     return userProfile.balance;
   } catch (error) {
-    console.error("Error retrieving user balance:", error.message);
+    logger.error("Error retrieving user balance:", error.message);
     return 0;
   }
 }
@@ -82,7 +83,7 @@ module.exports = {
           "I don't have permission to give you that role. Please contact a server administrator."
         );
       } else {
-        console.error("Error adding role to user:", error.message);
+        logger.error("Error adding role to user:", error.message);
         return interaction.reply(
           "An error occurred while giving you the role."
         );

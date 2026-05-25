@@ -1,8 +1,9 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const Quote = require("../../../schemas/quoteSchema");
+const logger = require("../../../extra/logger");
 
 const handleError = async (interaction, message) => {
-  console.error(message);
+  logger.error(message);
   await interaction.reply({ content: message, flags: MessageFlags.Ephemeral });
 };
 
@@ -64,7 +65,7 @@ const getRandomQuote = async (interaction, user) => {
     const formattedQuote = `**Content:** ${content}\n**Author:** ${selectedQuote.author}\n**Date:** ${formattedDate}`;
     await interaction.reply({ content: formattedQuote });
   } catch (error) {
-    console.error("Database query error:", error);
+    logger.error("Database query error:", error);
     handleError(interaction, "Failed to get random quote.");
   }
 };
@@ -86,7 +87,7 @@ module.exports = {
       const user = interaction.options.getUser("user");
       await getRandomQuote(interaction, user);
     } catch (error) {
-      console.error("An error occurred:", error);
+      logger.error("An error occurred:", error);
     }
   },
 };

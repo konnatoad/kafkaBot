@@ -1,3 +1,4 @@
+const logger = require("../../extra/logger");
 require("dotenv").config();
 const {
   EmbedBuilder,
@@ -55,7 +56,7 @@ module.exports = async (interaction, client) => {
     await channel
       .send({ embeds: [embed], components: [button] })
       .catch((err) => {
-        console.error("bugreport: failed to send to bug channel:", err);
+        logger.error("bugreport: failed to send to bug channel:", err);
       });
     await interaction.reply({
       content:
