@@ -21,11 +21,13 @@ async function fetchTwitchData(userLogin) {
       });
 
       res.on("end", () => {
-        const parsed = JSON.parse(data);
-        if (!parsed.data) {
-          console.error("Twitch API error:", parsed);
+        try {
+          const parsed = JSON.parse(data);
+          if (!parsed.data) console.error("Twitch API error:", parsed);
+          resolve(parsed);
+        } catch {
+          reject(new Error(`Failed to parse Twitch response: ${data.slice(0, 200)}`));
         }
-        resolve(parsed);
       });
     });
 
