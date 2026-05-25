@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
+const logger = require("../../../extra/logger");
 
 const baseDailyAmount = 10;
 const maxDailyAmount = 100;
@@ -99,7 +100,7 @@ module.exports = {
         content: `${dailyAmount} was added to your balance.\nNew balance: ${userProfile.balance} rice grains\nStreak: ${userProfile.dailyStreak} days`
       });
     } catch (error) {
-      console.error(`Error handling /daily: ${error}`);
+      logger.error(`Error handling /daily: ${error}`);
     }
   }
 };

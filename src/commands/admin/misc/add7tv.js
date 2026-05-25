@@ -7,6 +7,7 @@ const {
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const sharp = require("sharp");
+const logger = require("../../../extra/logger");
 
 module.exports = {
   /**
@@ -79,7 +80,7 @@ module.exports = {
 
       interaction.editReply(`Added ${emoji.toString()}  \`:${emoji.name}:\``);
     } catch (err) {
-      console.error("Error adding 7TV emote:", err);
+      logger.error("Error adding 7TV emote:", err);
       interaction.editReply("Something went wrong trying to add that emote.");
     }
   },

@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const WelcomeSetup = require("../../schemas/welcomeSchema");
+const logger = require("../../extra/logger");
 
 // Export a function that will be called when a new member joins the server
 module.exports = async (member) => {
@@ -15,13 +16,13 @@ module.exports = async (member) => {
   const channel = member.guild.channels.cache.get(existingSetup.channelId);
 
   if (!channel) {
-    console.error(`Error: Channel not found for guild ${guildId}`);
+    logger.error(`Error: Channel not found for guild ${guildId}`);
     return;
   }
 
   const me = member.guild.members.me;
   if (!channel.permissionsFor(me)?.has("SendMessages")) {
-    console.error(`Missing SendMessages permission in welcome channel ${existingSetup.channelId} for guild ${guildId}`);
+    logger.error(`Missing SendMessages permission in welcome channel ${existingSetup.channelId} for guild ${guildId}`);
     return;
   }
 
@@ -47,6 +48,6 @@ module.exports = async (member) => {
       await channel.send(messageContent);
     }
   } catch (err) {
-    console.error(`Failed to send welcome message in guild ${guildId}:`, err);
+    logger.error(`Failed to send welcome message in guild ${guildId}:`, err);
   }
 };

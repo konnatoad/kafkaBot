@@ -1,4 +1,5 @@
 const Cooldown = require("../../schemas/Cooldown");
+const logger = require("../../extra/logger");
 
 module.exports = () => {
   setInterval(async () => {
@@ -13,7 +14,7 @@ module.exports = () => {
         });
       }
     } catch (error) {
-      console.error(`error clearing cooldowns: ${error}`);
+      logger.error(`error clearing cooldowns: ${error}`);
     }
   }, 3.6e6);
 };

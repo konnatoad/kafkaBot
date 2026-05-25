@@ -6,6 +6,7 @@ const {
 } = require("discord.js");
 
 const ConfessionConfig = require("../../../../schemas/ConfessionConfig");
+const logger = require("../../../../extra/logger");
 
 module.exports = {
   testOnly: false,
@@ -68,7 +69,7 @@ module.exports = {
         });
       }
 
-      console.error("confession-setup error:", err);
+      logger.error("confession-setup error:", err);
       return interaction.reply({
         content: "Failed to save the confessions channel.",
         flags: MessageFlags.Ephemeral

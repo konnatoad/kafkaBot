@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
+const logger = require("../../../extra/logger");
 
 module.exports = {
   deleted: false,
@@ -40,7 +41,7 @@ module.exports = {
             }
       );
     } catch (error) {
-      console.error(`error handling /balance ${error}`);
+      logger.error(`error handling /balance ${error}`);
     }
   },
 

@@ -1,5 +1,6 @@
 const { Client, Events, MessageReaction, User } = require("discord.js");
 const reactions = require("../../schemas/reactions");
+const logger = require("../../extra/logger");
 
 module.exports = async (reaction, user) => {
   const client = reaction.message.client;
@@ -34,6 +35,6 @@ module.exports = async (reaction, user) => {
 
     await member.roles.remove(data.Role);
   } catch (error) {
-    console.error("Error in processing the reaction:", error);
+    logger.error("Error in processing the reaction:", error);
   }
 };

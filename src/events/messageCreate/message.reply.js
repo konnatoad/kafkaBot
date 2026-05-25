@@ -1,3 +1,4 @@
+const logger = require("../../extra/logger");
 module.exports = async (message) => {
   if (
     message.author.bot ||
@@ -15,7 +16,7 @@ module.exports = async (message) => {
     try {
       await message.reply(text);
     } catch (err) {
-      console.error(`Failed to reply in channel ${message.channelId}:`, err);
+      logger.error(`Failed to reply in channel ${message.channelId}:`, err);
     }
   };
 

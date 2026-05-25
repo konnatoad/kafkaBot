@@ -10,6 +10,7 @@ const {
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const logger = require("../../../extra/logger");
 
 async function rosu() {
   const mod = await import("rosu-pp-js");
@@ -104,7 +105,7 @@ async function downloadBeatmapIfNeeded(beatmapId) {
     }
     return beatmapPath;
   } catch (e) {
-    console.error(`Failed to download .osu for ${beatmapId}:`, e?.message || e);
+    logger.error(`Failed to download .osu for ${beatmapId}:`, e?.message || e);
     return null;
   }
 }
@@ -114,7 +115,7 @@ function readOsuText(beatmapPath) {
     const txt = fs.readFileSync(beatmapPath, "utf8");
     return txt.replace(/^\uFEFF/, "").trim();
   } catch (e) {
-    console.error("Failed to read .osu:", beatmapPath, e?.message || e);
+    logger.error("Failed to read .osu:", beatmapPath, e?.message || e);
     return "";
   }
 }
@@ -477,14 +478,14 @@ module.exports = {
           }
         }
       } catch (err) {
-        console.error("Component error:", err);
+        logger.error("Component error:", err);
         try {
           await i.reply({
             content: "Unexpected error. Try again.",
             flags: MessageFlags.Ephemeral
           });
         } catch (e) {
-          console.error(e);
+          logger.error(e);
         }
       }
     });
@@ -502,7 +503,7 @@ module.exports = {
           ]
         });
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       }
     });
   }

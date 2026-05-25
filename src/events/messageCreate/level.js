@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const levelSchema = require("../../schemas/level");
 const UserProfile = require("../../schemas/UserProfile");
+const logger = require("../../extra/logger");
 const { xpIgnoredChannels } = require("../../../config.json");
 
 module.exports = async (message) => {
@@ -72,6 +73,6 @@ module.exports = async (message) => {
       await data.save();
     }
   } catch (error) {
-    console.error(error);
+    logger.error(error);
   }
 };

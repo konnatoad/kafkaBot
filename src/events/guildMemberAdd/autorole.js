@@ -1,5 +1,6 @@
 const { Client, GuildMember } = require("discord.js");
 const AutoRole = require("../../schemas/AutoRole");
+const logger = require("../../extra/logger");
 
 /**
  *
@@ -17,6 +18,6 @@ module.exports = async (member) => {
 
     await member.roles.add(autoRole.roleId);
   } catch (error) {
-    console.error(`error giving role automatically: ${error}`);
+    logger.error(`error giving role automatically: ${error}`);
   }
 };

@@ -1,3 +1,4 @@
+const logger = require("../../../extra/logger");
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
@@ -80,7 +81,7 @@ module.exports = {
         embeds: [banEmbed]
       });
     } catch (error) {
-      console.error(`there was an error kicking ${error}`);
+      logger.error(`there was an error kicking ${error}`);
     }
   }
 };

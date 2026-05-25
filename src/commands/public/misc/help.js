@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const logger = require("../../../extra/logger");
 const {
   SlashCommandBuilder,
   ButtonStyle,
@@ -106,7 +107,7 @@ module.exports = {
         });
       });
     } catch (error) {
-      console.error("Error processing help command:", error);
+      logger.error("Error processing help command:", error);
       await interaction.editReply({
         content: "An error occurred while processing the help command.",
         flags: MessageFlags.Ephemeral,
@@ -129,7 +130,7 @@ function readCommandsDirectory(directory) {
         const command = require(filePath);
         commandFiles.push({ command, filePath });
       } catch (error) {
-        console.error(`Error loading command file ${filePath}:`, error);
+        logger.error(`Error loading command file ${filePath}:`, error);
       }
     }
   }

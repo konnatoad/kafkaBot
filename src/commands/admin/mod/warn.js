@@ -4,6 +4,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 const warningSchema = require("../../../schemas/warnschema");
+const logger = require("../../../extra/logger");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -75,7 +76,7 @@ module.exports = {
       .setTimestamp();
 
     target.send({ embeds: [embed] }).catch((err) => {
-      if (err.code !== 50007) console.error("warn: failed to DM user:", err);
+      if (err.code !== 50007) logger.error("warn: failed to DM user:", err);
     });
 
     interaction.reply({ embeds: [embed2] });

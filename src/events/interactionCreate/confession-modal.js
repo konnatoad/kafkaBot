@@ -1,5 +1,6 @@
 const { EmbedBuilder, MessageFlags, InteractionType } = require("discord.js");
 const ConfessionConfig = require("../../schemas/ConfessionConfig.js")
+const logger = require("../../extra/logger");
 
 module.exports = async (a, b) => {
   let interaction = a;
@@ -66,7 +67,7 @@ module.exports = async (a, b) => {
       content: "sent"
     });
   } catch (err) {
-    console.error("confession-modal error:", err)
+    logger.error("confession-modal error:", err)
 
     try {
       if (interaction.deferred || interaction.replied) {
@@ -78,7 +79,7 @@ module.exports = async (a, b) => {
         content: "Something broke while sending", flags: MessageFlags.Ephemeral,
       })
     } catch (replyErr) {
-      console.error("confession-modal: failed to send error reply:", replyErr);
+      logger.error("confession-modal: failed to send error reply:", replyErr);
     }
   }
 }

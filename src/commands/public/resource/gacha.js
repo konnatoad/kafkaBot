@@ -6,6 +6,7 @@ const {
 } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
 const Cooldown = require("../../../schemas/Cooldown");
+const logger = require("../../../extra/logger");
 
 function getRandomNumber(x, y) {
   const range = y - x + 1;
@@ -159,7 +160,7 @@ module.exports = {
         return;
       }
     } catch (error) {
-      console.error(`error handling /gacha: ${error}`);
+      logger.error(`error handling /gacha: ${error}`);
     }
   },
 

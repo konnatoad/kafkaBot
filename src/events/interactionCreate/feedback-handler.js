@@ -1,3 +1,4 @@
+const logger = require("../../extra/logger");
 require("dotenv").config();
 const { EmbedBuilder, MessageFlags } = require("discord.js");
 
@@ -44,7 +45,7 @@ module.exports = async (interaction, client) => {
       .setTimestamp();
 
     await feedbackChannel.send({ embeds: [feedbackEmbed] }).catch((err) => {
-      console.error("feedback-handler: failed to send to feedback channel:", err);
+      logger.error("feedback-handler: failed to send to feedback channel:", err);
     });
 
     await interaction.reply({
