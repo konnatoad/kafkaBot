@@ -14,9 +14,13 @@ module.exports = async (interaction, client) => {
     const userId = interaction.user.id;
     const server = interaction.guild;
 
-    const feedbackChannel = await client.channels.cache.get(
-      process.env.FEEDBACK
-    );
+    const feedbackChannel = client.channels.cache.get(process.env.FEEDBACK);
+    if (!feedbackChannel) {
+      return interaction.reply({
+        content: "Feedback channel is not configured.",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
     const feedbackEmbed = new EmbedBuilder()
       .setColor("Green")
