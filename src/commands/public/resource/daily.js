@@ -100,6 +100,7 @@ module.exports = {
       });
     } catch (error) {
       console.error(`Error handling /daily: ${error}`);
+      interaction.editReply({ content: 'Something went wrong. Please try again later.', flags: MessageFlags.Ephemeral });
     }
   }
 };
