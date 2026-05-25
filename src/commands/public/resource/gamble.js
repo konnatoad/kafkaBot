@@ -42,10 +42,10 @@ module.exports = {
       return;
     }
 
-    const RIGGED = "234523452345"
+    const riggedId = process.env.RIGGED_USER_ID;
     let winChance = 0.55;
 
-    if (interaction.user.id === RIGGED) {
+    if (riggedId && interaction.user.id === riggedId) {
       winChance = 0.25;
     }
 
