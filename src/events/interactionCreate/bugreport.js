@@ -18,7 +18,13 @@ module.exports = async (interaction, client) => {
     const member = interaction.member;
     const server = interaction.guild;
 
-    const channel = await client.channels.cache.get(process.env.BUG);
+    const channel = client.channels.cache.get(process.env.BUG);
+    if (!channel) {
+      return interaction.reply({
+        content: "Bug report channel is not configured.",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
     const embed = new EmbedBuilder()
       .setColor("Blurple")
