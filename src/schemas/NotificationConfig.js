@@ -6,7 +6,7 @@ const notificationConfigSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    notifiactionChannelId: {
+    notificationChannelId: {
       type: String,
       required: true,
     },

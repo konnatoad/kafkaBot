@@ -69,7 +69,7 @@ module.exports = (client) => {
           (latestVideo.id !== lastCheckedVid.id &&
             new Date(latestVideo.pubDate) > new Date(lastCheckedVid.pubDate))
         ) {
-          const { guildId, notifiactionChannelId } = notificationConfig;
+          const { guildId, notificationChannelId } = notificationConfig;
 
           let targetGuild = guildCache.get(guildId);
           if (!targetGuild) {
@@ -83,12 +83,12 @@ module.exports = (client) => {
             guildCache.set(guildId, targetGuild);
           }
 
-          const channelCacheKey = `${guildId}:${notifiactionChannelId}`;
+          const channelCacheKey = `${guildId}:${notificationChannelId}`;
           let targetChannel = channelCache.get(channelCacheKey);
           if (!targetChannel) {
             targetChannel =
-              targetGuild.channels.cache.get(notifiactionChannelId) ||
-              (await targetGuild.channels.fetch(notifiactionChannelId).catch(() => null));
+              targetGuild.channels.cache.get(notificationChannelId) ||
+              (await targetGuild.channels.fetch(notificationChannelId).catch(() => null));
             if (!targetChannel) {
               await NotificationConfig.findOneAndDelete({ _id: notificationConfig._id });
               continue;

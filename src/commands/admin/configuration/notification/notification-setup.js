@@ -45,7 +45,7 @@ async function run({ interaction }) {
 
     const notificationConfig = new NotificationConfig({
       guildId: interaction.guildId,
-      notifiactionChannelId: targetNotificationChannel.id,
+      notificationChannelId: targetNotificationChannel.id,
       ytChannelId: targetYtChannelId,
       customMessage: targetCustomMessage,
       lastChecked: new Date(),
