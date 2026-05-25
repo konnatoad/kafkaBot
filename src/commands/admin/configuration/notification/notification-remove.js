@@ -16,7 +16,7 @@ async function run({ interaction }) {
 
     const targetChannel = await NotificationConfig.findOne({
       ytChannelId: targetYtChannelId,
-      notifiactionChannelId: targetNotificationChannel.id
+      notificationChannelId: targetNotificationChannel.id
     });
 
     if (!targetChannel) {
