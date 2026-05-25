@@ -13,6 +13,8 @@ const { Beatmap, Performance } = require("rosu-pp-js");
 const fs = require("fs");
 const path = require("path");
 
+const downloading = new Set();
+
 const VAL_CACHE = new Map(); // key -> { expires, payload }
 const VAL_CACHE_TTL_MS = 30_000;
 
@@ -107,29 +109,32 @@ function mkActsBlock(seasonal) {
 }
 
 async function downloadBeatmap(beatmapId, beatmapPath) {
-  if (!fs.existsSync(beatmapPath)) {
+  if (fs.existsSync(beatmapPath)) return true;
+  if (downloading.has(beatmapId)) return false;
+  downloading.add(beatmapId);
+  try {
     console.log(`Downloading beatmap: ${beatmapId}`);
-    try {
-      const beatmapResponse = await axios.get(
-        `https://osu.ppy.sh/osu/${beatmapId}`,
-        {
-          responseType: "arraybuffer"
-        }
-      );
-
-      fs.writeFileSync(beatmapPath, beatmapResponse.data);
-
-      const fileSize = fs.statSync(beatmapPath).size;
-      if (fileSize === 0) {
-        console.error(`Downloaded beatmap ${beatmapId} is empty!`);
-        return false;
+    const beatmapResponse = await axios.get(
+      `https://osu.ppy.sh/osu/${beatmapId}`,
+      {
+        responseType: "arraybuffer"
       }
-    } catch (error) {
-      console.error(`Failed to download beatmap ${beatmapId}:`, error);
+    );
+
+    fs.writeFileSync(beatmapPath, beatmapResponse.data);
+
+    const fileSize = fs.statSync(beatmapPath).size;
+    if (fileSize === 0) {
+      console.error(`Downloaded beatmap ${beatmapId} is empty!`);
       return false;
     }
+    return true;
+  } catch (error) {
+    console.error(`Failed to download beatmap ${beatmapId}:`, error);
+    return false;
+  } finally {
+    downloading.delete(beatmapId);
   }
-  return true;
 }
 
 module.exports = {
