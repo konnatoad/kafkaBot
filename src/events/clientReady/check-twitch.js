@@ -84,9 +84,9 @@ async function sendNotification(notificationConfig, userLogin, client, guildCach
   await notificationConfig.save();
 }
 
-module.exports = (client) => {
-  let interval;
+let interval;
 
+module.exports = (client) => {
   async function checkTwitch() {
     try {
       const notificationConfigs = await NotificationConfig.find();
