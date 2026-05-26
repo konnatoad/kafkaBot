@@ -6,10 +6,12 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
 const uploadsPlaylistCache = new Map();
 
+const ytApiHeaders = { headers: { "x-goog-api-key": YOUTUBE_API_KEY } };
+
 async function getUploadsPlaylistId(ytChannelId) {
   if (uploadsPlaylistCache.has(ytChannelId)) return uploadsPlaylistCache.get(ytChannelId);
-  const url = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${ytChannelId}&key=${YOUTUBE_API_KEY}`;
-  const res = await axios.get(url);
+  const url = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${ytChannelId}`;
+  const res = await axios.get(url, ytApiHeaders);
   const playlistId = res.data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
   if (playlistId) uploadsPlaylistCache.set(ytChannelId, playlistId);
   return playlistId ?? null;
@@ -18,8 +20,8 @@ async function getUploadsPlaylistId(ytChannelId) {
 async function fetchLatestVideo(ytChannelId) {
   const playlistId = await getUploadsPlaylistId(ytChannelId);
   if (!playlistId) return null;
-  const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=1&key=${YOUTUBE_API_KEY}`;
-  const res = await axios.get(url);
+  const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=1`;
+  const res = await axios.get(url, ytApiHeaders);
   const item = res.data.items?.[0];
   if (!item) return null;
   const snippet = item.snippet;
