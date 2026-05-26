@@ -1,4 +1,5 @@
 node_modules
+video-urls.json
 .env
 config.json
 static
