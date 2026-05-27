@@ -28,7 +28,7 @@ module.exports = {
     const updatedProfile = await UserProfile.findOneAndUpdate(
       { userId, balance: { $gte: storeItem.cost } },
       { $inc: { balance: -storeItem.cost } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!updatedProfile) {

@@ -27,7 +27,7 @@ module.exports = {
       const old = await UserProfile.findOneAndUpdate(
         { ...query, balance: { $gt: 0 } },
         { $set: { balance: 0 } },
-        { new: false }
+        { returnDocument: 'before' }
       );
       if (!old) {
         const exists = await UserProfile.exists(query);
@@ -47,7 +47,7 @@ module.exports = {
       const updated = await UserProfile.findOneAndUpdate(
         { ...query, balance: { $gte: amount } },
         { $inc: { balance: -amount } },
-        { new: true }
+        { returnDocument: 'after' }
       );
       if (!updated) {
         const exists = await UserProfile.exists(query);
@@ -79,7 +79,7 @@ module.exports = {
     const result = await UserProfile.findOneAndUpdate(
       query,
       { $inc: { balance: amountWon } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     return interaction.reply(
