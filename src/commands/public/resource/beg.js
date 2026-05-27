@@ -104,13 +104,13 @@ module.exports = {
         });
       }
 
-      let userProfile = await UserProfile.findOne({
+      const profileExists = await UserProfile.exists({
         userId,
         Guild: interaction.guild.id
-      }).select("userId balance");
+      });
 
-      if (!userProfile) {
-        interaction.editReply({
+      if (!profileExists) {
+        await interaction.editReply({
           content: `You don't have user setup in my database, please run /daily.`
         });
         return;
@@ -188,7 +188,6 @@ module.exports = {
 
       //REWARDS
 
-      userProfile.balance += amount;
       cooldown.endsAt = Date.now() + 180000;
       const winnerchicken = [
         `Oh what a good puppy! Here's your reward. \n*+${amount} rice grains.*`,
@@ -209,7 +208,13 @@ module.exports = {
       const randomwin =
         winnerchicken[Math.floor(Math.random() * winnerchicken.length)];
 
-      await Promise.all([cooldown.save(), userProfile.save()]);
+      await Promise.all([
+        cooldown.save(),
+        UserProfile.updateOne(
+          { userId, Guild: interaction.guild.id },
+          { $inc: { balance: amount } }
+        ),
+      ]);
 
       await interaction.editReply({
         content: `${randomwin}`
