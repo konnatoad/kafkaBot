@@ -31,39 +31,23 @@ module.exports = {
       return interaction.reply("Stealing is illegal!");
     }
 
-    let giverProfile = await UserProfile.findOne({
-      userId: giver.id,
-      Guild: guildId,
-    });
-    if (!giverProfile) {
-      giverProfile = new UserProfile({
-        userId: giver.id,
-        Guild: guildId,
-        balance: 0,
-      });
-    }
+    // Atomically deduct from giver only if they have sufficient balance
+    const giverProfile = await UserProfile.findOneAndUpdate(
+      { userId: giver.id, Guild: guildId, balance: { $gte: amount } },
+      { $inc: { balance: -amount } },
+      { new: true }
+    );
 
-    if (giverProfile.balance < amount) {
+    if (!giverProfile) {
       return interaction.reply("You do not have enough rice grains.");
     }
 
-    let receiverProfile = await UserProfile.findOne({
-      userId: receiver.id,
-      Guild: guildId,
-    });
-    if (!receiverProfile) {
-      receiverProfile = new UserProfile({
-        userId: receiver.id,
-        Guild: guildId,
-        balance: 0,
-      });
-    }
-
-    giverProfile.balance -= amount;
-    receiverProfile.balance += amount;
-
-    await giverProfile.save();
-    await receiverProfile.save();
+    // Atomically credit receiver, creating their profile if needed
+    await UserProfile.findOneAndUpdate(
+      { userId: receiver.id, Guild: guildId },
+      { $inc: { balance: amount } },
+      { upsert: true }
+    );
 
     return interaction.reply({
       content: `${giver.toString()} has given ${amount} rice grains to ${receiver.toString()}!`,

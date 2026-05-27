@@ -9,53 +9,59 @@ module.exports = {
         content: "you can only run this command inside a server.",
         flags: MessageFlags.Ephemeral,
       });
-
       return;
     }
 
-    let amount = interaction.options.getNumber("amount");
+    const amount = interaction.options.getNumber("amount");
     const allIn = interaction.options.getBoolean("all-in");
-
-    if (amount < 10) {
-      interaction.reply("You must gamble at least 10 rice grains.");
-      return;
-    }
-
-    let userProfile = await UserProfile.findOne({
-      userId: interaction.user.id,
-      Guild: interaction.guild.id,
-    });
-
-    if (!userProfile) {
-      interaction.reply(
-        "You don't have user setup in my database, please run /daily."
-      );
-      return;
-    }
-
-    if (allIn) {
-      amount = userProfile.balance;
-    }
-
-    if (amount > userProfile.balance) {
-      interaction.reply("You don't have enough balance to gamble.");
-      return;
-    }
+    const query = { userId: interaction.user.id, Guild: interaction.guild.id };
 
     const riggedId = process.env.RIGGED_USER_ID;
-    let winChance = 0.55;
-
-    if (riggedId && interaction.user.id === riggedId) {
-      winChance = 0.25;
-    }
-
+    const winChance = riggedId && interaction.user.id === riggedId ? 0.25 : 0.55;
     const didWin = Math.random() > winChance;
 
-    if (!didWin) {
-      userProfile.balance -= amount;
-      await userProfile.save();
-      //await interaction.deleteReply();
+    let bet;
 
+    if (allIn) {
+      // Atomically zero the balance and capture the old value as the bet
+      const old = await UserProfile.findOneAndUpdate(
+        { ...query, balance: { $gt: 0 } },
+        [{ $set: { balance: 0 } }],
+        { new: false }
+      );
+      if (!old) {
+        const exists = await UserProfile.exists(query);
+        if (!exists) {
+          return interaction.reply(
+            "You don't have user setup in my database, please run /daily."
+          );
+        }
+        return interaction.reply("You have no rice grains to gamble.");
+      }
+      bet = old.balance;
+    } else {
+      if (amount < 10) {
+        return interaction.reply("You must gamble at least 10 rice grains.");
+      }
+      // Atomically deduct only if balance is sufficient
+      const updated = await UserProfile.findOneAndUpdate(
+        { ...query, balance: { $gte: amount } },
+        { $inc: { balance: -amount } },
+        { new: true }
+      );
+      if (!updated) {
+        const exists = await UserProfile.exists(query);
+        if (!exists) {
+          return interaction.reply(
+            "You don't have user setup in my database, please run /daily."
+          );
+        }
+        return interaction.reply("You don't have enough balance to gamble.");
+      }
+      bet = amount;
+    }
+
+    if (!didWin) {
       const lossoptios = [
         "Oh would you look at that, you lost! Better luck next time!",
         "Next time you lose I'll make you my pet, so please do try again!",
@@ -64,23 +70,20 @@ module.exports = {
         "You're so bad at this.",
         "Maybe it's time to quit before you go bankrupt.",
       ];
-
-      const randomreply =
-        lossoptios[Math.floor(Math.random() * lossoptios.length)];
-
-      await interaction.reply({
-        content: `${randomreply}`,
+      return interaction.reply({
+        content: lossoptios[Math.floor(Math.random() * lossoptios.length)],
       });
-      return;
     }
 
-    const amountWon = Number((amount * (Math.random() + 0.55)).toFixed(0));
+    const amountWon = Number((bet * (Math.random() + 0.55)).toFixed(0));
+    const result = await UserProfile.findOneAndUpdate(
+      query,
+      { $inc: { balance: amountWon } },
+      { new: true }
+    );
 
-    userProfile.balance += amountWon;
-    await userProfile.save();
-
-    await interaction.reply(
-      `Congratulations! You won +${amountWon} rice grains!\nYour new balance is: ${userProfile.balance} grains`
+    return interaction.reply(
+      `Congratulations! You won +${amountWon} rice grains!\nYour new balance is: ${result.balance} grains`
     );
   },
 

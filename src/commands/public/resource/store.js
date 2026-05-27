@@ -3,39 +3,6 @@ const StoreItem = require("../../../schemas/Store");
 const UserProfile = require("../../../schemas/UserProfile");
 const logger = require("../../../extra/logger");
 
-async function removeBalance(userId, amount) {
-  try {
-    const userProfile = await UserProfile.findOne({ userId });
-    if (!userProfile) {
-      logger.error("User profile not found.");
-      return false;
-    }
-
-    userProfile.balance -= amount;
-    await userProfile.save();
-
-    return true;
-  } catch (error) {
-    logger.error("Error removing balance:", error.message);
-    return false;
-  }
-}
-
-async function getUserBalance(userId) {
-  try {
-    const userProfile = await UserProfile.findOne({ userId });
-    if (!userProfile) {
-      logger.error("User profile not found.");
-      return 0;
-    }
-
-    return userProfile.balance;
-  } catch (error) {
-    logger.error("Error retrieving user balance:", error.message);
-    return 0;
-  }
-}
-
 module.exports = {
   deleted: false,
   data: new SlashCommandBuilder()
@@ -50,25 +17,23 @@ module.exports = {
   run: async ({ interaction }) => {
     const roleToBuyId = interaction.options.getRole("role").id;
     const userId = interaction.user.id;
-    const guildId = interaction.guild.id; // Get the guild ID
+    const guildId = interaction.guild.id;
 
     const storeItem = await StoreItem.findOne({ guildId, roleId: roleToBuyId });
     if (!storeItem) {
       return interaction.reply("This role is not available for purchase.");
     }
 
-    const userBalance = await getUserBalance(userId);
+    // Atomically deduct cost only if the user has sufficient balance
+    const updatedProfile = await UserProfile.findOneAndUpdate(
+      { userId, balance: { $gte: storeItem.cost } },
+      { $inc: { balance: -storeItem.cost } },
+      { new: true }
+    );
 
-    if (userBalance < storeItem.cost) {
+    if (!updatedProfile) {
       return interaction.reply(
         "You do not have enough rice grains to buy this role."
-      );
-    }
-
-    const balanceRemoved = await removeBalance(userId, storeItem.cost);
-    if (!balanceRemoved) {
-      return interaction.reply(
-        "An error occurred while removing your balance."
       );
     }
 
@@ -80,16 +45,20 @@ module.exports = {
         `Congratulations! You have successfully purchased the ${roleToAdd.toString()} role.`
       );
     } catch (error) {
+      // Refund the deducted balance since the role could not be granted
+      await UserProfile.findOneAndUpdate(
+        { userId },
+        { $inc: { balance: storeItem.cost } }
+      );
+
       if (error.message.includes("Missing Permissions")) {
         return interaction.reply(
           "I don't have permission to give you that role. Please contact a server administrator."
         );
-      } else {
-        logger.error("Error adding role to user:", error.message);
-        return interaction.reply(
-          "An error occurred while giving you the role."
-        );
       }
+
+      logger.error("Error adding role to user:", error.message);
+      return interaction.reply("An error occurred while giving you the role.");
     }
   }
 };
