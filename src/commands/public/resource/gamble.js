@@ -26,7 +26,7 @@ module.exports = {
       // Atomically zero the balance and capture the old value as the bet
       const old = await UserProfile.findOneAndUpdate(
         { ...query, balance: { $gt: 0 } },
-        [{ $set: { balance: 0 } }],
+        { $set: { balance: 0 } },
         { new: false }
       );
       if (!old) {
