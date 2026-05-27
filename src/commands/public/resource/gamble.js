@@ -75,7 +75,7 @@ module.exports = {
       });
     }
 
-    const amountWon = Number((bet * (Math.random() + 0.55)).toFixed(0));
+    const amountWon = Math.max(bet + 1, Number((bet * (Math.random() + 0.55)).toFixed(0)));
     const result = await UserProfile.findOneAndUpdate(
       query,
       { $inc: { balance: amountWon } },
