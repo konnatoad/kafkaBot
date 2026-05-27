@@ -18,7 +18,8 @@ module.exports = {
 
     const riggedId = process.env.RIGGED_USER_ID;
     const winChance = riggedId && interaction.user.id === riggedId ? 0.25 : 0.55;
-    const didWin = Math.random() > winChance;
+    const isJackpot = Math.random() < 0.001;
+    const didWin = isJackpot || Math.random() > winChance;
 
     let bet;
 
@@ -75,15 +76,19 @@ module.exports = {
       });
     }
 
-    const multiplier = allIn
-      ? Math.random() * 1.3 + 1.2
-      : Math.random() + 0.55;
+    const multiplier = isJackpot ? 10 : Math.random() * 1.8 + 1.2;
     const amountWon = Math.max(bet + 1, Number((bet * multiplier).toFixed(0)));
     const result = await UserProfile.findOneAndUpdate(
       query,
       { $inc: { balance: amountWon } },
       { returnDocument: 'after' }
     );
+
+    if (isJackpot) {
+      return interaction.reply(
+        `Ugh. JACKPOT. Of all the people, it had to be you. Don't let it get to your head. +${amountWon} rice grains!\nYour new balance is: ${result.balance} grains`
+      );
+    }
 
     return interaction.reply(
       `Congratulations! You won +${amountWon} rice grains!\nYour new balance is: ${result.balance} grains`
