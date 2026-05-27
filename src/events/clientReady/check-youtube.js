@@ -6,12 +6,10 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
 const uploadsPlaylistCache = new Map();
 
-const ytApiHeaders = { headers: { "x-goog-api-key": YOUTUBE_API_KEY } };
-
 async function getUploadsPlaylistId(ytChannelId) {
   if (uploadsPlaylistCache.has(ytChannelId)) return uploadsPlaylistCache.get(ytChannelId);
-  const url = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${ytChannelId}`;
-  const res = await axios.get(url, ytApiHeaders);
+  const url = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${ytChannelId}&key=${YOUTUBE_API_KEY}`;
+  const res = await axios.get(url);
   const playlistId = res.data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
   if (playlistId) uploadsPlaylistCache.set(ytChannelId, playlistId);
   return playlistId ?? null;
@@ -20,8 +18,8 @@ async function getUploadsPlaylistId(ytChannelId) {
 async function fetchLatestVideo(ytChannelId) {
   const playlistId = await getUploadsPlaylistId(ytChannelId);
   if (!playlistId) return null;
-  const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=1`;
-  const res = await axios.get(url, ytApiHeaders);
+  const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=1&key=${YOUTUBE_API_KEY}`;
+  const res = await axios.get(url);
   const item = res.data.items?.[0];
   if (!item) return null;
   const snippet = item.snippet;
@@ -36,6 +34,11 @@ async function fetchLatestVideo(ytChannelId) {
 }
 
 module.exports = (client) => {
+  if (!YOUTUBE_API_KEY) {
+    logger.warn("check-youtube: YOUTUBE_API_KEY is not set, YouTube notifications are disabled.");
+    return;
+  }
+
   checkYoutube();
   setInterval(checkYoutube, 60000);
 
@@ -57,7 +60,8 @@ module.exports = (client) => {
           try {
             latestVideo = await fetchLatestVideo(ytChannelId);
           } catch (e) {
-            logger.warn(`check-youtube: failed to fetch latest video for channel ${ytChannelId}:`, e.message);
+            const detail = e.response?.data?.error?.message ?? e.message ?? String(e);
+            logger.warn(`check-youtube: failed to fetch latest video for channel ${ytChannelId}: ${detail}`);
             latestVideo = null;
           }
           feedCache.set(ytChannelId, latestVideo);
