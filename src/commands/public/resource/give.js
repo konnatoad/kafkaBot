@@ -35,7 +35,7 @@ module.exports = {
     const giverProfile = await UserProfile.findOneAndUpdate(
       { userId: giver.id, Guild: guildId, balance: { $gte: amount } },
       { $inc: { balance: -amount } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!giverProfile) {
