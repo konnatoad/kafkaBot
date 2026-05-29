@@ -17,9 +17,9 @@ module.exports = {
     const query = { userId: interaction.user.id, Guild: interaction.guild.id };
 
     const riggedId = process.env.RIGGED_USER_ID;
-    const winChance = riggedId && interaction.user.id === riggedId ? 0.25 : 0.55;
+    const winChance = riggedId && interaction.user.id === riggedId ? 0.75 : 0.45;
     const isJackpot = Math.random() < 0.001;
-    const didWin = isJackpot || Math.random() > winChance;
+    const didWin = isJackpot || Math.random() < winChance;
 
     let bet;
 
