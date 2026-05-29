@@ -29,4 +29,6 @@ const userProfileSchema = new Schema(
   { timestamps: true }
 );
 
+userProfileSchema.index({ userId: 1, Guild: 1 }, { unique: true });
+
 module.exports = model("UserProfile", userProfileSchema);
