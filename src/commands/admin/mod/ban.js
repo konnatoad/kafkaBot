@@ -34,9 +34,11 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const targetUser = await interaction.guild.members.fetch(targetUserId);
-
-    if (!targetUser) {
+    let targetUser;
+    try {
+      targetUser = await interaction.guild.members.fetch(targetUserId);
+    } catch (error) {
+      logger.error(`there was an error fetching member: ${error}`);
       await interaction.editReply("that user doesn't exist on this server");
       return;
     }
