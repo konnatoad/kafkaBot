@@ -26,7 +26,7 @@ module.exports = {
 
     // Atomically deduct cost only if the user has sufficient balance
     const updatedProfile = await UserProfile.findOneAndUpdate(
-      { userId, balance: { $gte: storeItem.cost } },
+      { userId, Guild: guildId, balance: { $gte: storeItem.cost } },
       { $inc: { balance: -storeItem.cost } },
       { returnDocument: 'after' }
     );
@@ -47,7 +47,7 @@ module.exports = {
     } catch (error) {
       // Refund the deducted balance since the role could not be granted
       await UserProfile.findOneAndUpdate(
-        { userId },
+        { userId, Guild: guildId },
         { $inc: { balance: storeItem.cost } }
       );
 
