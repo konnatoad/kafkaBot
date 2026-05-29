@@ -11,13 +11,13 @@ module.exports = async (message) => {
     return;
 
   try {
-    const Data = await levelSchema.findOne({
+    let Data = await levelSchema.findOne({
       Guild: guild.id,
       User: author.id,
     });
 
     if (!Data) {
-      await levelSchema.create({
+      Data = await levelSchema.create({
         Guild: guild.id,
         User: author.id,
         XP: 0,
@@ -42,10 +42,7 @@ module.exports = async (message) => {
 
     const give = 1;
 
-    const data = await levelSchema.findOne({
-      Guild: guild.id,
-      User: author.id,
-    });
+    const data = Data;
 
     if (!data) return;
 
