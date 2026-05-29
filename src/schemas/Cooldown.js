@@ -15,4 +15,7 @@ const cooldownSchema = new Schema({
   },
 });
 
+cooldownSchema.index({ userId: 1, commandName: 1 }, { unique: true });
+cooldownSchema.index({ endsAt: 1 }, { expireAfterSeconds: 0 });
+
 module.exports = model("Cooldown", cooldownSchema);
