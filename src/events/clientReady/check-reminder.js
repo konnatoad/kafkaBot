@@ -7,7 +7,7 @@ module.exports = (client) => {
 
   async function checkReminders() {
     try {
-      const userProfiles = await UserProfile.find();
+      const userProfiles = await UserProfile.find({ reminderTime: { $ne: null } });
 
       for (const userProfile of userProfiles) {
         const { userId, Guild, reminderTime } = userProfile;
