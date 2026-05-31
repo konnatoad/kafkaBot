@@ -101,7 +101,6 @@ module.exports = {
       });
     } catch (error) {
       logger.error(`Error handling /daily: ${error}`);
-      console.error(`Error handling /daily: ${error}`);
       interaction.editReply({ content: 'Something went wrong. Please try again later.', flags: MessageFlags.Ephemeral });
     }
   }
