@@ -39,7 +39,7 @@ if (missingEnv.length) {
 
 const OPTIONAL_ENV = ["BUG", "FEEDBACK", "TWITCH_CLIENT_ID", "TWITCH_ACCESS_TOKEN", "YOUTUBE_API_KEY"];
 const missingOpt = OPTIONAL_ENV.filter((key) => !process.env[key]);
-if (missingOpt.length) console.warn(`⚠️  Optional env vars not set (features may be disabled): ${missingOpt.join(", ")}`);
+if (missingOpt.length) logger.warn(`Optional env vars not set (features may be disabled): ${missingOpt.join(", ")}`);
 
 (async () => {
   try {

@@ -61,7 +61,9 @@ module.exports = (client) => {
             latestVideo = await fetchLatestVideo(ytChannelId);
           } catch (e) {
             const detail = e.response?.data?.error?.message ?? e.message ?? String(e);
-            logger.warn(`check-youtube: failed to fetch latest video for channel ${ytChannelId}: ${detail}`);
+            const reason = e.response?.data?.error?.errors?.[0]?.reason ?? "unknown";
+            const status = e.response?.status ?? "no-status";
+            logger.warn(`check-youtube: failed to fetch latest video for channel ${ytChannelId}: ${detail} (reason: ${reason}, status: ${status})`);
             latestVideo = null;
           }
           feedCache.set(ytChannelId, latestVideo);
