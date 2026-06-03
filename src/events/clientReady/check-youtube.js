@@ -6,6 +6,9 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
 const uploadsPlaylistCache = new Map();
 
+// Failure tracker: channelId -> { count, firstFailAt, lastFailAt, lastRecoveredAt, wasFailingLastCycle }
+const failureTracker = new Map();
+
 async function getUploadsPlaylistId(ytChannelId) {
   if (uploadsPlaylistCache.has(ytChannelId)) return uploadsPlaylistCache.get(ytChannelId);
   const url = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${ytChannelId}&key=${YOUTUBE_API_KEY}`;
@@ -63,9 +66,44 @@ module.exports = (client) => {
             const detail = e.response?.data?.error?.message ?? e.message ?? String(e);
             const reason = e.response?.data?.error?.errors?.[0]?.reason ?? "unknown";
             const status = e.response?.status ?? "no-status";
-            logger.warn(`check-youtube: failed to fetch latest video for channel ${ytChannelId}: ${detail} (reason: ${reason}, status: ${status})`);
-            latestVideo = null;
+            const now = new Date();
+
+            const tracker = failureTracker.get(ytChannelId) ?? { count: 0, firstFailAt: now, lastFailAt: null, lastRecoveredAt: null, wasFailingLastCycle: false };
+            tracker.count++;
+            tracker.lastFailAt = now;
+            tracker.wasFailingLastCycle = true;
+            if (tracker.count === 1) tracker.firstFailAt = now;
+            failureTracker.set(ytChannelId, tracker);
+
+            logger.warn(
+              `check-youtube: failed to fetch latest video for channel ${ytChannelId}: ${detail} (reason: ${reason}, status: ${status}) ` +
+              `[failure #${tracker.count}, first failed at ${tracker.firstFailAt.toISOString()}, UTC hour: ${now.getUTCHours()}:${String(now.getUTCMinutes()).padStart(2, "0")}]`
+            );
+
+            // Retry after 3 seconds to see if it's a momentary blip
+            await new Promise(res => setTimeout(res, 3000));
+            try {
+              latestVideo = await fetchLatestVideo(ytChannelId);
+              logger.info(`check-youtube: channel ${ytChannelId} recovered on immediate retry after ${Date.now() - now.getTime()}ms`);
+              failureTracker.delete(ytChannelId);
+            } catch (retryErr) {
+              const retryDetail = retryErr.response?.data?.error?.message ?? retryErr.message ?? String(retryErr);
+              const retryReason = retryErr.response?.data?.error?.errors?.[0]?.reason ?? "unknown";
+              const retryStatus = retryErr.response?.status ?? "no-status";
+              logger.warn(`check-youtube: retry also failed for channel ${ytChannelId}: ${retryDetail} (reason: ${retryReason}, status: ${retryStatus}) — not a momentary blip`);
+              latestVideo = null;
+            }
           }
+
+          // Detect recovery: was failing last cycle, now succeeded
+          if (latestVideo !== null) {
+            const tracker = failureTracker.get(ytChannelId);
+            if (tracker?.wasFailingLastCycle) {
+              logger.info(`check-youtube: channel ${ytChannelId} recovered after ${tracker.count} failure(s). First failed at ${tracker.firstFailAt.toISOString()}, recovered at ${new Date().toISOString()}`);
+              failureTracker.delete(ytChannelId);
+            }
+          }
+
           feedCache.set(ytChannelId, latestVideo);
         }
 
