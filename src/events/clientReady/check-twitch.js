@@ -107,14 +107,18 @@ module.exports = (client) => {
           isLive,
         });
 
-        // Check if notification has been sent previously
-        if (isLive && !notificationConfig.isLivePreviously) {
-          // Send notification
-          await sendNotification(notificationConfig, userLogin, client, guildCache, channelCache);
-        } else if (!isLive && notificationConfig.isLivePreviously) {
-          // Update isLivePreviously field
-          notificationConfig.isLivePreviously = false;
-          await notificationConfig.save();
+        try {
+          if (isLive && !notificationConfig.isLivePreviously) {
+            await sendNotification(notificationConfig, userLogin, client, guildCache, channelCache);
+          } else if (!isLive && notificationConfig.isLivePreviously) {
+            notificationConfig.isLivePreviously = false;
+            await notificationConfig.save();
+          }
+        } catch (notifError) {
+          logger.error(
+            `Failed to send Twitch notification for ${userLogin} (guild: ${notificationConfig.guildId}, channel: ${notificationConfig.notificationChannelId}):`,
+            notifError,
+          );
         }
       }
     } catch (error) {
