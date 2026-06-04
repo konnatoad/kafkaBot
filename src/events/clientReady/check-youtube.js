@@ -163,7 +163,14 @@ module.exports = (client) => {
               ?.replace("{CHANNEL_NAME}", latestVideo.channelTitle) ||
             `New upload by ${latestVideo.channelTitle}\n${latestVideo.link}`;
 
-          await targetChannel.send(targetMessage);
+          try {
+            await targetChannel.send(targetMessage);
+          } catch (sendError) {
+            logger.error(
+              `check-youtube: failed to send notification for channel ${ytChannelId} (guild: ${guildId}, channel: ${notificationChannelId}):`,
+              sendError,
+            );
+          }
         }
       }
     } catch (error) {
