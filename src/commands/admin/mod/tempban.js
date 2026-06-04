@@ -74,13 +74,6 @@ module.exports = {
     const expirationTime = new Date();
     expirationTime.setMinutes(expirationTime.getMinutes() + totalDuration);
 
-    await Ban.create({
-      userId: user.id,
-      expirationTime,
-      guildId: interaction.guildId,
-      reason,
-    });
-
     const formattedDuration = providedDurations
       .map((option, index) => {
         const value = durationValues[index];
@@ -90,25 +83,7 @@ module.exports = {
       .filter((duration) => duration !== null)
       .join(", ");
 
-    const embed = new EmbedBuilder()
-      .setColor("#ff0000")
-      .setTitle("User Temporarily Banned")
-      .setDescription(
-        `**${user.tag}** has been temporarily banned from the server.`
-      )
-      .addFields(
-        { name: "Duration", value: `\`${formattedDuration}\`` },
-        { name: "Reason", value: `\`${reason}\`` },
-        { name: "User ID", value: `\`${user.id}\`` }
-      )
-      .setFooter({
-        text: `Banned by ${interaction.user.tag}`,
-        iconURL: interaction.user.displayAvatarURL(),
-      })
-      .setTimestamp();
-
-    await interaction.reply({ embeds: [embed] });
-
+    // DM the user before banning — once banned there may be no shared server
     const dmEmbed = new EmbedBuilder()
       .setColor("#ff0000")
       .setTitle("You Have Been Temporarily Banned")
@@ -128,6 +103,43 @@ module.exports = {
       logger.error(`Could not send DM to ${user.tag}: ${error.message}`);
     }
 
-    await interaction.guild.members.ban(user, { reason });
+    // Attempt the ban — if it fails, reply with an error and bail out
+    try {
+      await interaction.guild.members.ban(user, { reason });
+    } catch (error) {
+      logger.error(`Failed to ban ${user.tag}: ${error.message}`);
+      await interaction.reply({
+        content: `Failed to ban **${user.tag}**: ${error.message}`,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    // Ban succeeded — persist the record and notify the mod
+    await Ban.create({
+      userId: user.id,
+      expirationTime,
+      guildId: interaction.guildId,
+      reason,
+    });
+
+    const embed = new EmbedBuilder()
+      .setColor("#ff0000")
+      .setTitle("User Temporarily Banned")
+      .setDescription(
+        `**${user.tag}** has been temporarily banned from the server.`
+      )
+      .addFields(
+        { name: "Duration", value: `\`${formattedDuration}\`` },
+        { name: "Reason", value: `\`${reason}\`` },
+        { name: "User ID", value: `\`${user.id}\`` }
+      )
+      .setFooter({
+        text: `Banned by ${interaction.user.tag}`,
+        iconURL: interaction.user.displayAvatarURL(),
+      })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
   },
 };
