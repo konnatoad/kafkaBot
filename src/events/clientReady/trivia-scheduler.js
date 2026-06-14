@@ -91,6 +91,22 @@ module.exports = (client) => {
         const today = getTodayInTimezone(cfg.timezone);
         if (cfg.lastSentDate === today) continue;
 
+        const guild =
+          client.guilds.cache.get(cfg.guildId) ||
+          (await client.guilds.fetch(cfg.guildId).catch(() => null));
+        if (!guild) {
+          logger.error(`trivia-scheduler: guild ${cfg.guildId} not found`);
+          continue;
+        }
+
+        const channel =
+          guild.channels.cache.get(cfg.channelId) ||
+          (await guild.channels.fetch(cfg.channelId).catch(() => null));
+        if (!channel) {
+          logger.error(`trivia-scheduler: channel ${cfg.channelId} not found in guild ${cfg.guildId}`);
+          continue;
+        }
+
         // Announce previous day's winners before posting new question
         if (cfg.lastSentDate) {
           try {
@@ -99,15 +115,6 @@ module.exports = (client) => {
               questionId: cfg.lastSentDate,
               solved: true,
             }).sort({ wrongAttempts: 1 });
-
-            const guild =
-              client.guilds.cache.get(cfg.guildId) ||
-              (await client.guilds.fetch(cfg.guildId).catch(() => null));
-
-            const channel = guild
-              ? guild.channels.cache.get(cfg.channelId) ||
-                (await guild.channels.fetch(cfg.channelId).catch(() => null))
-              : null;
 
             if (channel) {
               if (!winners.length) {
@@ -169,22 +176,6 @@ module.exports = (client) => {
         const requiresChoices = /which of the following|which one of the following|which of these|all of the following|none of the following|which is not|which are not|which was not|which were not/.test(questionText);
 
         const basePayout = BASE_PAYOUT[effectiveDifficulty] ?? 75;
-
-        const guild =
-          client.guilds.cache.get(cfg.guildId) ||
-          (await client.guilds.fetch(cfg.guildId).catch(() => null));
-        if (!guild) {
-          logger.error(`trivia-scheduler: guild ${cfg.guildId} not found`);
-          continue;
-        }
-
-        const channel =
-          guild.channels.cache.get(cfg.channelId) ||
-          (await guild.channels.fetch(cfg.channelId).catch(() => null));
-        if (!channel) {
-          logger.error(`trivia-scheduler: channel ${cfg.channelId} not found in guild ${cfg.guildId}`);
-          continue;
-        }
 
         // Disable button on old message
         if (cfg.lastMessageId) {
