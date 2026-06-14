@@ -177,6 +177,11 @@ module.exports = (client) => {
 
         const basePayout = BASE_PAYOUT[effectiveDifficulty] ?? 75;
 
+        // Clear old stats so users can answer the new question
+        if (cfg.lastSentDate) {
+          await TriviaStats.deleteMany({ guildId: cfg.guildId, questionId: cfg.lastSentDate }).catch(() => {});
+        }
+
         // Disable button on old message
         if (cfg.lastMessageId) {
           const oldMessage = await channel.messages.fetch(cfg.lastMessageId).catch(() => null);
