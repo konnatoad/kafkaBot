@@ -127,7 +127,7 @@ module.exports = {
       .setCustomId("trivia_category_select")
       .setPlaceholder("Pick one or more categories (or leave as Random)")
       .setMinValues(1)
-      .setMaxValues(options.length)
+      .setMaxValues(Math.max(1, options.length))
       .addOptions(options);
 
     const row = new ActionRowBuilder().addComponents(menu);
