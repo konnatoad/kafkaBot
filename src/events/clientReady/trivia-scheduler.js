@@ -66,9 +66,7 @@ function getCurrentHHMM(timezone) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  })
-    .format(new Date())
-    .replace(":", ":");
+  }).format(new Date());
 }
 
 const BASE_PAYOUT = { easy: 25, medium: 75, hard: 150 };
