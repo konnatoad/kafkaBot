@@ -14,13 +14,13 @@ function decodeHtml(str) {
   return str
     .replace(/&quot;/g, '"')
     .replace(/&#039;/g, "'")
-    .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&ldquo;/g, "“")
     .replace(/&rdquo;/g, "”")
     .replace(/&lsquo;/g, "‘")
-    .replace(/&rsquo;/g, "’");
+    .replace(/&rsquo;/g, "’")
+    .replace(/&amp;/g, "&");
 }
 
 function fetchQuestion(difficulty, categoryId) {
