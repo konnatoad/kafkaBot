@@ -31,7 +31,7 @@ function fetchCategories() {
 }
 
 module.exports = {
-  testOnly: true,
+  testOnly: false,
   deleted: false,
   data: new SlashCommandBuilder()
     .setName("trivia-setup")
