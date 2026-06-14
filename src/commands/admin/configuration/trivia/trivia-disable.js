@@ -4,7 +4,7 @@ const TriviaStats = require("../../../../schemas/TriviaStats");
 const logger = require("../../../../extra/logger");
 
 module.exports = {
-  testOnly: true,
+  testOnly: false,
   deleted: false,
   data: new SlashCommandBuilder()
     .setName("trivia-disable")
