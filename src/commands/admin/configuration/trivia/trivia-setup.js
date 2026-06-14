@@ -211,7 +211,6 @@ module.exports = {
 
   autocomplete: async ({ interaction }) => {
     const focused = interaction.options.getFocused(true);
-    logger.info(`trivia autocomplete fired: focused=${focused.name} value=${focused.value}`);
     if (focused.name !== "timezone") return;
 
     const query = focused.value.toLowerCase().replace(/\s+/g, "_");
