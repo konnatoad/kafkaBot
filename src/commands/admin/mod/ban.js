@@ -84,6 +84,7 @@ module.exports = {
       });
     } catch (error) {
       logger.error(`there was an error banning ${error}`);
+      await interaction.editReply(`failed to ban ${targetUser}: ${error.message}`);
     }
   }
 };

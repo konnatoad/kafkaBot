@@ -84,6 +84,7 @@ module.exports = {
       });
     } catch (error) {
       logger.error(`there was an error kicking ${error}`);
+      await interaction.editReply(`failed to kick ${targetUser}: ${error.message}`);
     }
   }
 };
