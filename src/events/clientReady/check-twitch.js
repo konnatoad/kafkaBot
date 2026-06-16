@@ -76,13 +76,10 @@ async function sendNotification(notificationConfig, userLogin, client, guildCach
     ? notificationConfig.customMessage.replace("{URL}", twitchChannelUrl)
     : `@everyone ${userLogin} is now live on Twitch! Check it out: ${twitchChannelUrl}`;
 
-  // Send notification
-  await targetChannel.send(customMessage);
-
-  // Update lastNotificationSentAt and isLivePreviously
   notificationConfig.lastNotificationSentAt = new Date();
   notificationConfig.isLivePreviously = true;
-  await notificationConfig.save();
+
+  await Promise.all([targetChannel.send(customMessage), notificationConfig.save()]);
 }
 
 let interval;
