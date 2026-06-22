@@ -23,26 +23,48 @@ module.exports = {
       .setTitle("Bug & Command abuse reporting")
       .setCustomId("bugreport");
 
-    const command = new TextInputBuilder()
+    const feature = new TextInputBuilder()
       .setCustomId("type")
       .setRequired(true)
-      .setPlaceholder("Please only state the problematic feature")
-      .setLabel("What feature has a bug or is being abused?")
+      .setPlaceholder("e.g. /leaderboard, Twitch notifications")
+      .setLabel("What feature has a bug?")
       .setStyle(TextInputStyle.Short);
 
     const description = new TextInputBuilder()
       .setCustomId("description")
       .setRequired(true)
-      .setPlaceholder(
-        "Be sure to be as detailed as possible so the developer can take action"
-      )
-      .setLabel("Describe the bug or abuse")
+      .setPlaceholder("Describe what is happening")
+      .setLabel("Describe the bug")
       .setStyle(TextInputStyle.Paragraph);
 
-    const one = new ActionRowBuilder().addComponents(command);
-    const two = new ActionRowBuilder().addComponents(description);
+    const steps = new TextInputBuilder()
+      .setCustomId("steps")
+      .setRequired(true)
+      .setPlaceholder("1. Run /command\n2. See error")
+      .setLabel("Steps to reproduce")
+      .setStyle(TextInputStyle.Paragraph);
 
-    modal.addComponents(one, two);
+    const expected = new TextInputBuilder()
+      .setCustomId("expected")
+      .setRequired(true)
+      .setPlaceholder("What should happen vs what actually happens")
+      .setLabel("Expected vs actual behavior")
+      .setStyle(TextInputStyle.Paragraph);
+
+    const severity = new TextInputBuilder()
+      .setCustomId("severity")
+      .setRequired(true)
+      .setPlaceholder("low / medium / high")
+      .setLabel("Severity (low / medium / high)")
+      .setStyle(TextInputStyle.Short);
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(feature),
+      new ActionRowBuilder().addComponents(description),
+      new ActionRowBuilder().addComponents(steps),
+      new ActionRowBuilder().addComponents(expected),
+      new ActionRowBuilder().addComponents(severity)
+    );
     await interaction.showModal(modal);
   },
 };
