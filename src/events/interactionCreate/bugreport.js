@@ -36,24 +36,36 @@ module.exports = async (interaction, client) => {
     let issueNumber = null;
     if (process.env.GITHUB_TOKEN) {
       const body = `## Bug Report\n**Reported by:** ${member.user.username} (\`${id}\`) in **${server.name}** (\`${server.id}\`)\n\n### Description\n${description}\n\n### Steps to Reproduce\n${steps}\n\n### Expected vs Actual Behavior\n${expected}\n\n### Severity\n${severity}`;
-      await axios
-        .post(
-          `https://api.github.com/repos/${process.env.GITHUB_OWNER}/${process.env.GITHUB_REPO}/issues`,
-          { title: `[Bug] ${feature}`, body, labels: ["bug"] },
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-              Accept: "application/vnd.github+json",
-            },
-          }
-        )
-        .then((res) => {
-          issueUrl = res.data.html_url;
-          issueNumber = res.data.number;
-        })
-        .catch((err) => {
-          logger.error("bugreport: failed to create GitHub issue:", err.response?.data ?? err);
-        });
+      const githubOwner = process.env.GITHUB_OWNER;
+      const githubRepo = process.env.GITHUB_REPO;
+      const githubNamePattern = /^[A-Za-z0-9_.-]+$/;
+      if (!githubOwner || !githubRepo || !githubNamePattern.test(githubOwner) || !githubNamePattern.test(githubRepo)) {
+        logger.error("bugreport: invalid GitHub repository configuration.");
+      } else {
+        const githubIssueUrl = new URL(
+          `/repos/${encodeURIComponent(githubOwner)}/${encodeURIComponent(githubRepo)}/issues`,
+          "https://api.github.com"
+        ).toString();
+
+        await axios
+          .post(
+            githubIssueUrl,
+            { title: `[Bug] ${feature}`, body, labels: ["bug"] },
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+                Accept: "application/vnd.github+json",
+              },
+            }
+          )
+          .then((res) => {
+            issueUrl = res.data.html_url;
+            issueNumber = res.data.number;
+          })
+          .catch((err) => {
+            logger.error("bugreport: failed to create GitHub issue:", err.response?.data ?? err);
+          });
+      }
     }
 
     const embed = new EmbedBuilder()
