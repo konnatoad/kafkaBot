@@ -6,8 +6,8 @@ module.exports = (client) => {
     activities: [
       {
         type: ActivityType.Watching,
-        name: "bomzh.fm",
-        state: "/help for commands",
+        name: "/help",
+        state: "/beg",
       },
     ],
   });
