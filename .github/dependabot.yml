@@ -1,13 +1,11 @@
 version: 2
-
 registries:
   github:
     type: npm-registry
     url: https://npm.pkg.github.com
     username: konnatoad
     password: ${{ secrets.DEPENDABOT_TOKEN }}
-    replaces-base: true
-
+    replaces-base: false
 updates:
   - package-ecosystem: "npm"
     directory: "/"
