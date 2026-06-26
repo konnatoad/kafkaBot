@@ -6,6 +6,7 @@ registries:
     url: https://npm.pkg.github.com
     username: konnatoad
     password: ${{ secrets.DEPENDABOT_TOKEN }}
+    replaces-base: true
 
 updates:
   - package-ecosystem: "npm"
