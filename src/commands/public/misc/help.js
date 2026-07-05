@@ -101,10 +101,16 @@ module.exports = {
 
       collector.on("end", async () => {
         client.activeEphemeralMessages.delete(userId);
-        await interaction.editReply({
-          embeds: [embeds[currentGroup][currentPage[currentGroup]]],
-          components: [],
-        });
+        try {
+          await interaction.editReply({
+            embeds: [embeds[currentGroup][currentPage[currentGroup]]],
+            components: [],
+          });
+        } catch (error) {
+          if (error.code !== 50027) {
+            logger.error("Error clearing help components on collector end:", error);
+          }
+        }
       });
     } catch (error) {
       logger.error("Error processing help command:", error);
