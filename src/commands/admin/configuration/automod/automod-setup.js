@@ -22,6 +22,7 @@ module.exports = {
       option
         .setName("log-channel")
         .setDescription("where blocked messages get logged")
+        .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
         .setRequired(true)
     )
     .addBooleanOption((option) =>
