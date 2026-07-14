@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   MessageFlags,
+  ChannelType,
   EmbedBuilder,
   AutoModerationRuleEventType,
   AutoModerationRuleTriggerType,
