@@ -123,71 +123,96 @@ module.exports = {
       const ruleIds = {};
       const enabledSummary = [];
 
+      // rules other than us (manual server setup, or a leftover from a botched disable)
+      // count against discord's per-type cap, so check what's already there first
+      // instead of just throwing when create() hits the cap
+      const existingRules = await guild.autoModerationRules.fetch();
+      const hasType = (type) => existingRules.some((rule) => rule.triggerType === type);
+      const keywordRuleCount = existingRules.filter(
+        (rule) => rule.triggerType === AutoModerationRuleTriggerType.Keyword
+      ).size;
+
       try {
         if (wantSpam) {
-          const rule = await guild.autoModerationRules.create({
-            name: "kafkaBot - spam",
-            eventType: AutoModerationRuleEventType.MessageSend,
-            triggerType: AutoModerationRuleTriggerType.Spam,
-            actions,
-            enabled: true,
-            reason,
-          });
-          ruleIds.spam = rule.id;
-          enabledSummary.push("spam");
+          if (hasType(AutoModerationRuleTriggerType.Spam)) {
+            enabledSummary.push("spam (already set up on this server, skipped)");
+          } else {
+            const rule = await guild.autoModerationRules.create({
+              name: "kafkaBot - spam",
+              eventType: AutoModerationRuleEventType.MessageSend,
+              triggerType: AutoModerationRuleTriggerType.Spam,
+              actions,
+              enabled: true,
+              reason,
+            });
+            ruleIds.spam = rule.id;
+            enabledSummary.push("spam");
+          }
         }
 
         if (presets.length > 0) {
-          const rule = await guild.autoModerationRules.create({
-            name: "kafkaBot - keyword presets",
-            eventType: AutoModerationRuleEventType.MessageSend,
-            triggerType: AutoModerationRuleTriggerType.KeywordPreset,
-            triggerMetadata: { presets },
-            actions,
-            enabled: true,
-            reason,
-          });
-          ruleIds.keywordPreset = rule.id;
-          enabledSummary.push(
-            `keyword presets (${[
-              wantProfanity && "profanity",
-              wantSexual && "sexual content",
-              wantSlurs && "slurs",
-            ]
-              .filter(Boolean)
-              .join(", ")})`
-          );
+          if (hasType(AutoModerationRuleTriggerType.KeywordPreset)) {
+            enabledSummary.push("keyword presets (already set up on this server, skipped)");
+          } else {
+            const rule = await guild.autoModerationRules.create({
+              name: "kafkaBot - keyword presets",
+              eventType: AutoModerationRuleEventType.MessageSend,
+              triggerType: AutoModerationRuleTriggerType.KeywordPreset,
+              triggerMetadata: { presets },
+              actions,
+              enabled: true,
+              reason,
+            });
+            ruleIds.keywordPreset = rule.id;
+            enabledSummary.push(
+              `keyword presets (${[
+                wantProfanity && "profanity",
+                wantSexual && "sexual content",
+                wantSlurs && "slurs",
+              ]
+                .filter(Boolean)
+                .join(", ")})`
+            );
+          }
         }
 
         if (mentionLimit) {
-          const rule = await guild.autoModerationRules.create({
-            name: "kafkaBot - mention spam",
-            eventType: AutoModerationRuleEventType.MessageSend,
-            triggerType: AutoModerationRuleTriggerType.MentionSpam,
-            triggerMetadata: {
-              mentionTotalLimit: mentionLimit,
-              mentionRaidProtectionEnabled: true,
-            },
-            actions,
-            enabled: true,
-            reason,
-          });
-          ruleIds.mentionSpam = rule.id;
-          enabledSummary.push(`mention spam (limit ${mentionLimit})`);
+          if (hasType(AutoModerationRuleTriggerType.MentionSpam)) {
+            enabledSummary.push("mention spam (already set up on this server, skipped)");
+          } else {
+            const rule = await guild.autoModerationRules.create({
+              name: "kafkaBot - mention spam",
+              eventType: AutoModerationRuleEventType.MessageSend,
+              triggerType: AutoModerationRuleTriggerType.MentionSpam,
+              triggerMetadata: {
+                mentionTotalLimit: mentionLimit,
+                mentionRaidProtectionEnabled: true,
+              },
+              actions,
+              enabled: true,
+              reason,
+            });
+            ruleIds.mentionSpam = rule.id;
+            enabledSummary.push(`mention spam (limit ${mentionLimit})`);
+          }
         }
 
         if (customWords.length > 0) {
-          const rule = await guild.autoModerationRules.create({
-            name: "kafkaBot - custom words",
-            eventType: AutoModerationRuleEventType.MessageSend,
-            triggerType: AutoModerationRuleTriggerType.Keyword,
-            triggerMetadata: { keywordFilter: customWords },
-            actions,
-            enabled: true,
-            reason,
-          });
-          ruleIds.keyword = rule.id;
-          enabledSummary.push(`custom words (${customWords.length})`);
+          if (keywordRuleCount >= 6) {
+            enabledSummary.push("custom words (skipped, this server already has the max keyword rules)");
+          } else {
+            const rule = await guild.autoModerationRules.create({
+              name: "kafkaBot - custom words",
+              eventType: AutoModerationRuleEventType.MessageSend,
+              triggerType: AutoModerationRuleTriggerType.Keyword,
+              triggerMetadata: { keywordFilter: customWords },
+              actions,
+              enabled: true,
+              reason,
+            });
+            ruleIds.keyword = rule.id;
+            enabledSummary.push(`custom words (${customWords.length})`);
+          }
         }
       } catch (err) {
         // something failed partway, don't leave orphaned rules behind
