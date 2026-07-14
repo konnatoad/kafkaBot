@@ -3,7 +3,7 @@ const {
   PermissionFlagsBits,
   EmbedBuilder,
 } = require("discord.js");
-const warningSchema = require("../../../schemas/warnschema");
+const { addWarning } = require("../../../utils/addWarning");
 const logger = require("../../../extra/logger");
 
 module.exports = {
@@ -32,34 +32,14 @@ module.exports = {
 
     const userTag = `${target.username}`;
 
-    let data = await warningSchema.findOne({
-      GuildID: guildId,
-      UserID: target.id,
-      UserNAME: userTag,
+    await addWarning({
+      guildId,
+      userId: target.id,
+      userTag,
+      executerId: user.id,
+      executerTag: user.username,
+      reason,
     });
-
-    if (!data) {
-      data = new warningSchema({
-        GuildID: guildId,
-        UserID: target.id,
-        UserNAME: userTag,
-        Content: [
-          {
-            ExecuterId: user.id,
-            ExecuterTag: user.username,
-            Reason: reason,
-          },
-        ],
-      });
-    } else {
-      const warnContent = {
-        ExecuterId: user.id,
-        ExecuterTag: user.username,
-        Reason: reason,
-      };
-      data.Content.push(warnContent);
-    }
-    await data.save();
 
     const embed = new EmbedBuilder()
       .setColor("Blurple")
