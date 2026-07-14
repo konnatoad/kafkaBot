@@ -20,7 +20,7 @@ module.exports = {
 
       for (const ruleId of Object.values(cfg.ruleIds ?? {})) {
         if (!ruleId) continue;
-        await interaction.guild.autoModerationRules.delete(ruleId).catch(() => {});
+        await interaction.guild.autoModerationRules.delete(ruleId).catch(() => { });
       }
 
       await AutoModConfig.deleteOne({ guildId: interaction.guild.id });

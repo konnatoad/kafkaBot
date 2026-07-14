@@ -217,7 +217,7 @@ module.exports = {
       } catch (err) {
         // something failed partway, don't leave orphaned rules behind
         for (const id of Object.values(ruleIds)) {
-          await guild.autoModerationRules.delete(id).catch(() => {});
+          await guild.autoModerationRules.delete(id).catch(() => { });
         }
         throw err;
       }
