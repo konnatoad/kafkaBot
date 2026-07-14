@@ -130,6 +130,7 @@ module.exports = {
             eventType: AutoModerationRuleEventType.MessageSend,
             triggerType: AutoModerationRuleTriggerType.Spam,
             actions,
+            enabled: true,
             reason,
           });
           ruleIds.spam = rule.id;
@@ -143,6 +144,7 @@ module.exports = {
             triggerType: AutoModerationRuleTriggerType.KeywordPreset,
             triggerMetadata: { presets },
             actions,
+            enabled: true,
             reason,
           });
           ruleIds.keywordPreset = rule.id;
@@ -167,6 +169,7 @@ module.exports = {
               mentionRaidProtectionEnabled: true,
             },
             actions,
+            enabled: true,
             reason,
           });
           ruleIds.mentionSpam = rule.id;
@@ -180,6 +183,7 @@ module.exports = {
             triggerType: AutoModerationRuleTriggerType.Keyword,
             triggerMetadata: { keywordFilter: customWords },
             actions,
+            enabled: true,
             reason,
           });
           ruleIds.keyword = rule.id;
