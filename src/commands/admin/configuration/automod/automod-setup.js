@@ -216,20 +216,19 @@ module.exports = {
             enabledSummary.push(`custom words (${customWords.length})`);
           }
         }
+        await AutoModConfig.create({
+          guildId: guild.id,
+          logChannelId: logChannel.id,
+          autoWarn,
+          ruleIds,
+        });
       } catch (err) {
         // something failed partway, don't leave orphaned rules behind
         for (const id of Object.values(ruleIds)) {
-          await guild.autoModerationRules.delete(id).catch(() => { });
+          await guild.autoModerationRules.delete(id).catch(() => {});
         }
         throw err;
       }
-
-      await AutoModConfig.create({
-        guildId: guild.id,
-        logChannelId: logChannel.id,
-        autoWarn,
-        ruleIds,
-      });
 
       const embed = new EmbedBuilder()
         .setColor("Blurple")
