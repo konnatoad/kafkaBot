@@ -14,7 +14,7 @@
     "axios": "^1.13.6",
     "canvacord": "^6.0.4",
     "chalk": "^5.4.1",
-    "discord.js": "^14.25.1",
+    "discord.js": "^14.27.0",
     "djs-commander": "github:konnatoad/djs-commander",
     "dotenv": "^17.2.1",
     "file-type": "^22.0.0",
