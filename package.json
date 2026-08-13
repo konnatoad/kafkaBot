@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@napi-rs/canvas": "^1.0.3",
+    "@napi-rs/canvas": "^1.0.5",
     "axios": "^1.19.0",
     "canvacord": "^6.0.4",
     "chalk": "^6.0.0",
