@@ -1,0 +1,7 @@
+node_modules
+logs
+src/static
+src/extra/maps
+package-lock.json
+video-urls.json
+*.min.js
