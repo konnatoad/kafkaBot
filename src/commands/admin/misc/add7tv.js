@@ -4,8 +4,6 @@ const {
   PermissionFlagsBits,
   MessageFlags
 } = require("discord.js");
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const sharp = require("sharp");
 const logger = require("../../../extra/logger");
 
