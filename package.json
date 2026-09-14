@@ -36,7 +36,7 @@
     "discord.js": "^14.27.0",
     "djs-commander": "github:konnatoad/djs-commander",
     "dotenv": "^17.2.1",
-    "file-type": "^22.0.2",
+    "file-type": "^22.1.0",
     "fuse.js": "^7.4.2",
     "mongoose": "^9.9.5",
     "node-cron": "^4.2.1",
