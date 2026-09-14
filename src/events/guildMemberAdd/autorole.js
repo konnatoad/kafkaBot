@@ -8,16 +8,18 @@ const logger = require("../../extra/logger");
  * @param {GuildMember} member
  */
 module.exports = async (member) => {
+  const guild = member.guild;
+  let autoRole;
   try {
-    let guild = member.guild;
-    //if (!guild) return;
     if (member.user.bot) return;
 
-    const autoRole = await AutoRole.findOne({ guildId: guild.id });
+    autoRole = await AutoRole.findOne({ guildId: guild.id });
     if (!autoRole) return;
 
     await member.roles.add(autoRole.roleId);
   } catch (error) {
-    logger.error(`error giving role automatically: ${error}`);
+    logger.error(
+      `error giving role automatically in guild "${guild?.name}" (${guild?.id}), role ${autoRole?.roleId}, member ${member.user?.tag}: ${error}`
+    );
   }
 };
