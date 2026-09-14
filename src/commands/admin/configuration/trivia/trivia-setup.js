@@ -35,7 +35,7 @@ module.exports = {
   deleted: false,
   data: new SlashCommandBuilder()
     .setName("trivia-setup")
-    .setDescription("Configure the daily trivia system for this server. ")
+    .setDescription("Configure the daily trivia system for this server.")
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addChannelOption((opt) =>
       opt
@@ -219,6 +219,6 @@ module.exports = {
       .slice(0, 25)
       .map((tz) => ({ name: tz, value: tz }));
 
-    await interaction.respond(matches).catch(() => {});
+    await interaction.respond(matches).catch(() => { });
   },
 };
