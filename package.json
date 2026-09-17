@@ -38,7 +38,7 @@
     "dotenv": "^17.2.1",
     "file-type": "^22.1.0",
     "fuse.js": "^7.4.2",
-    "mongoose": "^9.10.0",
+    "mongoose": "^9.10.1",
     "node-cron": "^4.2.1",
     "pretty-ms": "^9.3.1",
     "rosu-pp-js": "^4.0.1",
