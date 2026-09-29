@@ -17,7 +17,7 @@ module.exports = async (message) => {
 
   const reply = async (text) => {
     try {
-      await message.reply(text);
+      return await message.reply(text);
     } catch (err) {
       logger.error(`Failed to reply in channel ${message.channelId}:`, err);
     }
