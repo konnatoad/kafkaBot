@@ -1,4 +1,7 @@
 const logger = require("../../extra/logger");
+
+const REPLY_CHANCE = 0.7;
+
 module.exports = async (message) => {
   if (
     message.author.bot ||
@@ -20,8 +23,22 @@ module.exports = async (message) => {
     }
   };
 
+  const replyChance = (text) => {
+    if (Math.random() >= REPLY_CHANCE) return;
+    return reply(text);
+  };
+
   if (content === "ping") {
-    return reply("pong");
+    const sent = await reply("pinging...");
+    if (!sent) return;
+    const roundTrip = sent.createdTimestamp - message.createdTimestamp;
+    const wsPing = message.client.ws.ping;
+    try {
+      await sent.edit(`Pong! Latency: ${roundTrip}ms | API: ${wsPing}ms`);
+    } catch (err) {
+      logger.error(`Failed to edit ping reply in ${message.channelId};`, error)
+    }
+    return;
   }
 
   if (
@@ -29,7 +46,7 @@ module.exports = async (message) => {
     /\bgoodnight\b/.test(content) ||
     /\bgood night\b/.test(content)
   ) {
-    return reply("Goodnight!");
+    return replyChance("Goodnight!");
   }
 
   if (
@@ -37,7 +54,7 @@ module.exports = async (message) => {
     /\bgoodmorning\b/.test(content) ||
     /\bgood morning\b/.test(content)
   ) {
-    return reply("Good morning!");
+    return replyChance("Good morning!");
   }
 
   if (
@@ -45,7 +62,7 @@ module.exports = async (message) => {
     /\bnya\b/.test(content) ||
     /\bpurr\b/.test(content)
   ) {
-    return reply("Good kitty!");
+    return replyChance("Good kitty!");
   }
 
   if (
@@ -53,6 +70,6 @@ module.exports = async (message) => {
     /\barf\b/.test(content) ||
     /\bbark\b/.test(content)
   ) {
-    return reply("Good puppy!");
+    return replyChance("Good puppy!");
   }
 };
