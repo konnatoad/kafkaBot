@@ -42,7 +42,7 @@
     "node-cron": "^4.2.1",
     "pretty-ms": "^9.3.1",
     "rosu-pp-js": "^4.0.1",
-    "sharp": "^0.35.4",
+    "sharp": "^0.35.5",
     "winston": "^3.19.0"
   },
   "devDependencies": {
