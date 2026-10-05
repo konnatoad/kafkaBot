@@ -1,6 +1,6 @@
 const logger = require("../../extra/logger");
 
-const REPLY_CHANCE = 0.7;
+const REPLY_CHANCE = 0.4;
 
 module.exports = async (message) => {
   if (
