@@ -5,6 +5,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 const GoodbyeSetup = require("../../../../schemas/goodbyeSchema");
+const logger = require("../../../../extra/logger");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -31,6 +32,19 @@ module.exports = {
         flags: MessageFlags.Ephemeral,
       });
     }
+
+    const me = interaction.guild.members.me;
+    const needed = existingSetup.useEmbed
+      ? ["ViewChannel", "SendMessages", "EmbedLinks"]
+      : ["ViewChannel", "SendMessages"];
+    if (!channel.permissionsFor(me)?.has(needed)) {
+      const readable = needed.map((p) => p.replace(/([a-z])([A-Z])/g, "$1 $2"));
+      return await interaction.reply({
+        content: `I'm missing permissions in ${channel}. I need: ${readable.join(", ")}.`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
     const userAvatar = interaction.user.displayAvatarURL({
       // Getting the user's avatar URL
       format: "png",
@@ -43,23 +57,34 @@ module.exports = {
       .replace("{USER_NAME}", interaction.user.username)
       .replace("{SERVER_NAME}", interaction.guild.name);
 
-    if (existingSetup.useEmbed) {
-      // If the configuration specifies using an embed
-      const embed = new EmbedBuilder()
-        .setColor("Random")
-        .setTimestamp()
-        .setTitle("Goodbye")
-        .setThumbnail(userAvatar)
-        .setFooter({ text: interaction.guild.name })
-        .setDescription(messageContent);
+    try {
+      if (existingSetup.useEmbed) {
+        // If the configuration specifies using an embed
+        const embed = new EmbedBuilder()
+          .setColor("Random")
+          .setTimestamp()
+          .setTitle("Goodbye")
+          .setThumbnail(userAvatar)
+          .setFooter({ text: interaction.guild.name })
+          .setDescription(messageContent);
 
-      await channel.send({
-        content: `<@${interaction.user.id}>`,
-        embeds: [embed],
+        await channel.send({
+          content: `<@${interaction.user.id}>`,
+          embeds: [embed],
+        });
+      } else {
+        // If the configuration does not specify using an embed
+        await channel.send(messageContent); // Sending the goodbye message as a plain text
+      }
+    } catch (error) {
+      logger.error(
+        `goodbye-test failed to send in guild "${interaction.guild.name}" (${guildId}), channel ${channel.id}: ${error}`,
+      );
+      return await interaction.reply({
+        content:
+          "Couldn't send the test message. Check my permissions in that channel.",
+        flags: MessageFlags.Ephemeral,
       });
-    } else {
-      // If the configuration does not specify using an embed
-      await channel.send(messageContent); // Sending the goodbye message as a plain text
     }
 
     await interaction.reply({
