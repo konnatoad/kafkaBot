@@ -7,7 +7,7 @@ const ALT = process.env.ALT;
 
 // Export a function that will be called when a new member joins the server
 module.exports = async (member) => {
-  if (member.id === MAIN || ALT) return;
+  if (member.id === MAIN || member.id === ALT) return;
 
   // Get the ID of the guild the member joined
   const guildId = member.guild.id;
@@ -22,6 +22,17 @@ module.exports = async (member) => {
 
   if (!channel) {
     logger.error(`Error: Channel not found for guild ${guildId}`);
+    return;
+  }
+
+  const me = member.guild.members.me;
+  const needed = existingSetup.useEmbed
+    ? ["ViewChannel", "SendMessages", "EmbedLinks"]
+    : ["ViewChannel", "SendMessages"];
+  if (!channel.permissionsFor(me)?.has(needed)) {
+    logger.error(
+      `Missing ${needed.join("/")} permission in goodbye channel ${existingSetup.channelId} for guild "${member.guild.name}" (${guildId})`,
+    );
     return;
   }
 
@@ -40,18 +51,24 @@ module.exports = async (member) => {
     dynamic: true,
   });
 
-  // If the setup specifies to use an embed, create a new embed
-  if (existingSetup.useEmbed) {
-    const embed = new EmbedBuilder()
-      .setColor("Random")
-      .setTitle("User left the server.")
-      .setThumbnail(userAvatar)
-      .setDescription(messageContent)
-      .setTimestamp();
+  try {
+    // If the setup specifies to use an embed, create a new embed
+    if (existingSetup.useEmbed) {
+      const embed = new EmbedBuilder()
+        .setColor("Random")
+        .setTitle("User left the server.")
+        .setThumbnail(userAvatar)
+        .setDescription(messageContent)
+        .setTimestamp();
 
-    channel.send({ embeds: [embed] });
-  } else {
-    // If not using an embed, send a plain message to the channel
-    channel.send(messageContent);
+      await channel.send({ embeds: [embed] });
+    } else {
+      // If not using an embed, send a plain message to the channel
+      await channel.send(messageContent);
+    }
+  } catch (err) {
+    logger.error(
+      `Failed to send goodbye message in guild "${member.guild.name}" (${guildId}): ${err}`,
+    );
   }
 };

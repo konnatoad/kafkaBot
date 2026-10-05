@@ -31,6 +31,17 @@ new CommandHandler({
   functions: path.join(__dirname, "functions"),
 });
 
+// Resolve the guild from the channel ID in a Discord API error URL so errors say which server they came from
+function describeErr(err) {
+  const channelId = err?.url?.match(/channels\/(\d+)/)?.[1];
+  const guild = channelId && client.channels.cache.get(channelId)?.guild;
+  return `${guild ? `[guild "${guild.name}" ${guild.id}] ` : ""}${err?.stack || err}`;
+}
+
+// discord.js re-emits rejected async listeners as "error"; with no listener that throws and kills the process
+client.on("error", (err) => logger.error(describeErr(err)));
+process.on("unhandledRejection", (err) => logger.error(describeErr(err)));
+
 const REQUIRED_ENV = ["TOKEN", "MONGODB_URI", "DEV_ID", "TESTSERVER"];
 const missingEnv = REQUIRED_ENV.filter((key) => !process.env[key]);
 if (missingEnv.length) {
