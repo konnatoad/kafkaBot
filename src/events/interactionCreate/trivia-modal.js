@@ -6,11 +6,29 @@ const UserProfile = require("../../schemas/UserProfile");
 const logger = require("../../extra/logger");
 const { currentPrize } = require("../../utils/trivia");
 
+const NUMERIC = /^-?\d[\d,\s]*(\.\d+)?$/;
+
+function normalize(str) {
+  return str.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 function isCorrect(userAnswer, correctAnswer) {
-  const trimmed = userAnswer.trim();
-  if (trimmed.length < Math.max(3, correctAnswer.length * 0.6)) return false;
-  const fuse = new Fuse([correctAnswer], { threshold: 0.2, includeScore: true });
-  const results = fuse.search(trimmed);
+  const user = normalize(userAnswer);
+  const answer = normalize(correctAnswer);
+  if (user === answer) return true;
+
+  // compare numbers by value, fuzzy matching would accept 100 for 1000
+  if (NUMERIC.test(answer)) {
+    const toNumber = (s) => Number(s.replace(/[,\s]/g, ""));
+    return NUMERIC.test(user) && toNumber(user) === toNumber(answer);
+  }
+
+  // short answers like "Au" have to match exactly
+  if (answer.length <= 3) return false;
+
+  if (user.length < answer.length * 0.6) return false;
+  const fuse = new Fuse([answer], { threshold: 0.2, includeScore: true });
+  const results = fuse.search(user);
   return results.length > 0 && results[0].score <= 0.2;
 }
 
