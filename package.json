@@ -1,6 +1,6 @@
 {
   "name": "kafkaBot",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "description": "A multi-purpose Discord bot",
   "main": "src/index.js",
   "scripts": {
