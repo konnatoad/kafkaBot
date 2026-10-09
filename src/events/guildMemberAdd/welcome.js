@@ -1,18 +1,14 @@
 const { EmbedBuilder } = require("discord.js");
 const WelcomeSetup = require("../../schemas/welcomeSchema");
 const logger = require("../../extra/logger");
+const { alertMissingPermissions } = require("../../utils/permissionAlert");
 
-// Export a function that will be called when a new member joins the server
 module.exports = async (member) => {
-  // Get the ID of the guild the member joined
   const guildId = member.guild.id;
-
-  // Find the welcome setup for this guild in the database
   const existingSetup = await WelcomeSetup.findOne({ guildId: guildId });
 
   if (!existingSetup) return;
 
-  // Get the channel where the welcome message should be sent
   const channel = member.guild.channels.cache.get(existingSetup.channelId);
 
   if (!channel) {
@@ -21,15 +17,19 @@ module.exports = async (member) => {
   }
 
   const me = member.guild.members.me;
-  if (!channel.permissionsFor(me)?.has("SendMessages")) {
-    logger.error(`Missing SendMessages permission in welcome channel ${existingSetup.channelId} for guild ${guildId}`);
+  const needed = existingSetup.useEmbed
+    ? ["ViewChannel", "SendMessages", "EmbedLinks"]
+    : ["ViewChannel", "SendMessages"];
+  const missing = channel.permissionsFor(me)?.missing(needed) ?? needed;
+  if (missing.length) {
+    await alertMissingPermissions(member.guild, channel, missing, "welcome").catch((err) =>
+      logger.error(`welcome: permission alert crashed for guild ${guildId}: ${err}`),
+    );
     return;
   }
 
-  // Get the welcome message content from the database
   let messageContent = existingSetup.welcomeMessage
 
-    // Replace placeholders in the message with actual values
     .replace("{SERVER_MEMBER}", member.guild.memberCount)
     .replace("{USER_MENTION}", `<@${member.id}>`)
     .replace("{USER_NAME}", member.user.username)
@@ -48,6 +48,6 @@ module.exports = async (member) => {
       await channel.send(messageContent);
     }
   } catch (err) {
-    logger.error(`Failed to send welcome message in guild ${guildId}:`, err);
+    logger.error(`Failed to send welcome message in guild ${guildId}: ${err}`);
   }
 };

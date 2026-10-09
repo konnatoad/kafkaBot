@@ -1,23 +1,19 @@
 const { EmbedBuilder } = require("discord.js");
 const GoodbyeSetup = require("../../schemas/goodbyeSchema");
 const logger = require("../../extra/logger");
+const { alertMissingPermissions } = require("../../utils/permissionAlert");
 
 const MAIN = process.env.MAIN;
 const ALT = process.env.ALT;
 
-// Export a function that will be called when a new member joins the server
 module.exports = async (member) => {
   if (member.id === MAIN || member.id === ALT) return;
 
-  // Get the ID of the guild the member joined
   const guildId = member.guild.id;
-
-  // Find the goodbye setup for this guild in the database
   const existingSetup = await GoodbyeSetup.findOne({ guildId: guildId });
 
   if (!existingSetup) return;
 
-  // Get the channel where the goodbye message should be sent
   const channel = member.guild.channels.cache.get(existingSetup.channelId);
 
   if (!channel) {
@@ -29,30 +25,27 @@ module.exports = async (member) => {
   const needed = existingSetup.useEmbed
     ? ["ViewChannel", "SendMessages", "EmbedLinks"]
     : ["ViewChannel", "SendMessages"];
-  if (!channel.permissionsFor(me)?.has(needed)) {
-    logger.error(
-      `Missing ${needed.join("/")} permission in goodbye channel ${existingSetup.channelId} for guild "${member.guild.name}" (${guildId})`,
+  const missing = channel.permissionsFor(me)?.missing(needed) ?? needed;
+  if (missing.length) {
+    await alertMissingPermissions(member.guild, channel, missing, "goodbye").catch((err) =>
+      logger.error(`goodbye: permission alert crashed for guild ${guildId}: ${err}`),
     );
     return;
   }
 
-  // Get the goodbye message content from the database
   let messageContent = existingSetup.goodbyeMessage
 
-    // Replace placeholders in the message with actual values
     .replace("{SERVER_MEMBER}", member.guild.memberCount)
     .replace("{USER_MENTION}", `<@${member.id}>`)
     .replace("{USER_NAME}", member.user.username)
     .replace("{SERVER_NAME}", member.guild.name);
 
   const userAvatar = member.user.displayAvatarURL({
-    // Getting the user's avatar URL
     format: "png",
     dynamic: true,
   });
 
   try {
-    // If the setup specifies to use an embed, create a new embed
     if (existingSetup.useEmbed) {
       const embed = new EmbedBuilder()
         .setColor("Random")
