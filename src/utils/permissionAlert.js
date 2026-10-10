@@ -5,7 +5,7 @@ const COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const readable = (perm) => perm.replace(/([a-z])([A-Z])/g, "$1 $2");
 
 function report(client, level, text, toChannel = true) {
-  logger[level](`permission-alert; ${text}`);
+  logger[level](`permission-alert: ${text}`);
   const logChannelId = process.env.PERMISSION_LOG;
   if (!toChannel || !logChannelId) return;
   client.channels.cache
@@ -14,10 +14,10 @@ function report(client, level, text, toChannel = true) {
     .catch(() => { });
 }
 
-async function alertMissingPermission(guild, channel, missing, feature) {
+async function alertMissingPermissions(guild, channel, missing, feature) {
   const client = guild.client;
   const key = `${feature}:${channel.id}`;
-  const where = `guild "${guild.name}" (${guild.id}), ${feature} channel #{channel.name} (${channel.id})`;
+  const where = `guild "${guild.name}" (${guild.id}), ${feature} channel #${channel.name} (${channel.id})`;
   const cutoff = new Date(Date.now() - COOLDOWN_MS);
 
   try {
@@ -51,9 +51,9 @@ async function alertMissingPermission(guild, channel, missing, feature) {
   const ownerLabel = `${owner.user.username} (${owner.id})`;
   try {
     await owner.send(
-      `Hi! I couldn't post the **${feature}** message in **#${channel.name}** on **${guild.name}**` +
-      `Because i'm missing these permissions there: **${missing.map(readable).join(", ")}**.\n` +
-      `Please give my role these permissions in that channel (Edit channel -> Permissions),` +
+      `Hi! I couldn't post the **${feature}** message in **#${channel.name}** on **${guild.name}** ` +
+      `because I'm missing these permissions there: **${missing.map(readable).join(", ")}**.\n` +
+      `Please give my role these permissions in that channel (Edit channel -> Permissions), ` +
       `or choose a different channel with the setup command.`,
     );
     report(client, "info", `DMed owner ${ownerLabel} for ${where}, missing ${missing.join(", ")}`);
@@ -66,8 +66,9 @@ async function alertMissingPermission(guild, channel, missing, feature) {
       return "dm_closed";
     }
     report(client, "error", `failed to DM owner ${ownerLabel} for ${where}: ${err}`);
+    await record("error", String(err));
     return "error";
   }
 }
-module.exports = { alertMissingPermission };
+module.exports = { alertMissingPermissions };
 
