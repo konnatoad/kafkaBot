@@ -58,7 +58,10 @@ module.exports = async (message) => {
       if (!channel) return;
 
       const me = guild.members.me;
-      if (!channel.permissionsFor(me)?.has("SendMessages")) return;
+      const needed = channel.isThread()
+        ? ["ViewChannel", "SendMessagesInThreads", "EmbedLinks"]
+        : ["ViewChannel", "SendMessages", "EmbedLinks"];
+      if (!channel.permissionsFor(me)?.has(needed)) return;
 
       const embed = new EmbedBuilder()
         .setColor("Blurple")
@@ -70,6 +73,8 @@ module.exports = async (message) => {
       await data.save();
     }
   } catch (error) {
-    logger.error(error);
+    logger.error(
+      `level: failed in guild "${guild.name}" (${guild.id}), channel ${message.channelId}: ${error}`,
+    );
   }
 };
