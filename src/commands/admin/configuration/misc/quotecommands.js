@@ -248,7 +248,7 @@ module.exports = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName("add")
-        .setDescription("Add a quote ")
+        .setDescription("Add a quote")
         .addStringOption((option) =>
           option
             .setName("messageid")
