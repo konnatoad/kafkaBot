@@ -4,18 +4,12 @@ const logger = require("../extra/logger");
 const COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const readable = (perm) => perm.replace(/([a-z])([A-Z])/g, "$1 $2");
 
-function report(client, level, text, toChannel = true) {
+// Goes through the logger, which ships to the Discord #logs webhook
+function report(level, text) {
   logger[level](`permission-alert: ${text}`);
-  const logChannelId = process.env.PERMISSION_LOG;
-  if (!toChannel || !logChannelId) return;
-  client.channels.cache
-    .get(logChannelId)
-    ?.send(`[${level}] ${text}`)
-    .catch(() => { });
 }
 
 async function alertMissingPermissions(guild, channel, missing, feature) {
-  const client = guild.client;
   const key = `${feature}:${channel.id}`;
   const where = `guild "${guild.name}" (${guild.id}), ${feature} channel #${channel.name} (${channel.id})`;
   const cutoff = new Date(Date.now() - COOLDOWN_MS);
@@ -30,10 +24,8 @@ async function alertMissingPermissions(guild, channel, missing, feature) {
     if (err.code !== 11000) throw err;
     const prev = await PermissionAlert.findOne({ guildId: guild.id, key }).lean();
     report(
-      client,
       "info",
       `skipped for ${where}, last attempt ${prev?.lastSentAt?.toISOString()} (result: ${prev?.lastResult})`,
-      false,
     );
     return "cooldown";
   }
@@ -44,7 +36,7 @@ async function alertMissingPermissions(guild, channel, missing, feature) {
     );
   const owner = await guild.fetchOwner().catch(() => null);
   if (!owner) {
-    report(client, "warn", `could not fetch owner for ${where}`);
+    report("warn", `could not fetch owner for ${where}`);
     await record("owner_not_found");
     return "owner_not_found";
   }
@@ -56,16 +48,16 @@ async function alertMissingPermissions(guild, channel, missing, feature) {
       `Please give my role these permissions in that channel (Edit channel -> Permissions), ` +
       `or choose a different channel with the setup command.`,
     );
-    report(client, "info", `DMed owner ${ownerLabel} for ${where}, missing ${missing.join(", ")}`);
+    report("info", `DMed owner ${ownerLabel} for ${where}, missing ${missing.join(", ")}`);
     await record("sent");
     return "sent";
   } catch (err) {
     if (err.code === 50007) {
-      report(client, "warn", `owner ${ownerLabel} for ${where} has DMs closed`);
+      report("warn", `owner ${ownerLabel} for ${where} has DMs closed`);
       await record("dm_closed");
       return "dm_closed";
     }
-    report(client, "error", `failed to DM owner ${ownerLabel} for ${where}: ${err}`);
+    report("error", `failed to DM owner ${ownerLabel} for ${where}: ${err}`);
     await record("error", String(err));
     return "error";
   }
