@@ -244,11 +244,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("quote")
     .setDescription("Manage quotes")
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuildExpressions)
+    .setDefaultMemberPermissions(PermissionFlagsBits.CreateGuildExpressions)
     .addSubcommand((subcommand) =>
       subcommand
         .setName("add")
-        .setDescription("Add a quote ")
+        .setDescription("Add a quote")
         .addStringOption((option) =>
           option
             .setName("messageid")
