@@ -41,10 +41,21 @@ const createPaginationButtons = (currentPage, totalPages, uniqueId, user) => {
   return [actionRow];
 };
 
-const handleError = async (interaction, message) => {
-  logger.error(message);
+// Who/where the command ran, so log lines are actionable
+const describeContext = (interaction) =>
+  `guild "${interaction.guild?.name}" (${interaction.guildId}), ` +
+  `channel #${interaction.channel?.name ?? "unknown"} (${interaction.channelId}), ` +
+  `user ${interaction.user.tag} (${interaction.user.id})`;
+
+const describeError = (error) =>
+  error ? ` | ${error.code ? `code ${error.code}: ` : ""}${error.stack || error}` : "";
+
+const handleError = async (interaction, message, error, detail = "") => {
+  logger.error(`/quote: ${message} [${describeContext(interaction)}${detail}]${describeError(error)}`);
   try {
-    await interaction.reply({
+    // Ephemeral = only the user who ran it sees it, with a "Dismiss message" link
+    const send = interaction.deferred || interaction.replied ? "followUp" : "reply";
+    await interaction[send]({
       content: message,
       flags: MessageFlags.Ephemeral,
     });
@@ -184,7 +195,40 @@ const setupCollector = (interaction, uniqueId, user) => {
   });
 };
 
+// Permissions the bot needs in the channel to fetch a message by ID
+const ADD_QUOTE_PERMS = [
+  PermissionFlagsBits.ViewChannel,
+  PermissionFlagsBits.ReadMessageHistory,
+];
+const readablePerm = (flag) =>
+  Object.keys(PermissionFlagsBits)
+    .find((k) => PermissionFlagsBits[k] === flag)
+    .replace(/([a-z])([A-Z])/g, "$1 $2");
+
 const addQuote = async (interaction, messageId) => {
+  const detail = `, messageId ${messageId}`;
+
+  const missing = ADD_QUOTE_PERMS.filter((p) => !interaction.appPermissions?.has(p));
+  if (missing.length || !interaction.channel) {
+    const names = (missing.length ? missing : ADD_QUOTE_PERMS).map(readablePerm).join(", ");
+    return handleError(
+      interaction,
+      `I don't have permission to read messages in this channel. Missing: **${names}**. ` +
+      `Ask an admin to give my role these permissions here.`,
+      null,
+      `${detail}, missing perms: ${names}`
+    );
+  }
+
+  if (!/^\d{17,20}$/.test(messageId)) {
+    return handleError(
+      interaction,
+      "That doesn't look like a message ID. Right-click the message -> Copy Message ID (needs Developer Mode).",
+      null,
+      detail
+    );
+  }
+
   try {
     const message = await interaction.channel.messages.fetch(messageId);
     const quote = new Quote({
@@ -202,10 +246,15 @@ const addQuote = async (interaction, messageId) => {
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
-    handleError(
-      interaction,
-      "Failed to add quote. Please ensure the message ID is correct."
-    );
+    let reason;
+    if (error.code === 10008) {
+      reason = "Couldn't find that message in this channel. Make sure the ID is right and you run the command in the same channel as the message.";
+    } else if (error.code === 50001 || error.code === 50013) {
+      reason = "I don't have permission to read that message. Ask an admin to give my role **View Channel** and **Read Message History** in this channel.";
+    } else {
+      reason = "Failed to add quote due to an unexpected error. It has been logged.";
+    }
+    await handleError(interaction, reason, error, detail);
   }
 };
 
@@ -220,9 +269,11 @@ const removeQuote = async (interaction, quoteId) => {
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
-    handleError(
+    await handleError(
       interaction,
-      "Failed to remove quote. Please ensure the quote ID is correct."
+      "Failed to remove quote. Please ensure the quote ID is correct.",
+      error,
+      `, quoteId ${quoteId}`
     );
   }
 };
@@ -235,7 +286,7 @@ const removeAllQuotes = async (interaction) => {
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
-    handleError(interaction, "Failed to remove all quotes.");
+    await handleError(interaction, "Failed to remove all quotes.", error);
   }
 };
 
