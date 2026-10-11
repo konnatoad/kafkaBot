@@ -244,7 +244,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("quote")
     .setDescription("Manage quotes")
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuildExpressions)
     .addSubcommand((subcommand) =>
       subcommand
         .setName("add")
