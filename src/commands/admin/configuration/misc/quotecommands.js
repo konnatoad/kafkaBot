@@ -41,17 +41,16 @@ const createPaginationButtons = (currentPage, totalPages, uniqueId, user) => {
   return [actionRow];
 };
 
-// Who/where the command ran, so log lines are actionable
+// Only server + channel ID in logs; no usernames, channel names or message contents/IDs
 const describeContext = (interaction) =>
-  `guild "${interaction.guild?.name}" (${interaction.guildId}), ` +
-  `channel #${interaction.channel?.name ?? "unknown"} (${interaction.channelId}), ` +
-  `user ${interaction.user.tag} (${interaction.user.id})`;
+  `guild "${interaction.guild?.name}" (${interaction.guildId}), channel ${interaction.channelId}`;
 
 const describeError = (error) =>
   error ? ` | ${error.code ? `code ${error.code}: ` : ""}${error.stack || error}` : "";
 
-const handleError = async (interaction, message, error, detail = "") => {
-  logger.error(`/quote: ${message} [${describeContext(interaction)}${detail}]${describeError(error)}`);
+// `log` is a short reason for #logs; `message` is what the user sees. Only "error" level pings.
+const handleError = async (interaction, message, { log, level = "error", error } = {}) => {
+  logger[level](`/quote: ${log ?? message} [${describeContext(interaction)}]${describeError(error)}`);
   try {
     // Ephemeral = only the user who ran it sees it, with a "Dismiss message" link
     const send = interaction.deferred || interaction.replied ? "followUp" : "reply";
@@ -206,8 +205,6 @@ const readablePerm = (flag) =>
     .replace(/([a-z])([A-Z])/g, "$1 $2");
 
 const addQuote = async (interaction, messageId) => {
-  const detail = `, messageId ${messageId}`;
-
   const missing = ADD_QUOTE_PERMS.filter((p) => !interaction.appPermissions?.has(p));
   if (missing.length || !interaction.channel) {
     const names = (missing.length ? missing : ADD_QUOTE_PERMS).map(readablePerm).join(", ");
@@ -215,8 +212,7 @@ const addQuote = async (interaction, messageId) => {
       interaction,
       `I don't have permission to read messages in this channel. Missing: **${names}**. ` +
       `Ask an admin to give my role these permissions here.`,
-      null,
-      `${detail}, missing perms: ${names}`
+      { log: `add: missing permissions (${names})`, level: "warn" }
     );
   }
 
@@ -224,8 +220,7 @@ const addQuote = async (interaction, messageId) => {
     return handleError(
       interaction,
       "That doesn't look like a message ID. Right-click the message -> Copy Message ID (needs Developer Mode).",
-      null,
-      detail
+      { log: "add: invalid message ID format", level: "warn" }
     );
   }
 
@@ -246,15 +241,25 @@ const addQuote = async (interaction, messageId) => {
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
-    let reason;
     if (error.code === 10008) {
-      reason = "Couldn't find that message in this channel. Make sure the ID is right and you run the command in the same channel as the message.";
+      await handleError(
+        interaction,
+        "Couldn't find that message in this channel. Make sure the ID is right and you run the command in the same channel as the message.",
+        { log: "add: message not found in channel", level: "warn" }
+      );
     } else if (error.code === 50001 || error.code === 50013) {
-      reason = "I don't have permission to read that message. Ask an admin to give my role **View Channel** and **Read Message History** in this channel.";
+      await handleError(
+        interaction,
+        "I don't have permission to read that message. Ask an admin to give my role **View Channel** and **Read Message History** in this channel.",
+        { log: `add: Discord denied access (code ${error.code})`, level: "warn" }
+      );
     } else {
-      reason = "Failed to add quote due to an unexpected error. It has been logged.";
+      await handleError(
+        interaction,
+        "Failed to add quote due to an unexpected error. It has been logged.",
+        { log: "add: unexpected error", error }
+      );
     }
-    await handleError(interaction, reason, error, detail);
   }
 };
 
@@ -272,8 +277,7 @@ const removeQuote = async (interaction, quoteId) => {
     await handleError(
       interaction,
       "Failed to remove quote. Please ensure the quote ID is correct.",
-      error,
-      `, quoteId ${quoteId}`
+      { log: "remove: failed", error }
     );
   }
 };
@@ -286,7 +290,7 @@ const removeAllQuotes = async (interaction) => {
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
-    await handleError(interaction, "Failed to remove all quotes.", error);
+    await handleError(interaction, "Failed to remove all quotes.", { log: "removeall: failed", error });
   }
 };
 
