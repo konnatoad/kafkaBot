@@ -31,4 +31,4 @@ This policy applies only to **KafkaBot’s codebase** and **public Discord inter
 
 ---
 
-> Note: kafkaBot does **not** collect personal data or sensitive user information.
+> Note: kafkaBot only stores the data its features need (Discord IDs, per-server settings, XP, economy and trivia data, warnings, and saved quotes). See the [Privacy Policy](https://konnatoad.github.io/kafkaBot-Privacy-Policy/) for details.
