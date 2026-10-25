@@ -1,8 +1,11 @@
 const NotificationConfig = require("../../schemas/twitchNotificationSchema");
 const https = require("https");
 const logger = require("../../extra/logger");
+const { getTwitchAccessToken } = require("../../extra/twitchAuth");
 
 async function fetchTwitchData(userLogin) {
+  const token = await getTwitchAccessToken();
+  if (!token) throw new Error("no Twitch access token");
   return new Promise((resolve, reject) => {
     const options = {
       hostname: "api.twitch.tv",
@@ -10,7 +13,7 @@ async function fetchTwitchData(userLogin) {
       method: "GET",
       headers: {
         "Client-ID": process.env.TWITCH_CLIENT_ID,
-        Authorization: `Bearer ${process.env.TWITCH_ACCESS_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       },
     };
 
@@ -46,8 +49,7 @@ async function sendNotification(notificationConfig, userLogin, client, guildCach
   let targetGuild = guildCache.get(guildId);
   if (!targetGuild) {
     targetGuild =
-      client.guilds.cache.get(guildId) ||
-      (await client.guilds.fetch(guildId).catch(() => null));
+      client.guilds.cache.get(guildId) || (await client.guilds.fetch(guildId).catch(() => null));
     if (!targetGuild) {
       logger.error(`Guild ${guildId} not found for ${userLogin}`);
       return;
@@ -62,9 +64,7 @@ async function sendNotification(notificationConfig, userLogin, client, guildCach
       targetGuild.channels.cache.get(notificationChannelId) ||
       (await targetGuild.channels.fetch(notificationChannelId).catch(() => null));
     if (!targetChannel) {
-      logger.error(
-        `Notification channel ${notificationChannelId} not found for ${userLogin}`,
-      );
+      logger.error(`Notification channel ${notificationChannelId} not found for ${userLogin}`);
       return;
     }
     channelCache.set(channelCacheKey, targetChannel);
@@ -97,8 +97,7 @@ module.exports = (client) => {
 
         const responseData = await fetchTwitchData(userLogin);
 
-        const isLive =
-          responseData && responseData.data && responseData.data.length > 0;
+        const isLive = responseData && responseData.data && responseData.data.length > 0;
 
         await NotificationConfig.findByIdAndUpdate(notificationConfig._id, {
           isLive,
