@@ -1,11 +1,8 @@
-const {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  MessageFlags,
-} = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require("discord.js");
 const Notification = require("../../../../schemas/twitchNotificationSchema");
 const https = require("https");
 const logger = require("../../../../extra/logger");
+const { getTwitchAccessToken } = require("../../../../extra/twitchAuth");
 
 const twitchNotificationCommand = new SlashCommandBuilder()
   .setName("twitchnotify")
@@ -19,22 +16,20 @@ const twitchNotificationCommand = new SlashCommandBuilder()
         option
           .setName("twitch_url")
           .setDescription("The URL of the Twitch channel")
-          .setRequired(true)
+          .setRequired(true),
       )
       .addChannelOption((option) =>
         option
           .setName("channel")
           .setDescription("The channel to send notifications to")
-          .setRequired(true)
+          .setRequired(true),
       )
       .addStringOption((option) =>
         option
           .setName("custom-message")
-          .setDescription(
-            "Use {URL} for Twitch channel URL and {USERNAME} for username."
-          )
-          .setRequired(false)
-      )
+          .setDescription("Use {URL} for Twitch channel URL and {USERNAME} for username.")
+          .setRequired(false),
+      ),
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -44,8 +39,8 @@ const twitchNotificationCommand = new SlashCommandBuilder()
         option
           .setName("twitch_url")
           .setDescription("The URL of the Twitch channel")
-          .setRequired(true)
-      )
+          .setRequired(true),
+      ),
   );
 
 module.exports = {
@@ -89,8 +84,7 @@ async function setupTwitchNotification(interaction) {
 
   if (!userData || !userData.id) {
     await interaction.followUp({
-      content:
-        "Failed to fetch Twitch user data. Please check the Twitch URL and try again.",
+      content: "Failed to fetch Twitch user data. Please check the Twitch URL and try again.",
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -147,8 +141,7 @@ async function removeTwitchNotification(interaction) {
 
   if (!userData || !userData.id) {
     await interaction.followUp({
-      content:
-        "Failed to fetch Twitch user data. Please check the Twitch URL and try again.",
+      content: "Failed to fetch Twitch user data. Please check the Twitch URL and try again.",
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -176,14 +169,15 @@ async function removeTwitchNotification(interaction) {
   } catch (error) {
     logger.error("Error removing Twitch notification setup:", error);
     await interaction.followUp({
-      content:
-        "Failed to remove Twitch notification setup. Please try again later.",
+      content: "Failed to remove Twitch notification setup. Please try again later.",
       flags: MessageFlags.Ephemeral,
     });
   }
 }
 
 async function fetchTwitchUserData(userLogin) {
+  const token = await getTwitchAccessToken();
+  if (!token) return null;
   return new Promise((resolve, reject) => {
     const options = {
       hostname: "api.twitch.tv",
@@ -191,7 +185,7 @@ async function fetchTwitchUserData(userLogin) {
       method: "GET",
       headers: {
         "Client-ID": process.env.TWITCH_CLIENT_ID,
-        Authorization: `Bearer ${process.env.TWITCH_ACCESS_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       },
     };
 
@@ -203,18 +197,18 @@ async function fetchTwitchUserData(userLogin) {
       });
 
       res.on("end", () => {
-  try {
-    const userData = JSON.parse(data);
-    if (!userData.data) {
-      logger.error("Twitch API error:", userData);
-      resolve(null);
-      return;
-    }
-    resolve(userData.data[0]);
-  } catch (error) {
-    reject(error);
-  }
-});
+        try {
+          const userData = JSON.parse(data);
+          if (!userData.data) {
+            logger.error("Twitch API error:", userData);
+            resolve(null);
+            return;
+          }
+          resolve(userData.data[0]);
+        } catch (error) {
+          reject(error);
+        }
+      });
     });
 
     req.on("error", (error) => {
