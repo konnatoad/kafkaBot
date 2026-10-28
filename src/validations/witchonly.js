@@ -1,12 +1,10 @@
 const { MessageFlags } = require("discord.js");
-const { sabiServer } = require("../../config.json");
-
-const allowedServers = Array.isArray(sabiServer) ? sabiServer : [sabiServer];
+const { witchServers } = require("../../config.json");
 
 module.exports = (interaction, commandObject) => {
-  if (!commandObject.sabiServer) return;
+  if (!commandObject.witchOnly) return;
 
-  if (!allowedServers.includes(interaction.guildId)) {
+  if (!witchServers.includes(interaction.guildId)) {
     interaction.reply({
       content: "This command cannot be run here.",
       flags: MessageFlags.Ephemeral,

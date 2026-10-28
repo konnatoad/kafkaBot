@@ -20,7 +20,7 @@ function shuffle(array) {
 }
 
 module.exports = {
-  sabiServer: true,
+  witchOnly: true,
   deleted: false,
   data: new SlashCommandBuilder()
     .setName("cat")

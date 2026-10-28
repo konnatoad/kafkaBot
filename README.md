@@ -222,9 +222,8 @@ The bot exits on startup if any required variable is missing, and logs a warning
 ```json
 {
   "testServer": "",
-  "sabiServer": [],
+  "witchServers": [],
   "devs": [],
-  "mods": [],
   "xpIgnoredChannels": []
 }
 ```
@@ -233,9 +232,6 @@ The bot exits on startup if any required variable is missing, and logs a warning
 
 Some files are gitignored and must be provided yourself:
 
-- `src/extra/logger.js` — winston logger used throughout the bot
-- `src/extra/osuAuth.js` — osu! API auth helper used by `/stats osu`
-- `src/validations/` — command validations (dev-only, mod-only, test-only)
 - `src/static/kafka/` — image folder for `/kafka`
 
 **5. Start the bot**

@@ -13,7 +13,7 @@ function getRandomInt(seed, max) {
 }
 
 module.exports = {
-  sabiServer: true,
+  witchOnly: true,
   deleted: false,
   data: new SlashCommandBuilder()
     .setName("dog")

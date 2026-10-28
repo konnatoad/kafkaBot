@@ -43,7 +43,7 @@ module.exports = (client) => {
 
             const targetChannel = await targetMember
               .send(
-                `Hey <@${userId}>, it's time for your daily reminder to collect your dailies!`, //sabi saa tehä uudet ja kovat messaget
+                `Hey <@${userId}>, it's time for your daily reminder to collect your dailies!`,
               )
               .catch(() => null);
 
