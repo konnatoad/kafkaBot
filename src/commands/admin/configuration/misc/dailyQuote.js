@@ -7,22 +7,10 @@ const {
 const Quote = require("../../../../schemas/quoteSchema");
 const DailyQuote = require("../../../../schemas/dailyQuoteSchema");
 const logger = require("../../../../extra/logger");
+const { pickOne } = require("../../../../utils/random");
 
-function seededRandom(seed) {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
-}
-
-function getRandomInt(seed, max) {
-  return Math.floor(seededRandom(seed) * max);
-}
-
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-}
+// how many past daily quotes a server won't see again
+const RECENT_LIMIT = 20;
 
 const sendDailyQuote = async (client) => {
   const guilds = await DailyQuote.find();
@@ -33,70 +21,47 @@ const sendDailyQuote = async (client) => {
         .fetch(guild.channelId)
         .catch(() => null);
       if (!channel) {
-        logger.error(`Channel not found for guild ${guild.guildId}. Skipping.`);
+        logger.warn(`Channel not found for guild ${guild.guildId}. Skipping.`);
         continue;
       }
 
       const permissions = channel.permissionsFor(client.user);
       if (!permissions || !permissions.has("SendMessages")) {
-        logger.error(
+        logger.warn(
           `Missing permissions to send messages in channel ${channel.id}.`,
         );
         continue;
       }
 
-      let quotes = await Quote.find({ guildId: guild.guildId }).exec();
+      const quotes = await Quote.find({ guildId: guild.guildId });
       if (quotes.length === 0) {
-        logger.error(`No quotes found for guild ${guild.guildId}. Skipping.`);
+        logger.warn(`No quotes found for guild ${guild.guildId}. Skipping.`);
         continue;
       }
 
-      // Fetch recentQuotes from the database
-      let recentQuotes = guild.recentQuotes || [];
-
-      // Filter out recently used quotes
-      let availableQuotes = quotes.filter(
-        (quote) => !recentQuotes.includes(quote._id.toString()),
+      const recent = guild.recentQuotes || [];
+      const fresh = quotes.filter(
+        (quote) => !recent.includes(quote._id.toString()),
       );
-
-      // If all quotes are used, reset buffer
-      if (availableQuotes.length === 0) {
+      if (!fresh.length) {
         logger.info(
-          `All quotes used in guild ${guild.guildId}, resetting buffer.`,
+          `All quotes used in guild ${guild.guildId}, starting over.`,
         );
-        recentQuotes = [];
-        availableQuotes = quotes;
       }
-
-      // Shuffle for extra randomness
-      shuffle(availableQuotes);
-
-      // Select a random quote with seeded randomness
-      const seed = Date.now() + Math.random();
-      const randomQuote =
-        availableQuotes[getRandomInt(seed, availableQuotes.length)];
-
+      const randomQuote = pickOne(fresh.length ? fresh : quotes);
       const formattedDate = randomQuote.date.toLocaleDateString("fi-FI");
 
-      // Update recent quotes buffer
-      recentQuotes.push(randomQuote._id.toString());
-
-      // Keep only the last 20 quotes
-      if (recentQuotes.length > 20) {
-        recentQuotes.shift();
-      }
-
-      // Save updated recentQuotes buffer to the database
-      await DailyQuote.findOneAndUpdate(
-        { guildId: guild.guildId },
-        { recentQuotes },
-        { returnDocument: "after" },
-      );
-
-      // Increment quote count
       const updatedGuild = await DailyQuote.findOneAndUpdate(
         { guildId: guild.guildId },
-        { $inc: { quoteCount: 1 } },
+        {
+          $set: {
+            recentQuotes: [
+              ...(fresh.length ? recent : []),
+              randomQuote._id.toString(),
+            ].slice(-RECENT_LIMIT),
+          },
+          $inc: { quoteCount: 1 },
+        },
         { returnDocument: "after" },
       );
 

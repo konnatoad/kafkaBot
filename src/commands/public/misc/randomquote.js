@@ -1,85 +1,70 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const Quote = require("../../../schemas/quoteSchema");
 const logger = require("../../../extra/logger");
+const { pickOne } = require("../../../utils/random");
 
-const handleError = async (interaction, message) => {
-  logger.error(message);
-  await interaction.reply({ content: message, flags: MessageFlags.Ephemeral });
-};
+// how many recent picks per server to avoid repeating
+const RECENT_LIMIT = 20;
+// the quote plus its author and date lines have to fit in 2000 characters
+const MAX_CONTENT = 1800;
 
-const recentlyUsedQuotesBuffer = new Set();
+/** guildId -> ids of the last RECENT_LIMIT quotes shown there */
+const recentByGuild = new Map();
 
-const getRandomQuote = async (interaction, user) => {
-  try {
-    let query = { guildId: interaction.guildId };
-    if (user) {
-      query.authorId = user.id;
-    }
-
-    const quotes = await Quote.find(query).exec();
-    const count = quotes.length;
-
-    if (count === 0) {
-      return handleError(
-        interaction,
-        "No quotes found for the specified user.",
-      );
-    }
-
-    const weights = quotes.map((quote) => {
-      return recentlyUsedQuotesBuffer.has(quote._id.toString()) ? 1 : 10;
-    });
-
-    const cumulativeWeights = [];
-    weights.reduce((acc, weight, index) => {
-      cumulativeWeights[index] = acc + weight;
-      return cumulativeWeights[index];
-    }, 0);
-
-    const randomWeight =
-      Math.random() * cumulativeWeights[cumulativeWeights.length - 1];
-    const selectedQuoteIndex = cumulativeWeights.findIndex(
-      (cumulativeWeight) => cumulativeWeight >= randomWeight,
-    );
-    const selectedQuote = quotes[selectedQuoteIndex];
-
-    recentlyUsedQuotesBuffer.add(selectedQuote._id.toString());
-
-    let content = selectedQuote.content.replace(
-      /<@(\d+)>/g,
-      (match, userID) => {
-        const user = interaction.guild.members.cache.get(userID);
-        return user ? `@${user.displayName}` : match;
-      },
-    );
-
-    const formattedDate = selectedQuote.date.toLocaleDateString("fi-FI");
-    const formattedQuote = `**Content:** ${content}\n**Author:** ${selectedQuote.author}\n**Date:** ${formattedDate}`;
-    await interaction.reply({ content: formattedQuote });
-  } catch (error) {
-    logger.error("Database query error:", error);
-    handleError(interaction, "Failed to get random quote.");
-  }
-};
-
-const data = new SlashCommandBuilder()
-  .setName("randomquote")
-  .setDescription("Get a random quote")
-  .addUserOption((option) =>
-    option
-      .setName("user")
-      .setDescription("Filter quotes by user")
-      .setRequired(false),
+function pickFresh(guildId, quotes) {
+  const recent = recentByGuild.get(guildId) ?? [];
+  const fresh = quotes.filter((quote) => !recent.includes(String(quote._id)));
+  const picked = pickOne(fresh.length ? fresh : quotes);
+  recentByGuild.set(
+    guildId,
+    [...recent, String(picked._id)].slice(-RECENT_LIMIT),
   );
+  return picked;
+}
 
 module.exports = {
-  data,
+  data: new SlashCommandBuilder()
+    .setName("randomquote")
+    .setDescription("Get a random quote")
+    .addUserOption((option) =>
+      option
+        .setName("user")
+        .setDescription("Filter quotes by user")
+        .setRequired(false),
+    ),
+
   async run({ interaction }) {
+    const user = interaction.options.getUser("user");
     try {
-      const user = interaction.options.getUser("user");
-      await getRandomQuote(interaction, user);
+      const query = { guildId: interaction.guildId };
+      if (user) query.authorId = user.id;
+      const quotes = await Quote.find(query);
+      if (!quotes.length) {
+        return interaction.reply({
+          content: user ? `No quotes found for ${user}.` : "No quotes found.",
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const quote = pickFresh(interaction.guildId, quotes);
+      let content = quote.content.replace(/<@!?(\d+)>/g, (raw, userId) => {
+        const member = interaction.guild.members.cache.get(userId);
+        return member ? `@${member.displayName}` : raw;
+      });
+      if (content.length > MAX_CONTENT)
+        content = `${content.slice(0, MAX_CONTENT)}…`;
+
+      await interaction.reply(
+        `**Content:** ${content}\n**Author:** ${quote.author}\n**Date:** ${quote.date.toLocaleDateString("fi-FI")}`,
+      );
     } catch (error) {
-      logger.error("An error occurred:", error);
+      logger.error("/randomquote failed:", error);
+      await interaction
+        .reply({
+          content: "Failed to get random quote.",
+          flags: MessageFlags.Ephemeral,
+        })
+        .catch(() => {});
     }
   },
 };
