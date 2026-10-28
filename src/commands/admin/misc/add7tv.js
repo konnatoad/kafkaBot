@@ -1,85 +1,84 @@
 const {
-  Client,
   SlashCommandBuilder,
   PermissionFlagsBits,
-  MessageFlags
+  MessageFlags,
 } = require("discord.js");
 const sharp = require("sharp");
 const logger = require("../../../extra/logger");
 
+const MAX_EMOJI_BYTES = 256_000;
+// Discord's answers that are the server's to fix, not a bug
+const EMOJI_ERRORS = {
+  30008: "This server has no emoji slots left.",
+  50013: "I need the **Manage Expressions** permission to add emojis.",
+};
+
 module.exports = {
-  /**
-   *
-   * @param {Client} client
-   * @param {import('discord.js').ChatInputCommandInteraction} interaction
-   */
-  run: async ({ client, interaction }) => {
+  run: async ({ interaction }) => {
+    if (!interaction.inGuild()) {
+      return interaction.reply("Run this inside a server.");
+    }
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+    const match = interaction.options
+      .getString("link", true)
+      .trim()
+      .match(/\/emotes\/([a-zA-Z0-9]{24,})/);
+    if (!match) {
+      return interaction.editReply(
+        "That doesn’t look like a valid 7TV emote link.",
+      );
+    }
+
     try {
-      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      const res = await fetch(`https://7tv.io/v3/emotes/${match[1]}`);
+      if (!res.ok) return interaction.editReply("Couldn’t reach the 7TV API");
+      const emote = await res.json();
 
-      if (!interaction.guild) return;
-
-      const url = interaction.options.getString("link", true).trim();
-      const match = url.match(/\/emotes\/([a-zA-Z0-9]{24,})/);
-
-      if (!match) {
+      // Discord emoji names are 2-32 letters, digits or underscores
+      const name = (interaction.options.getString("name") || emote.name)
+        .replace(/[^a-z0-9_]/gi, "_")
+        .slice(0, 32);
+      if (name.length < 2) {
         return interaction.editReply(
-          "That doesn’t look like a valid 7TV emote link."
+          "Give the emoji a name of at least 2 characters.",
         );
       }
 
-      const emoteId = match[1];
-      const res = await fetch(`https://7tv.io/v3/emotes/${emoteId}`);
-
-      if (!res.ok) {
-        return interaction.editReply("Couldn’t reach the 7TV API");
-      }
-
-      const emote = await res.json();
       const file =
-        [...emote.host.files]
+        emote.host.files
           .filter((f) => f.format === "WEBP")
-          .sort((a, b) => b.width - a.width)[0] || emote.host.files[0];
+          .sort((a, b) => b.width - a.width)[0] ?? emote.host.files[0];
+      const download = await fetch(`https:${emote.host.url}/${file.name}`);
+      if (!download.ok)
+        return interaction.editReply("Couldn’t download that emote from 7TV.");
+      let image = Buffer.from(await download.arrayBuffer());
 
-      const fileUrl = `https:${emote.host.url}/${file.name}`;
-
-      const imgBuf = Buffer.from(await (await fetch(fileUrl)).arrayBuffer());
-
-      let finalBuf = imgBuf;
-
-      // If the file is already < 256 KB, don't touch it
-      if (imgBuf.length > 256_000) {
-        finalBuf = await sharp(imgBuf)
+      // Discord's emoji limit; a smaller file is used as it is
+      if (image.length > MAX_EMOJI_BYTES) {
+        image = await sharp(image)
           .resize(256, 256, { fit: "inside" })
           .png()
           .toBuffer();
-
-        if (finalBuf.length > 256_000) {
+        if (image.length > MAX_EMOJI_BYTES) {
           return interaction.editReply(
-            "Still too chunky after resizing (>256 kB)."
+            "Still too chunky after resizing (>256 kB).",
           );
         }
       }
 
-      if (finalBuf.length > 256_000) {
-        return interaction.editReply(
-          "Still too chunky after resizing (>256 kB)."
-        );
-      }
-
-      const name = (
-        interaction.options.getString("name") || emote.name
-      ).replace(/[^a-z0-9_]/gi, "_");
-
       const emoji = await interaction.guild.emojis.create({
-        attachment: finalBuf,
-        name
+        attachment: image,
+        name,
       });
-
-      interaction.editReply(`Added ${emoji.toString()}  \`:${emoji.name}:\``);
+      return interaction.editReply(`Added ${emoji}  \`:${emoji.name}:\``);
     } catch (err) {
+      if (EMOJI_ERRORS[err.code])
+        return interaction.editReply(EMOJI_ERRORS[err.code]);
       logger.error("Error adding 7TV emote:", err);
-      interaction.editReply("Something went wrong trying to add that emote.");
+      return interaction.editReply(
+        "Something went wrong trying to add that emote.",
+      );
     }
   },
 
@@ -90,10 +89,10 @@ module.exports = {
       option
         .setName("link")
         .setDescription("Full 7TV emote URL")
-        .setRequired(true)
+        .setRequired(true),
     )
     .addStringOption((option) =>
-      option.setName("name").setDescription("Custom emoji name (optional)")
+      option.setName("name").setDescription("Custom emoji name (optional)"),
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 };

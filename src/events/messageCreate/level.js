@@ -3,75 +3,60 @@ const levelSchema = require("../../schemas/level");
 const UserProfile = require("../../schemas/UserProfile");
 const logger = require("../../extra/logger");
 const { xpIgnoredChannels } = require("../../../config.json");
+const { xpForNextLevel } = require("../../utils/levels");
+
+const XP_PER_MESSAGE = 1;
+const LEVEL_UP_REWARD = 50;
+/** Balance someone starts with the first time they talk. */
+const STARTING_BALANCE = 25;
 
 module.exports = async (message) => {
-  const { guild, author } = message;
+  const { guild, author, channel } = message;
 
   if (!guild || author.bot || xpIgnoredChannels.includes(message.channelId))
     return;
 
   try {
-    let Data = await levelSchema.findOne({
-      Guild: guild.id,
-      User: author.id,
+    // creates the profile on someone's first message, leaves it alone after
+    await UserProfile.updateOne(
+      { userId: author.id, Guild: guild.id },
+      { $setOnInsert: { balance: STARTING_BALANCE } },
+      { upsert: true },
+    ).catch((err) => {
+      // two first messages at once: the other one created it
+      if (err.code !== 11000) throw err;
     });
 
-    if (!Data) {
-      Data = await levelSchema.create({
-        Guild: guild.id,
-        User: author.id,
-        XP: 0,
-        Level: 0,
-      });
-    }
+    const data = await levelSchema.findOneAndUpdate(
+      { Guild: guild.id, User: author.id },
+      { $inc: { XP: XP_PER_MESSAGE }, $setOnInsert: { Level: 0 } },
+      { upsert: true, returnDocument: "after" },
+    );
+    if (data.XP < xpForNextLevel(data.Level)) return;
 
-    let userProfile = await UserProfile.findOne({
-      userId: author.id,
-      Guild: guild.id,
-    });
+    // only one of two racing messages gets to move Level on
+    const levelled = await levelSchema.findOneAndUpdate(
+      { _id: data._id, Level: data.Level },
+      { $inc: { Level: 1 } },
+      { returnDocument: "after" },
+    );
+    if (!levelled) return;
+    await UserProfile.updateOne(
+      { userId: author.id, Guild: guild.id },
+      { $inc: { balance: LEVEL_UP_REWARD } },
+    );
 
-    if (!userProfile) {
-      userProfile = await UserProfile.create({
-        userId: author.id,
-        Guild: guild.id,
-        balance: 25,
-      });
-    }
+    const needed = channel.isThread()
+      ? ["ViewChannel", "SendMessagesInThreads", "EmbedLinks"]
+      : ["ViewChannel", "SendMessages", "EmbedLinks"];
+    if (!channel.permissionsFor(guild.members.me)?.has(needed)) return;
 
-    const channel = message.channel;
-
-    const give = 1;
-
-    const data = Data;
-
-    if (!data) return;
-
-    const requiredXP = data.Level * data.Level * 20 + 20;
-
-    if (data.XP + give >= requiredXP) {
-      data.XP += give;
-      data.Level += 1;
-      userProfile.balance += 50;
-      await data.save();
-      await userProfile.save();
-
-      if (!channel) return;
-
-      const me = guild.members.me;
-      const needed = channel.isThread()
-        ? ["ViewChannel", "SendMessagesInThreads", "EmbedLinks"]
-        : ["ViewChannel", "SendMessages", "EmbedLinks"];
-      if (!channel.permissionsFor(me)?.has(needed)) return;
-
-      const embed = new EmbedBuilder()
-        .setColor("Blurple")
-        .setDescription(`**${author}, you have reached level ${data.Level}!**`);
-
-      await channel.send({ embeds: [embed] });
-    } else {
-      data.XP += give;
-      await data.save();
-    }
+    const embed = new EmbedBuilder()
+      .setColor("Blurple")
+      .setDescription(
+        `**${author}, you have reached level ${levelled.Level}!**`,
+      );
+    await channel.send({ embeds: [embed] });
   } catch (error) {
     logger.error(
       `level: failed in guild "${guild.name}" (${guild.id}), channel ${message.channelId}: ${error}`,

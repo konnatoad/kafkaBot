@@ -4,9 +4,9 @@ const {
   MessageFlags,
 } = require("discord.js");
 const StoreItem = require("../../../../schemas/Store");
+const { whyBotCantGive } = require("../../../../utils/roles");
 
 module.exports = {
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("store-setup")
     .setDescription("Configure the store system for rice grains")
@@ -19,14 +19,16 @@ module.exports = {
           option
             .setName("role")
             .setDescription("The role to add to the rice store")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addIntegerOption((option) =>
           option
             .setName("cost")
             .setDescription("The cost of the role in rice grains")
-            .setRequired(true)
-        )
+            // a negative cost would pay people for buying it
+            .setMinValue(1)
+            .setRequired(true),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -36,18 +38,24 @@ module.exports = {
           option
             .setName("role")
             .setDescription("The role to remove from the rice store")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     ),
   run: async ({ interaction }) => {
     const subcommand = interaction.options.getSubcommand();
-    const guildId = interaction.guild.id; // Get the guild ID
+    const guildId = interaction.guild.id;
 
     if (subcommand === "add") {
       const roleToAdd = interaction.options.getRole("role");
       const cost = interaction.options.getInteger("cost");
+      const refusal = whyBotCantGive(interaction.guild, roleToAdd);
+      if (refusal) {
+        return interaction.reply({
+          content: refusal,
+          flags: MessageFlags.Ephemeral,
+        });
+      }
 
-      // Check if role is already in the store
       const existingItem = await StoreItem.findOne({
         guildId,
         roleId: roleToAdd.id,
@@ -60,7 +68,6 @@ module.exports = {
         });
       }
 
-      // Create new store item
       const newItem = new StoreItem({
         guildId: guildId,
         roleId: roleToAdd.id,
@@ -75,7 +82,6 @@ module.exports = {
     } else if (subcommand === "remove") {
       const roleToRemove = interaction.options.getRole("role");
 
-      // Check if role is in the store
       const existingItem = await StoreItem.findOne({
         guildId,
         roleId: roleToRemove.id,
@@ -87,7 +93,6 @@ module.exports = {
         });
       }
 
-      // Remove store item
       await StoreItem.findOneAndDelete({ guildId, roleId: roleToRemove.id });
 
       return interaction.reply({

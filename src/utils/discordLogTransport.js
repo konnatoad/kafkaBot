@@ -1,15 +1,45 @@
+const { stripVTControlCharacters } = require("node:util");
 const Transport = require("winston-transport");
 
-const ANSI = /\x1b\[[0-9;]*m/g;
 const MAX_LEN = 1900; // Discord caps content at 2000 chars, leave room for code fences + ping
 const FLUSH_MS = 2000;
 const PING_COOLDOWN_MS = 60_000;
+
+const WEBHOOK_HOSTS = [
+  "discord.com",
+  "discordapp.com",
+  "ptb.discord.com",
+  "canary.discord.com",
+];
+const WEBHOOK_PATH = /^\/api(\/v\d+)?\/webhooks\/\d+\/[\w-]+$/;
+
+// Log lines carry error stacks, so they only ever go to a real Discord webhook:
+// a typo or a URL pasted from elsewhere in .env would otherwise ship them there.
+// The request goes to a fixed https://discord.com with only the checked path.
+function webhookEndpoint(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    parsed = null;
+  }
+  if (
+    parsed?.protocol !== "https:" ||
+    !WEBHOOK_HOSTS.includes(parsed.hostname) ||
+    !WEBHOOK_PATH.test(parsed.pathname)
+  ) {
+    throw new Error(
+      "LOG_WEBHOOK_URL has to look like https://discord.com/api/webhooks/<id>/<token>",
+    );
+  }
+  return `https://discord.com${parsed.pathname}`;
+}
 
 // Batches log lines into code blocks and posts them to a Discord webhook; errors ping PING_USER_ID
 class DiscordLogTransport extends Transport {
   constructor({ webhookUrl, pingUserId, ...opts }) {
     super(opts);
-    this.webhookUrl = webhookUrl;
+    this.webhookUrl = webhookEndpoint(webhookUrl);
     this.pingUserId = pingUserId;
     this.queue = [];
     this.pendingPing = false;
@@ -19,9 +49,12 @@ class DiscordLogTransport extends Transport {
   }
 
   log(info, callback) {
-    const level = String(info.level).replace(ANSI, "");
-    const stack = info.stack && !String(info.message).includes(info.stack) ? `\n${info.stack}` : "";
-    const line = `${info.timestamp ?? new Date().toISOString()} [${level}]: ${String(info.message).replace(ANSI, "")}${stack}`;
+    const level = stripVTControlCharacters(String(info.level));
+    const stack =
+      info.stack && !String(info.message).includes(info.stack)
+        ? `\n${info.stack}`
+        : "";
+    const line = `${info.timestamp ?? new Date().toISOString()} [${level}]: ${stripVTControlCharacters(String(info.message))}${stack}`;
     this.queue.push(line);
     if (level === "error") this.pendingPing = true;
     callback();
@@ -31,7 +64,10 @@ class DiscordLogTransport extends Transport {
     if (this.sending || !this.queue.length) return;
     this.sending = true;
     try {
-      const ping = this.pendingPing && this.pingUserId && Date.now() - this.lastPing > PING_COOLDOWN_MS;
+      const ping =
+        this.pendingPing &&
+        this.pingUserId &&
+        Date.now() - this.lastPing > PING_COOLDOWN_MS;
       this.pendingPing = false;
       if (ping) this.lastPing = Date.now();
 
@@ -39,7 +75,8 @@ class DiscordLogTransport extends Transport {
       const chunks = [];
       let current = "";
       for (let line of lines) {
-        if (line.length > MAX_LEN) line = `${line.slice(0, MAX_LEN - 15)}…[truncated]`;
+        if (line.length > MAX_LEN)
+          line = `${line.slice(0, MAX_LEN - 15)}…[truncated]`;
         if (current.length + line.length + 1 > MAX_LEN) {
           chunks.push(current);
           current = "";
@@ -50,7 +87,9 @@ class DiscordLogTransport extends Transport {
 
       for (const [i, chunk] of chunks.entries()) {
         const mention = ping && i === 0 ? `<@${this.pingUserId}>\n` : "";
-        await this.post(`${mention}\`\`\`\n${chunk.replace(/```/g, "ʼʼʼ")}\n\`\`\``);
+        await this.post(
+          `${mention}\`\`\`\n${chunk.replace(/```/g, "ʼʼʼ")}\n\`\`\``,
+        );
       }
     } catch {
       // Never let log shipping crash the bot; the console transport still has everything

@@ -13,7 +13,7 @@ module.exports = {
       option
         .setName("user")
         .setDescription("The member you want to clear the xp of")
-        .setRequired(true)
+        .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
@@ -22,7 +22,7 @@ module.exports = {
 
     const target = interaction.options.getUser("user");
 
-    const data = await levelSchema.deleteMany({
+    await levelSchema.deleteMany({
       Guild: guildId,
       User: target.id,
     });

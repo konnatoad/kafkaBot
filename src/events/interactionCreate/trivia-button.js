@@ -9,9 +9,9 @@ const {
 const TriviaConfig = require("../../schemas/TriviaConfig");
 const TriviaStats = require("../../schemas/TriviaStats");
 const logger = require("../../extra/logger");
-const { BASE_PAYOUT, currentPrize } = require("../../utils/trivia");
+const { currentPrize } = require("../../utils/trivia");
 
-module.exports = async (interaction, client) => {
+module.exports = async (interaction) => {
   if (interaction?.type !== InteractionType.MessageComponent) return;
   if (interaction.customId === "trivia_dev_simulated") {
     return interaction.reply({

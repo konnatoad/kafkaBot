@@ -5,9 +5,9 @@ const {
 } = require("discord.js");
 const reaction = require("../../../../schemas/reactions");
 const logger = require("../../../../extra/logger");
+const { whyBotCantGive } = require("../../../../utils/roles");
 
 module.exports = {
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("reaction-roles")
     .setDescription("Manage your reaction roles system")
@@ -19,20 +19,20 @@ module.exports = {
           option
             .setName("message-id")
             .setDescription("The message to react to")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addStringOption((option) =>
           option
             .setName("emoji")
             .setDescription("The emoji to react with")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addRoleOption((option) =>
           option
             .setName("role")
             .setDescription("The role you want to give")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((command) =>
@@ -43,91 +43,80 @@ module.exports = {
           option
             .setName("message-id")
             .setDescription("The message to react to")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addStringOption((option) =>
           option
             .setName("emoji")
             .setDescription("The emoji to react with")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     ),
 
   run: async ({ interaction }) => {
     const { options, guild, channel } = interaction;
-    const sub = options.getSubcommand();
-    const emoji = options.getString("emoji");
+    const emoji = options.getString("emoji").trim();
+    const reply = (content) =>
+      interaction.reply({ content, flags: MessageFlags.Ephemeral });
 
-    let e;
     const message = await channel.messages
       .fetch(options.getString("message-id"))
-      .catch((err) => {
-        e = err;
-      });
+      .catch(() => null);
+    if (!message) {
+      return reply(
+        `Couldn't find that message in ${channel}. Run this in the channel the message is in.`,
+      );
+    }
 
-    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator))
-      return await interaction.reply({
-        content: "you dont have permissions to use this system",
-        flags: MessageFlags.Ephemeral,
+    if (options.getSubcommand() === "remove") {
+      const { deletedCount } = await reaction.deleteMany({
+        Guild: guild.id,
+        Message: message.id,
+        Emoji: emoji,
       });
-    if (e)
-      return await interaction.reply({
-        content: `be sure to get a message from ${channel}!`,
-        flags: MessageFlags.Ephemeral,
-      });
+      return reply(
+        deletedCount
+          ? `I have removed the reaction role from ${message.url} with ${emoji}`
+          : "It doesn't look like that reaction role exists",
+      );
+    }
 
-    const data = await reaction.findOne({
+    const role = options.getRole("role");
+    const refusal = whyBotCantGive(guild, role);
+    if (refusal) return reply(refusal);
+
+    // reacting first proves the emoji is real and usable here; what Discord
+    // reports back is exactly what reactions to it will look like
+    let reacted;
+    try {
+      reacted = await message.react(emoji);
+    } catch (err) {
+      logger.warn(
+        `reaction-roles: can't react with ${emoji} in guild ${guild.id}: ${err}`,
+      );
+      return reply(
+        `I can't react with ${emoji} there. Use an emoji from this server or a normal one, and check I can add reactions in ${channel}.`,
+      );
+    }
+    const stored = reacted.emoji.toString();
+
+    if (
+      await reaction.exists({
+        Guild: guild.id,
+        Message: message.id,
+        Emoji: stored,
+      })
+    ) {
+      return reply(
+        `It looks like you already have this reaction setup using ${emoji} on this message`,
+      );
+    }
+    await reaction.create({
       Guild: guild.id,
       Message: message.id,
-      Emoji: emoji,
+      Emoji: stored,
+      Role: role.id,
     });
-
-    switch (sub) {
-      case "add":
-        if (data) {
-          return await interaction.reply({
-            content: `It looks like you already have this reaction setup using ${emoji} on this message`,
-            flags: MessageFlags.Ephemeral,
-          });
-        } else {
-          const role = options.getRole("role");
-          await reaction.create({
-            Guild: guild.id,
-            Message: message.id,
-            Emoji: emoji, // Store emoji as it is (whether normal or animated)
-            Role: role.id,
-          });
-
-          await message.react(emoji).catch((err) => {
-            logger.error("reaction-roles: failed to react with emoji:", err);
-          });
-
-          await interaction.reply({
-            content: `Successfully added reaction role to the message.`,
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-        break;
-
-      case "remove":
-        if (!data) {
-          return await interaction.reply({
-            content: `It doesn't look like that reaction role exists`,
-            flags: MessageFlags.Ephemeral,
-          });
-        } else {
-          await reaction.deleteMany({
-            Guild: guild.id,
-            Message: message.id,
-            Emoji: emoji,
-          });
-
-          await interaction.reply({
-            content: `I have removed the reaction role from ${message.url} with ${emoji}`,
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-        break;
-    }
+    return reply("Successfully added reaction role to the message.");
   },
 };

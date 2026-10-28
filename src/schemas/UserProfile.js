@@ -26,7 +26,7 @@ const userProfileSchema = new Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userProfileSchema.index({ userId: 1, Guild: 1 }, { unique: true });

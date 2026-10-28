@@ -1,5 +1,4 @@
 const logger = require("../../extra/logger");
-require("dotenv").config();
 const { EmbedBuilder, MessageFlags } = require("discord.js");
 
 module.exports = async (interaction, client) => {
@@ -8,7 +7,7 @@ module.exports = async (interaction, client) => {
   if (interaction.customId === "feedbackSubmit") {
     const feature = interaction.fields.getTextInputValue("feature");
     const feedbackDescription = interaction.fields.getTextInputValue(
-      "feedbackDescription"
+      "feedbackDescription",
     );
 
     const member = interaction.member;
@@ -36,7 +35,7 @@ module.exports = async (interaction, client) => {
           value: `\`${server.name} (${server.id})\``,
         },
         { name: "Feature/Topic", value: `> ${feature}` },
-        { name: "Feedback", value: `> ${feedbackDescription}` }
+        { name: "Feedback", value: `> ${feedbackDescription}` },
       )
       .setFooter({
         text: "Feedback System",
@@ -44,13 +43,21 @@ module.exports = async (interaction, client) => {
       })
       .setTimestamp();
 
-    await feedbackChannel.send({ embeds: [feedbackEmbed] }).catch((err) => {
-      logger.error("feedback-handler: failed to send to feedback channel:", err);
-    });
+    const delivered = await feedbackChannel
+      .send({ embeds: [feedbackEmbed] })
+      .then(() => true)
+      .catch((err) => {
+        logger.error(
+          "feedback-handler: failed to send to feedback channel:",
+          err,
+        );
+        return false;
+      });
 
     await interaction.reply({
-      content:
-        "Thank you for your feedback! The developer will review it soon.",
+      content: delivered
+        ? "Thank you for your feedback! The developer will review it soon."
+        : "Sorry, your feedback couldn't be delivered. Please try again in a bit.",
       flags: MessageFlags.Ephemeral,
     });
   }

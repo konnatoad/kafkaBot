@@ -9,13 +9,13 @@ module.exports = {
       option
         .setName("user")
         .setDescription("The user to give rice grains to")
-        .setRequired(true)
+        .setRequired(true),
     )
     .addIntegerOption((option) =>
       option
         .setName("amount")
         .setDescription("The amount of rice grains to give")
-        .setRequired(true)
+        .setRequired(true),
     ),
   run: async ({ interaction }) => {
     const giver = interaction.user;
@@ -35,7 +35,7 @@ module.exports = {
     const giverProfile = await UserProfile.findOneAndUpdate(
       { userId: giver.id, Guild: guildId, balance: { $gte: amount } },
       { $inc: { balance: -amount } },
-      { returnDocument: 'after' }
+      { returnDocument: "after" },
     );
 
     if (!giverProfile) {
@@ -46,7 +46,7 @@ module.exports = {
     await UserProfile.findOneAndUpdate(
       { userId: receiver.id, Guild: guildId },
       { $inc: { balance: amount } },
-      { upsert: true }
+      { upsert: true },
     );
 
     return interaction.reply({

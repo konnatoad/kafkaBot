@@ -2,89 +2,52 @@ const logger = require("../../../extra/logger");
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  EmbedBuilder
+  EmbedBuilder,
 } = require("discord.js");
+const { whyCantModerate } = require("../../../utils/moderation");
 
 module.exports = {
-  deleted: false,
-
   data: new SlashCommandBuilder()
     .setName("kick")
     .setDescription("kicks a user")
-    .addMentionableOption((option) =>
+    .addUserOption((option) =>
       option
         .setName("target-user")
         .setDescription("user you want to kick")
-        .setRequired(true)
+        .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
     .addStringOption((option) =>
-      option.setName("reason").setDescription("reason for the kick")
+      option.setName("reason").setDescription("reason for the kick"),
     ),
-  /**
-   *
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
 
   run: async ({ interaction }) => {
-    const targetUserId = interaction.options.get("target-user").value;
+    const member = interaction.options.getMember("target-user");
     const reason =
-      interaction.options.get("reason")?.value || "no reason provided";
+      interaction.options.getString("reason") || "no reason provided";
 
     await interaction.deferReply();
 
-    let targetUser;
+    if (!member) return interaction.editReply("that user isn't on this server");
+    const refusal = whyCantModerate(interaction, member, "kick");
+    if (refusal) return interaction.editReply(refusal);
+
     try {
-      targetUser = await interaction.guild.members.fetch(targetUserId);
+      await member.kick(reason);
     } catch (error) {
-      logger.error(`there was an error fetching member: ${error}`);
-      await interaction.editReply("that user doesn't exist on this server");
-      return;
-    }
-
-    if (targetUser.id === interaction.guild.ownerId) {
-      await interaction.editReply("you can't kick server owner");
-      return;
-    }
-
-    const targetUserRolePosition = targetUser.roles.highest.position;
-    // const requestUserRolePosition = interaction.member.roles.highest.position;
-    const botRolePosition = interaction.guild.members.me.roles.highest.position;
-
-    // if (targetUserRolePosition >= requestUserRolePosition) {
-    //     await interaction.editReply("you can't kick a member that has the same or higher role than you");
-    //     return;
-    // }
-
-    if (targetUserRolePosition >= botRolePosition) {
-      await interaction.editReply(
-        "i can't kick a member that has the same or higher role than me"
+      logger.error(`kick: failed to kick ${member.id}: ${error}`);
+      return interaction.editReply(
+        `failed to kick ${member}: ${error.message}`,
       );
-      return;
     }
 
-    try {
-      const banEmbed = new EmbedBuilder()
-        .setTitle("**Kick**")
-        .setColor("Red")
-        .setDescription(`User ${targetUser} was kicked.`)
-        .addFields({
-          name: "Reason:",
-          value: `${reason}`
-        })
-        .setTimestamp()
-        .setFooter({
-          text: "Kick",
-          iconURL: "https://vou.s-ul.eu/ts9RQjxl"
-        });
-      await targetUser.kick({ reason });
-      await interaction.editReply({
-        embeds: [banEmbed]
-      });
-    } catch (error) {
-      logger.error(`there was an error kicking ${error}`);
-      await interaction.editReply(`failed to kick ${targetUser}: ${error.message}`);
-    }
-  }
+    const kickEmbed = new EmbedBuilder()
+      .setTitle("**Kick**")
+      .setColor("Red")
+      .setDescription(`User ${member} was kicked.`)
+      .addFields({ name: "Reason:", value: reason })
+      .setTimestamp()
+      .setFooter({ text: "Kick", iconURL: "https://vou.s-ul.eu/ts9RQjxl" });
+    await interaction.editReply({ embeds: [kickEmbed] });
+  },
 };

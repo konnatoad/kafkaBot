@@ -32,7 +32,7 @@ function isCorrect(userAnswer, correctAnswer) {
   return results.length > 0 && results[0].score <= 0.2;
 }
 
-module.exports = async (interaction, client) => {
+module.exports = async (interaction) => {
   if (interaction?.type !== InteractionType.ModalSubmit) return;
   if (!interaction.customId?.startsWith("trivia_modal_")) return;
 
@@ -48,11 +48,14 @@ module.exports = async (interaction, client) => {
   try {
     const cfg = await TriviaConfig.findOne({ guildId });
     if (!cfg || cfg.lastSentDate !== questionId || !cfg.correctAnswer) {
-      return interaction.editReply({ content: "This question is no longer active." });
+      return interaction.editReply({
+        content: "This question is no longer active.",
+      });
     }
 
     const difficulty = cfg.questionDifficulty ?? "medium";
-    const userAnswer = interaction.fields.getTextInputValue("trivia_answer_text") ?? "";
+    const userAnswer =
+      interaction.fields.getTextInputValue("trivia_answer_text") ?? "";
 
     let stats = await TriviaStats.findOne({
       guildId,
@@ -95,7 +98,8 @@ module.exports = async (interaction, client) => {
         `❌ Have you considered not answering? **${nextPrize} rice grains** left.`,
       ];
       return interaction.editReply({
-        content: wrongMessages[Math.floor(Math.random() * wrongMessages.length)],
+        content:
+          wrongMessages[Math.floor(Math.random() * wrongMessages.length)],
       });
     }
 
@@ -120,12 +124,13 @@ module.exports = async (interaction, client) => {
     await UserProfile.findOneAndUpdate(
       { userId: interaction.user.id, Guild: guildId },
       { $inc: { balance: prize } },
-      { upsert: true }
+      { upsert: true },
     );
 
-    const correctEphemeral = attempts === 1
-      ? `✅ Fine. You got it. **+${prize} rice grains**. Don't make it a habit.`
-      : `✅ Took you long enough. **+${prize} rice grains**. ${attempts} attempts. Pathetic.`;
+    const correctEphemeral =
+      attempts === 1
+        ? `✅ Fine. You got it. **+${prize} rice grains**. Don't make it a habit.`
+        : `✅ Took you long enough. **+${prize} rice grains**. ${attempts} attempts. Pathetic.`;
 
     await interaction.editReply({ content: correctEphemeral });
 
@@ -144,7 +149,9 @@ module.exports = async (interaction, client) => {
     logger.error("trivia-modal error:", err);
     try {
       if (interaction.deferred || interaction.replied) {
-        return interaction.editReply({ content: "Something went wrong. Try again." });
+        return interaction.editReply({
+          content: "Something went wrong. Try again.",
+        });
       }
       return interaction.reply({
         content: "Something went wrong. Try again.",

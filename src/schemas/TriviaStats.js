@@ -8,6 +8,9 @@ const triviaStatsSchema = new Schema({
   solved: { type: Boolean, default: false },
 });
 
-triviaStatsSchema.index({ guildId: 1, questionId: 1, userId: 1 }, { unique: true });
+triviaStatsSchema.index(
+  { guildId: 1, questionId: 1, userId: 1 },
+  { unique: true },
+);
 
 module.exports = model("TriviaStats", triviaStatsSchema);

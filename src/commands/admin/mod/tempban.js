@@ -6,140 +6,117 @@ const {
 } = require("discord.js");
 const Ban = require("../../../schemas/banschema");
 const logger = require("../../../extra/logger");
+const { whyCantModerate } = require("../../../utils/moderation");
 
-const slashCommand = new SlashCommandBuilder()
+const MINUTES_PER = {
+  weeks: 7 * 24 * 60,
+  days: 24 * 60,
+  hours: 60,
+  minutes: 1,
+};
+
+const data = new SlashCommandBuilder()
   .setName("tempban")
   .setDescription("Temporarily ban a user")
   .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
   .addUserOption((option) =>
-    option.setName("user").setDescription("The user to ban").setRequired(true)
-  )
-  .addIntegerOption((option) =>
-    option.setName("weeks").setDescription("The number of weeks")
-  )
-  .addIntegerOption((option) =>
-    option.setName("days").setDescription("The number of days")
-  )
-  .addIntegerOption((option) =>
-    option.setName("hours").setDescription("The number of hours")
-  )
-  .addIntegerOption((option) =>
-    option.setName("minutes").setDescription("The number of minutes")
-  )
-  .addStringOption((option) =>
-    option.setName("reason").setDescription("The reason for the ban")
+    option.setName("user").setDescription("The user to ban").setRequired(true),
   );
+for (const unit of Object.keys(MINUTES_PER)) {
+  data.addIntegerOption((option) =>
+    option.setName(unit).setDescription(`The number of ${unit}`).setMinValue(0),
+  );
+}
+data.addStringOption((option) =>
+  option.setName("reason").setDescription("The reason for the ban"),
+);
 
 module.exports = {
-  data: slashCommand,
+  data,
   run: async ({ interaction }) => {
-    const user = interaction.options.getUser("user");
-    const durationOptions = ["weeks", "days", "hours", "minutes"];
-    const providedDurations = durationOptions.filter(
-      (option) => interaction.options.getInteger(option) !== null
-    );
-    const durationValues = providedDurations.map((option) =>
-      interaction.options.getInteger(option)
-    );
+    const user = interaction.options.getUser("user", true);
+    const member = interaction.options.getMember("user");
     const reason =
       interaction.options.getString("reason") || "No reason provided";
 
-    // Ensure at least one duration option is provided
-    if (providedDurations.length === 0) {
-      await interaction.reply({
-        content: "You must specify at least one duration option.",
+    const amounts = Object.keys(MINUTES_PER)
+      .map((unit) => [unit, interaction.options.getInteger(unit) ?? 0])
+      .filter(([, amount]) => amount > 0);
+    const totalMinutes = amounts.reduce(
+      (total, [unit, amount]) => total + amount * MINUTES_PER[unit],
+      0,
+    );
+    if (totalMinutes === 0) {
+      return interaction.reply({
+        content: "Give the ban a length: weeks, days, hours or minutes.",
         flags: MessageFlags.Ephemeral,
       });
-      return;
     }
-
-    // Calculate total duration in minutes
-    const totalDuration = providedDurations.reduce((total, option, index) => {
-      const value = durationValues[index];
-      switch (option) {
-        case "weeks":
-          return total + value * 7 * 24 * 60;
-        case "days":
-          return total + value * 24 * 60;
-        case "hours":
-          return total + value * 60;
-        case "minutes":
-          return total + value;
-        default:
-          return total;
-      }
-    }, 0);
-
-    // Calculate expiration time
-    const expirationTime = new Date();
-    expirationTime.setMinutes(expirationTime.getMinutes() + totalDuration);
-
-    const formattedDuration = providedDurations
-      .map((option, index) => {
-        const value = durationValues[index];
-        if (value === 0) return null;
-        return `${value} ${value === 1 ? option.slice(0, -1) : option}`;
-      })
-      .filter((duration) => duration !== null)
+    const duration = amounts
+      .map(
+        ([unit, amount]) =>
+          `${amount} ${amount === 1 ? unit.slice(0, -1) : unit}`,
+      )
       .join(", ");
 
-    // DM the user before banning — once banned there may be no shared server
+    const refusal = member && whyCantModerate(interaction, member, "ban");
+    if (refusal) {
+      return interaction.reply({
+        content: refusal,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    await interaction.deferReply();
+
+    // DM first: once banned there may be no shared server left to DM through
     const dmEmbed = new EmbedBuilder()
       .setColor("#ff0000")
       .setTitle("You Have Been Temporarily Banned")
       .setDescription(
-        `You have been temporarily banned from **${interaction.guild.name}**.`
+        `You have been temporarily banned from **${interaction.guild.name}**.`,
       )
       .addFields(
-        { name: "Duration", value: `\`${formattedDuration}\`` },
+        { name: "Duration", value: `\`${duration}\`` },
         { name: "Reason", value: `\`${reason}\`` },
-        { name: "Server", value: `\`${interaction.guild.name}\`` }
+        { name: "Server", value: `\`${interaction.guild.name}\`` },
       )
       .setTimestamp();
+    await user.send({ embeds: [dmEmbed] }).catch((err) => {
+      if (err.code !== 50007) logger.error("tempban: failed to DM user:", err);
+    });
 
-    try {
-      await user.send({ embeds: [dmEmbed] });
-    } catch (error) {
-      logger.error(`Could not send DM to ${user.tag}: ${error.message}`);
-    }
-
-    // Attempt the ban — if it fails, reply with an error and bail out
     try {
       await interaction.guild.members.ban(user, { reason });
     } catch (error) {
-      logger.error(`Failed to ban ${user.tag}: ${error.message}`);
-      await interaction.reply({
-        content: `Failed to ban **${user.tag}**: ${error.message}`,
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
+      logger.error(`tempban: failed to ban ${user.id}: ${error}`);
+      return interaction.editReply(
+        `Failed to ban **${user.tag}**: ${error.message}`,
+      );
     }
 
-    // Ban succeeded — persist the record and notify the mod
     await Ban.create({
       userId: user.id,
-      expirationTime,
+      expirationTime: new Date(Date.now() + totalMinutes * 60_000),
       guildId: interaction.guildId,
-      reason,
     });
 
     const embed = new EmbedBuilder()
       .setColor("#ff0000")
       .setTitle("User Temporarily Banned")
       .setDescription(
-        `**${user.tag}** has been temporarily banned from the server.`
+        `**${user.tag}** has been temporarily banned from the server.`,
       )
       .addFields(
-        { name: "Duration", value: `\`${formattedDuration}\`` },
+        { name: "Duration", value: `\`${duration}\`` },
         { name: "Reason", value: `\`${reason}\`` },
-        { name: "User ID", value: `\`${user.id}\`` }
+        { name: "User ID", value: `\`${user.id}\`` },
       )
       .setFooter({
         text: `Banned by ${interaction.user.tag}`,
         iconURL: interaction.user.displayAvatarURL(),
       })
       .setTimestamp();
-
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
   },
 };

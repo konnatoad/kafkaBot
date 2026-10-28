@@ -1,5 +1,11 @@
 const logger = require("../../extra/logger");
-const { MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
+const {
+  MessageFlags,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder,
+} = require("discord.js");
 
 module.exports = async (interaction, client) => {
   if (!interaction.customId) return;
@@ -14,7 +20,9 @@ module.exports = async (interaction, client) => {
     const comment = new TextInputBuilder()
       .setCustomId("resolveComment")
       .setLabel("Resolution comment (sent to reporter)")
-      .setPlaceholder("Describe what was fixed or any notes for the reporter...")
+      .setPlaceholder(
+        "Describe what was fixed or any notes for the reporter...",
+      )
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
@@ -33,7 +41,8 @@ module.exports = async (interaction, client) => {
           content: `Your bug report has been resolved by the developer!\n\n**Developer's note:**\n> ${comment.split("\n").join("\n> ")}`,
         })
         .catch((err) => {
-          if (err.code !== 50007) logger.error("bugreportbutton: failed to DM member:", err);
+          if (err.code !== 50007)
+            logger.error("bugreportbutton: failed to DM member:", err);
         });
     }
 
@@ -43,7 +52,8 @@ module.exports = async (interaction, client) => {
     });
 
     await interaction.message.delete().catch((err) => {
-      if (err.code !== 10008) logger.error("bugreportbutton: failed to delete message:", err);
+      if (err.code !== 10008)
+        logger.error("bugreportbutton: failed to delete message:", err);
     });
   }
 };

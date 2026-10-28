@@ -1,5 +1,4 @@
 const cron = require("node-cron");
-const https = require("https");
 const {
   EmbedBuilder,
   ActionRowBuilder,
@@ -9,57 +8,13 @@ const {
 const TriviaConfig = require("../../schemas/TriviaConfig");
 const TriviaStats = require("../../schemas/TriviaStats");
 const logger = require("../../extra/logger");
-
-function decodeHtml(str) {
-  return str
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&ldquo;/g, "\u201C")
-    .replace(/&rdquo;/g, "\u201D")
-    .replace(/&lsquo;/g, "\u2018")
-    .replace(/&rsquo;/g, "\u2019")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
-    .replace(/&amp;/g, "&");
-}
-
-function fetchQuestion(difficulty, categoryId) {
-  return new Promise((resolve, reject) => {
-    let path = `/api.php?amount=1&type=multiple`;
-    if (difficulty && difficulty !== "random") path += `&difficulty=${difficulty}`;
-    if (categoryId) path += `&category=${categoryId}`;
-
-    const options = {
-      hostname: "opentdb.com",
-      path,
-      method: "GET",
-    };
-
-    https
-      .get(options, (res) => {
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => {
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.response_code !== 0 || !parsed.results?.length) {
-              reject(new Error(`OpenTDB response_code: ${parsed.response_code}`));
-            } else {
-              resolve(parsed.results[0]);
-            }
-          } catch {
-            reject(new Error("Failed to parse OpenTDB response"));
-          }
-        });
-      })
-      .on("error", reject);
-  });
-}
+const { BASE_PAYOUT, fetchQuestion } = require("../../utils/trivia");
+const { pickOne, shuffle } = require("../../utils/random");
 
 function getTodayInTimezone(timezone) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(
+    new Date(),
+  );
 }
 
 function getCurrentHHMM(timezone) {
@@ -70,8 +25,6 @@ function getCurrentHHMM(timezone) {
     hour12: false,
   }).format(new Date());
 }
-
-const BASE_PAYOUT = { easy: 25, medium: 75, hard: 150 };
 
 module.exports = (client) => {
   cron.schedule("* * * * *", async () => {
@@ -103,7 +56,9 @@ module.exports = (client) => {
           guild.channels.cache.get(cfg.channelId) ||
           (await guild.channels.fetch(cfg.channelId).catch(() => null));
         if (!channel) {
-          logger.error(`trivia-scheduler: channel ${cfg.channelId} not found in guild ${cfg.guildId}`);
+          logger.error(
+            `trivia-scheduler: channel ${cfg.channelId} not found in guild ${cfg.guildId}`,
+          );
           continue;
         }
 
@@ -116,82 +71,97 @@ module.exports = (client) => {
               solved: true,
             }).sort({ wrongAttempts: 1 });
 
-            if (channel) {
-              if (!winners.length) {
-                const noWinnersEmbed = new EmbedBuilder()
-                  .setColor("Red")
-                  .setTitle("📋 Yesterday's Trivia Results")
-                  .setDescription("nobody got it right. embarrassing, all of you.")
-                  .setFooter({ text: cfg.lastSentDate });
-                await channel.send({ embeds: [noWinnersEmbed] });
-              } else {
-                const lines = await Promise.all(
-                  winners.map(async (s) => {
-                    const user = await client.users.fetch(s.userId).catch(() => null);
-                    const name = user ? `<@${s.userId}>` : s.userId;
-                    const attempts = s.wrongAttempts + 1;
-                    return attempts === 1
-                      ? `${name} — first try. fine.`
-                      : `${name} — ${attempts} attempts. took long enough.`;
-                  })
+            const results = new EmbedBuilder()
+              .setTitle("📋 Yesterday's Trivia Results")
+              .setFooter({ text: cfg.lastSentDate });
+            if (!winners.length) {
+              results
+                .setColor("Red")
+                .setDescription(
+                  "nobody got it right. embarrassing, all of you.",
                 );
-                const winnersEmbed = new EmbedBuilder()
-                  .setColor("Blurple")
-                  .setTitle("📋 Yesterday's Trivia Results")
-                  .setDescription(`here's who actually got it right:\n\n${lines.join("\n")}`)
-                  .setFooter({ text: cfg.lastSentDate });
-                await channel.send({ embeds: [winnersEmbed] });
-              }
+            } else {
+              const lines = winners.map(({ userId, wrongAttempts }) =>
+                wrongAttempts === 0
+                  ? `<@${userId}> — first try. fine.`
+                  : `<@${userId}> — ${wrongAttempts + 1} attempts. took long enough.`,
+              );
+              results
+                .setColor("Blurple")
+                .setDescription(
+                  `here's who actually got it right:\n\n${lines.join("\n")}`,
+                );
             }
+            await channel.send({ embeds: [results] });
           } catch (err) {
-            logger.error(`trivia-scheduler: failed to announce winners for guild ${cfg.guildId}:`, err);
+            logger.error(
+              `trivia-scheduler: failed to announce winners for guild ${cfg.guildId}:`,
+              err,
+            );
           }
         }
 
-        let categoryId = null;
-        if (cfg.categoryIds.length > 0) {
-          categoryId = cfg.categoryIds[Math.floor(Math.random() * cfg.categoryIds.length)];
-        }
-
+        const categoryId = cfg.categoryIds.length
+          ? pickOne(cfg.categoryIds)
+          : null;
         const effectiveDifficulty =
           cfg.difficulty === "random"
-            ? ["easy", "medium", "hard"][Math.floor(Math.random() * 3)]
+            ? pickOne(["easy", "medium", "hard"])
             : cfg.difficulty;
 
         let question;
         try {
           question = await fetchQuestion(effectiveDifficulty, categoryId);
         } catch (err) {
-          logger.error(`trivia-scheduler: failed to fetch question for guild ${cfg.guildId}:`, err);
+          logger.error(
+            `trivia-scheduler: failed to fetch question for guild ${cfg.guildId}:`,
+            err,
+          );
           continue;
         }
 
-        const correctAnswer = decodeHtml(question.correct_answer);
-        const allAnswers = [
+        const { correctAnswer } = question;
+        const allAnswers = shuffle([
           correctAnswer,
-          ...question.incorrect_answers.map(decodeHtml),
-        ].sort(() => Math.random() - 0.5);
+          ...question.incorrectAnswers,
+        ]);
 
-        const questionText = decodeHtml(question.question).toLowerCase();
-        const requiresChoices = /which of the following|which one of the following|which of these|all of the following|none of the following|which is not|which are not|which was not|which were not/.test(questionText);
+        const questionText = question.question.toLowerCase();
+        const requiresChoices =
+          /which of the following|which one of the following|which of these|all of the following|none of the following|which is not|which are not|which was not|which were not/.test(
+            questionText,
+          );
 
         const basePayout = BASE_PAYOUT[effectiveDifficulty] ?? 75;
 
         // Clear stats for the incoming question date so users can answer again
-        await TriviaStats.deleteMany({ guildId: cfg.guildId, questionId: today }).catch(() => {});
+        await TriviaStats.deleteMany({
+          guildId: cfg.guildId,
+          questionId: today,
+        }).catch((err) =>
+          // without this, people who answered on this date before can't answer again
+          logger.warn(
+            `trivia-scheduler: couldn't clear old answers for guild ${cfg.guildId}: ${err}`,
+          ),
+        );
 
         // Disable button on old message
         if (cfg.lastMessageId) {
-          const oldMessage = await channel.messages.fetch(cfg.lastMessageId).catch(() => null);
+          const oldMessage = await channel.messages
+            .fetch(cfg.lastMessageId)
+            .catch(() => null);
           if (oldMessage) {
             const disabledButton = new ActionRowBuilder().addComponents(
               new ButtonBuilder()
                 .setCustomId("trivia_expired")
                 .setLabel("Submissions Closed")
                 .setStyle(ButtonStyle.Secondary)
-                .setDisabled(true)
+                .setDisabled(true),
             );
-            await oldMessage.edit({ components: [disabledButton] }).catch(() => {});
+            await oldMessage
+              .edit({ components: [disabledButton] })
+              // the old question was deleted or I lost access to it; nothing to fix
+              .catch(() => {});
           }
         }
 
@@ -200,28 +170,50 @@ module.exports = (client) => {
         const embed = new EmbedBuilder()
           .setColor("Blurple")
           .setTitle("📚 Daily Trivia Question")
-          .setDescription(`**${decodeHtml(question.question)}**`)
+          .setDescription(`**${question.question}**`)
           .addFields(
-            { name: "Category", value: decodeHtml(question.category), inline: true },
+            {
+              name: "Category",
+              value: question.category,
+              inline: true,
+            },
             {
               name: "Difficulty",
               value: `${difficultyEmoji[effectiveDifficulty] ?? ""} ${effectiveDifficulty}`,
               inline: true,
             },
-            { name: "Base Payout", value: `${basePayout} rice grains`, inline: true },
-            ...(requiresChoices ? [{ name: "Choices", value: allAnswers.map((a, i) => `${["🅐","🅑","🅒","🅓"][i]} ${a}`).join("\n") }] : [])
+            {
+              name: "Base Payout",
+              value: `${basePayout} rice grains`,
+              inline: true,
+            },
+            ...(requiresChoices
+              ? [
+                  {
+                    name: "Choices",
+                    value: allAnswers
+                      .map((a, i) => `${["🅐", "🅑", "🅒", "🅓"][i]} ${a}`)
+                      .join("\n"),
+                  },
+                ]
+              : []),
           )
-          .setFooter({ text: "Click Submit Answer to enter your answer. All correct submissions win!" })
+          .setFooter({
+            text: "Click Submit Answer to enter your answer. All correct submissions win!",
+          })
           .setTimestamp();
 
         const button = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
             .setCustomId(`trivia_answer_${cfg.guildId}_${today}`)
             .setLabel("Submit Answer")
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Primary),
         );
 
-        const sentMessage = await channel.send({ embeds: [embed], components: [button] });
+        const sentMessage = await channel.send({
+          embeds: [embed],
+          components: [button],
+        });
 
         cfg.lastSentDate = today;
         cfg.correctAnswer = correctAnswer;
@@ -229,7 +221,10 @@ module.exports = (client) => {
         cfg.lastMessageId = sentMessage.id;
         await cfg.save();
       } catch (err) {
-        logger.error(`trivia-scheduler: error processing guild ${cfg.guildId}:`, err);
+        logger.error(
+          `trivia-scheduler: error processing guild ${cfg.guildId}:`,
+          err,
+        );
       }
     }
   });

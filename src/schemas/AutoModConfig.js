@@ -12,7 +12,7 @@ const autoModConfigSchema = new Schema(
       keyword: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = model("AutoModConfig", autoModConfigSchema);

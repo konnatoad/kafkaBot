@@ -1,14 +1,13 @@
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  MessageFlags
+  MessageFlags,
 } = require("discord.js");
 
 const ConfessionConfig = require("../../../../schemas/ConfessionConfig");
 const logger = require("../../../../extra/logger");
 
 module.exports = {
-  testOnly: false,
   data: new SlashCommandBuilder()
     .setName("confessions-disable")
     .setDescription("Disable anonymous confessions in this server.")
@@ -19,18 +18,18 @@ module.exports = {
       if (!interaction.inGuild()) {
         return interaction.reply({
           content: "Run this inside a server.",
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
 
       const existing = await ConfessionConfig.findOne({
-        guildId: interaction.guildId
+        guildId: interaction.guildId,
       });
 
       if (!existing) {
         return interaction.reply({
           content: "Confessions are not enabled in this server.",
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -38,14 +37,14 @@ module.exports = {
 
       return interaction.reply({
         content: "Anonymous confessions have been disabled.",
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     } catch (err) {
       logger.error("confessionsdisable error:", err);
       return interaction.reply({
         content: "Failed to disable confessions.",
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
-  }
+  },
 };

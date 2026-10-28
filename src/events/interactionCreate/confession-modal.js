@@ -1,55 +1,44 @@
-const { EmbedBuilder, MessageFlags, InteractionType } = require("discord.js");
-const ConfessionConfig = require("../../schemas/ConfessionConfig.js")
+const { EmbedBuilder, MessageFlags } = require("discord.js");
+const ConfessionConfig = require("../../schemas/ConfessionConfig.js");
 const logger = require("../../extra/logger");
 
-module.exports = async (a, b) => {
-  let interaction = a;
-  let client = b;
-
-  const looksLikeInteraction = (x) =>
-    x && typeof x === "object" && typeof x.reply === "function" && typeof x.type === "number";
-
-  if (!looksLikeInteraction(interaction) && looksLikeInteraction(client)) {
-    interaction = b;
-    client = a;
-  }
-
-  if (!looksLikeInteraction(interaction)) return;
-
-  if (interaction.type !== 5) return;
+module.exports = async (interaction, client) => {
+  if (!interaction.isModalSubmit()) return;
   if (interaction.customId !== "confession_modal_v1") return;
   if (!interaction.guildId) return;
 
   try {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-    let text = interaction.fields?.getTextInputValue?.("confession_text") || "";
-    text = text
-      .trim();
+    const text = (
+      interaction.fields.getTextInputValue("confession_text") || ""
+    ).trim();
 
     if (!text) {
       return interaction.editReply({
         content: "empty",
-        flags: MessageFlags.Ephemeral,
       });
     }
     if (text.length > 4000) {
       return interaction.editReply({
         content: "too long",
-        flags: MessageFlags.Ephemeral,
       });
     }
 
-    const cfg = await ConfessionConfig.findOne({ guildId: interaction.guildId });
+    const cfg = await ConfessionConfig.findOne({
+      guildId: interaction.guildId,
+    });
     if (!cfg) {
       return interaction.editReply({
-        content: "not set up"
+        content: "not set up",
       });
     }
 
-    const channel = await client.channels.fetch(cfg.channelId).catch(() => null);
+    const channel = await client.channels
+      .fetch(cfg.channelId)
+      .catch(() => null);
     if (!channel) {
       return interaction.editReply({
-        content: "Confessions channel missing"
+        content: "Confessions channel missing",
       });
     }
 
@@ -64,22 +53,23 @@ module.exports = async (a, b) => {
     });
 
     return interaction.editReply({
-      content: "sent"
+      content: "sent",
     });
   } catch (err) {
-    logger.error("confession-modal error:", err)
+    logger.error("confession-modal error:", err);
 
     try {
       if (interaction.deferred || interaction.replied) {
         return interaction.editReply({
-          content: "Something broke while sending"
-        })
+          content: "Something broke while sending",
+        });
       }
       return interaction.reply({
-        content: "Something broke while sending", flags: MessageFlags.Ephemeral,
-      })
+        content: "Something broke while sending",
+        flags: MessageFlags.Ephemeral,
+      });
     } catch (replyErr) {
       logger.error("confession-modal: failed to send error reply:", replyErr);
     }
   }
-}
+};

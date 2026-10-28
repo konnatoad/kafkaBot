@@ -8,31 +8,11 @@ const {
   MessageFlags,
   ComponentType,
 } = require("discord.js");
-const https = require("https");
 const TriviaConfig = require("../../../../schemas/TriviaConfig");
 const logger = require("../../../../extra/logger");
-
-function fetchCategories() {
-  return new Promise((resolve, reject) => {
-    https
-      .get("https://opentdb.com/api_category.php", (res) => {
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => {
-          try {
-            resolve(JSON.parse(data).trivia_categories || []);
-          } catch {
-            reject(new Error("Failed to parse category response"));
-          }
-        });
-      })
-      .on("error", reject);
-  });
-}
+const { fetchCategories } = require("../../../../utils/trivia");
 
 module.exports = {
-  testOnly: false,
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("trivia-setup")
     .setDescription("Configure the daily trivia system for this server.")
@@ -42,20 +22,22 @@ module.exports = {
         .setName("channel")
         .setDescription("Channel where the daily trivia question is posted")
         .addChannelTypes(ChannelType.GuildText)
-        .setRequired(true)
+        .setRequired(true),
     )
     .addStringOption((opt) =>
       opt
         .setName("time")
         .setDescription("Time to post the question (HH:MM, 24h format)")
-        .setRequired(true)
+        .setRequired(true),
     )
     .addStringOption((opt) =>
       opt
         .setName("timezone")
-        .setDescription("Your timezone — start typing to search (e.g. London, New_York)")
+        .setDescription(
+          "Your timezone — start typing to search (e.g. London, New_York)",
+        )
         .setRequired(true)
-        .setAutocomplete(true)
+        .setAutocomplete(true),
     )
     .addStringOption((opt) =>
       opt
@@ -66,8 +48,8 @@ module.exports = {
           { name: "Easy", value: "easy" },
           { name: "Medium", value: "medium" },
           { name: "Hard", value: "hard" },
-          { name: "Random", value: "random" }
-        )
+          { name: "Random", value: "random" },
+        ),
     ),
 
   run: async ({ interaction }) => {
@@ -108,7 +90,8 @@ module.exports = {
     } catch (err) {
       logger.error("trivia-setup: failed to fetch categories:", err);
       return interaction.editReply({
-        content: "Failed to fetch trivia categories from the API. Try again later.",
+        content:
+          "Failed to fetch trivia categories from the API. Try again later.",
       });
     }
 
@@ -119,7 +102,7 @@ module.exports = {
       ...categories.map((cat) =>
         new StringSelectMenuOptionBuilder()
           .setLabel(cat.name.slice(0, 100))
-          .setValue(String(cat.id))
+          .setValue(String(cat.id)),
       ),
     ].slice(0, 25);
 
@@ -174,7 +157,7 @@ module.exports = {
             enabled: true,
             lastSentDate: null,
           },
-          { upsert: true, returnDocument: "after" }
+          { upsert: true, returnDocument: "after" },
         );
 
         const categoryDisplay = isRandom
@@ -219,6 +202,7 @@ module.exports = {
       .slice(0, 25)
       .map((tz) => ({ name: tz, value: tz }));
 
-    await interaction.respond(matches).catch(() => { });
+    // Discord drops suggestions that come after the user kept typing; that's fine
+    await interaction.respond(matches).catch(() => {});
   },
 };

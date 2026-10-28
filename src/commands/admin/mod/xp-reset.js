@@ -1,7 +1,6 @@
 const {
   SlashCommandBuilder,
   EmbedBuilder,
-  AttachmentBuilder,
   PermissionFlagsBits,
 } = require("discord.js");
 const levelSchema = require("../../../schemas/level");
@@ -15,7 +14,7 @@ module.exports = {
   run: async ({ interaction }) => {
     const { guildId } = interaction;
 
-    const data = await levelSchema.deleteMany({ Guild: guildId });
+    await levelSchema.deleteMany({ Guild: guildId });
 
     const embed = new EmbedBuilder()
       .setColor("DarkPurple")

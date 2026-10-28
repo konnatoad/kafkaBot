@@ -1,6 +1,7 @@
 const path = require("path");
-const logger = require("./extra/logger");
+// before anything else: the logger reads LOG_WEBHOOK_URL when it's first required
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
+const logger = require("./extra/logger");
 const { Client, IntentsBitField, Partials } = require("discord.js");
 const mongoose = require("mongoose");
 const { CommandHandler } = require("djs-commander");
@@ -28,7 +29,6 @@ new CommandHandler({
   commandsPath: path.join(__dirname, "commands"),
   eventsPath: path.join(__dirname, "events"),
   validationsPath: path.join(__dirname, "validations"),
-  functions: path.join(__dirname, "functions"),
 });
 
 // Resolve the guild from the channel ID in a Discord API error URL so errors say which server they came from
@@ -45,13 +45,24 @@ process.on("unhandledRejection", (err) => logger.error(describeErr(err)));
 const REQUIRED_ENV = ["TOKEN", "MONGODB_URI", "DEV_ID", "TESTSERVER"];
 const missingEnv = REQUIRED_ENV.filter((key) => !process.env[key]);
 if (missingEnv.length) {
-  logger.error(`❌ Missing required environment variables: ${missingEnv.join(", ")}`);
+  logger.error(
+    `❌ Missing required environment variables: ${missingEnv.join(", ")}`,
+  );
   process.exit(1);
 }
 
-const OPTIONAL_ENV = ["BUG", "FEEDBACK", "TWITCH_CLIENT_ID", "TWITCH_ACCESS_TOKEN", "YOUTUBE_API_KEY"];
+const OPTIONAL_ENV = [
+  "BUG",
+  "FEEDBACK",
+  "TWITCH_CLIENT_ID",
+  "TWITCH_CLIENT_SECRET",
+  "YOUTUBE_API_KEY",
+];
 const missingOpt = OPTIONAL_ENV.filter((key) => !process.env[key]);
-if (missingOpt.length) logger.warn(`Optional env vars not set (features may be disabled): ${missingOpt.join(", ")}`);
+if (missingOpt.length)
+  logger.warn(
+    `Optional env vars not set (features may be disabled): ${missingOpt.join(", ")}`,
+  );
 
 (async () => {
   try {

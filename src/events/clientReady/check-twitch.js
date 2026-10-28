@@ -1,129 +1,73 @@
 const NotificationConfig = require("../../schemas/twitchNotificationSchema");
-const https = require("https");
 const logger = require("../../extra/logger");
-const { getTwitchAccessToken } = require("../../extra/twitchAuth");
+const { liveUserIds } = require("../../utils/twitch");
 
-async function fetchTwitchData(userLogin) {
-  const token = await getTwitchAccessToken();
-  if (!token) throw new Error("no Twitch access token");
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: "api.twitch.tv",
-      path: `/helix/streams?user_login=${userLogin}`,
-      method: "GET",
-      headers: {
-        "Client-ID": process.env.TWITCH_CLIENT_ID,
-        Authorization: `Bearer ${token}`,
-      },
-    };
+const CHECK_EVERY_MS = 5 * 60 * 1000;
 
-    const req = https.request(options, (res) => {
-      let data = "";
-
-      res.on("data", (chunk) => {
-        data += chunk;
-      });
-
-      res.on("end", () => {
-        try {
-          const parsed = JSON.parse(data);
-          if (!parsed.data) logger.error("Twitch API error:", parsed);
-          resolve(parsed);
-        } catch {
-          reject(new Error(`Failed to parse Twitch response: ${data.slice(0, 200)}`));
-        }
-      });
-    });
-
-    req.on("error", (error) => {
-      reject(error);
-    });
-
-    req.end();
-  });
+function liveMessage(setup) {
+  return setup.customMessage
+    .replaceAll("{USERNAME}", setup.twitchUsername)
+    .replaceAll("{URL}", `https://twitch.tv/${setup.twitchUsername}`);
 }
 
-async function sendNotification(notificationConfig, userLogin, client, guildCache, channelCache) {
-  const { guildId, notificationChannelId } = notificationConfig;
+async function announce(client, setup) {
+  const where = `${setup.twitchUsername} (guild ${setup.guildId}, channel ${setup.notificationChannelId})`;
+  const guild = client.guilds.cache.get(setup.guildId);
+  const channel =
+    guild &&
+    (guild.channels.cache.get(setup.notificationChannelId) ||
+      (await guild.channels
+        .fetch(setup.notificationChannelId)
+        .catch(() => null)));
+  if (!channel) {
+    logger.warn(`check-twitch: no channel to announce ${where}`);
+    return;
+  }
+  await channel
+    .send(liveMessage(setup))
+    .catch((err) =>
+      logger.error(`check-twitch: failed to announce ${where}:`, err),
+    );
+}
 
-  let targetGuild = guildCache.get(guildId);
-  if (!targetGuild) {
-    targetGuild =
-      client.guilds.cache.get(guildId) || (await client.guilds.fetch(guildId).catch(() => null));
-    if (!targetGuild) {
-      logger.error(`Guild ${guildId} not found for ${userLogin}`);
-      return;
-    }
-    guildCache.set(guildId, targetGuild);
+async function checkTwitch(client) {
+  let setups;
+  let live;
+  try {
+    setups = await NotificationConfig.find();
+    if (!setups.length) return;
+    live = await liveUserIds([...new Set(setups.map((s) => s.twitchUserId))]);
+  } catch (error) {
+    logger.error("check-twitch: failed:", error.response?.data ?? error);
+    return;
   }
 
-  const channelCacheKey = `${guildId}:${notificationChannelId}`;
-  let targetChannel = channelCache.get(channelCacheKey);
-  if (!targetChannel) {
-    targetChannel =
-      targetGuild.channels.cache.get(notificationChannelId) ||
-      (await targetGuild.channels.fetch(notificationChannelId).catch(() => null));
-    if (!targetChannel) {
-      logger.error(`Notification channel ${notificationChannelId} not found for ${userLogin}`);
-      return;
+  for (const setup of setups) {
+    const isLive = live.has(setup.twitchUserId);
+    if (isLive === setup.isLivePreviously) continue;
+    try {
+      // saved first, so a failed send doesn't repeat the announcement every check
+      setup.isLivePreviously = isLive;
+      if (isLive) setup.lastNotificationSentAt = new Date();
+      await setup.save();
+      if (isLive) await announce(client, setup);
+    } catch (error) {
+      logger.error(`check-twitch: failed for ${setup.twitchUsername}:`, error);
     }
-    channelCache.set(channelCacheKey, targetChannel);
   }
-
-  // Construct message with Twitch channel URL
-  const twitchChannelUrl = `https://twitch.tv/${userLogin}`;
-  const customMessage = notificationConfig.customMessage
-    ? notificationConfig.customMessage.replace("{URL}", twitchChannelUrl)
-    : `@everyone ${userLogin} is now live on Twitch! Check it out: ${twitchChannelUrl}`;
-
-  notificationConfig.lastNotificationSentAt = new Date();
-  notificationConfig.isLivePreviously = true;
-
-  await Promise.all([targetChannel.send(customMessage), notificationConfig.save()]);
 }
 
 let interval;
 
 module.exports = (client) => {
-  async function checkTwitch() {
-    try {
-      const notificationConfigs = await NotificationConfig.find();
-
-      const guildCache = new Map();
-      const channelCache = new Map();
-
-      for (const notificationConfig of notificationConfigs) {
-        const userLogin = notificationConfig.twitchUsername;
-
-        const responseData = await fetchTwitchData(userLogin);
-
-        const isLive = responseData && responseData.data && responseData.data.length > 0;
-
-        await NotificationConfig.findByIdAndUpdate(notificationConfig._id, {
-          isLive,
-        });
-
-        try {
-          if (isLive && !notificationConfig.isLivePreviously) {
-            await sendNotification(notificationConfig, userLogin, client, guildCache, channelCache);
-          } else if (!isLive && notificationConfig.isLivePreviously) {
-            notificationConfig.isLivePreviously = false;
-            await notificationConfig.save();
-          }
-        } catch (notifError) {
-          logger.error(
-            `Failed to send Twitch notification for ${userLogin} (guild: ${notificationConfig.guildId}, channel: ${notificationConfig.notificationChannelId}):`,
-            notifError,
-          );
-        }
-      }
-    } catch (error) {
-      logger.error("Error checking Twitch status:", error);
-    }
+  if (!process.env.TWITCH_CLIENT_ID || !process.env.TWITCH_CLIENT_SECRET) {
+    logger.warn(
+      "check-twitch: TWITCH_CLIENT_ID or TWITCH_CLIENT_SECRET is not set, Twitch notifications are disabled.",
+    );
+    return;
   }
-
-  // Set interval to check Twitch
+  // clientReady can fire again after a reconnect; keep a single timer
   if (interval) clearInterval(interval);
-  checkTwitch();
-  interval = setInterval(checkTwitch, 300000);
+  checkTwitch(client);
+  interval = setInterval(() => checkTwitch(client), CHECK_EVERY_MS);
 };

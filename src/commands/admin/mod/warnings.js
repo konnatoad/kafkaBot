@@ -3,7 +3,10 @@ const {
   PermissionFlagsBits,
   EmbedBuilder,
 } = require("discord.js");
-const warningSchema = require("../../../schemas/warnschema");
+const { findWarnings } = require("../../../utils/warnings");
+
+// embed descriptions stop at 4096 characters
+const MAX_DESCRIPTION = 4000;
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,55 +16,37 @@ module.exports = {
       option
         .setName("user")
         .setDescription("The user you want to check the warnings of")
-        .setRequired(true)
+        .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
   run: async ({ interaction }) => {
-    const { options, guildId, user } = interaction;
+    const target = interaction.options.getUser("user");
+    const warnings = await findWarnings(interaction.guildId, target.id);
 
-    const target = options.getUser("user");
-
-    const userTag = `${target.username}`;
-
-    const embed = new EmbedBuilder();
-    const noWarns = new EmbedBuilder();
-
-    let data = await warningSchema.findOne({
-      GuildID: guildId,
-      UserID: target.id,
-      UserNAME: userTag,
-    });
-
-    if (data) {
-      embed
+    if (!warnings.length) {
+      const noWarns = new EmbedBuilder()
         .setColor("Blurple")
-        .setDescription(
-          `:exclamation:     ${target}'s warnings: \n${data.Content.map(
-            (w, i) =>
-              `
-                  **Warning**: ${i + 1}
-                  **Warning Moderator**: ${w.ExecuterTag}
-                  **Warn Reason**: ${w.Reason}
-            `
-          ).join(`-`)}`
-        )
-        .setTimestamp()
-        .setFooter({
-          text: "Warnings",
-          iconURL: "https://vou.s-ul.eu/ts9RQjxl",
-        });
-
-      interaction.reply({ embeds: [embed] });
-    } else {
-      noWarns
-        .setColor("Blurple")
-        .setDescription(
-          `:white_check_mark:     **${target}** has **0** warnings!`
-        )
+        .setDescription(`:white_check_mark: **${target}** has **0** warnings!`)
         .setTimestamp();
-
-      interaction.reply({ embeds: [noWarns] });
+      return interaction.reply({ embeds: [noWarns] });
     }
+
+    let description = `:exclamation: ${target}'s warnings (${warnings.length}):\n`;
+    for (const [i, warning] of warnings.entries()) {
+      const line = `\n**${i + 1}.** ${warning.Reason}\n-# by ${warning.ExecuterTag}`;
+      if (description.length + line.length > MAX_DESCRIPTION) {
+        description += `\n\n…and ${warnings.length - i} more`;
+        break;
+      }
+      description += line;
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor("Blurple")
+      .setDescription(description)
+      .setTimestamp()
+      .setFooter({ text: "Warnings", iconURL: "https://vou.s-ul.eu/ts9RQjxl" });
+    await interaction.reply({ embeds: [embed] });
   },
 };
