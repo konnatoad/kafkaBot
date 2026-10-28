@@ -1,18 +1,16 @@
-const { sabiServer } = require("../../config.json");
 const { MessageFlags } = require("discord.js");
+const { sabiServer } = require("../../config.json");
+
+const allowedServers = Array.isArray(sabiServer) ? sabiServer : [sabiServer];
 
 module.exports = (interaction, commandObject) => {
   if (!commandObject.sabiServer) return;
 
-  const allowedServers = Array.isArray(sabiServer) ? sabiServer : [sabiServer];
-
-  if (!allowedServers.includes(interaction.guild?.id)) {
+  if (!allowedServers.includes(interaction.guildId)) {
     interaction.reply({
-      content: "This command cannot be ran here.",
+      content: "This command cannot be run here.",
       flags: MessageFlags.Ephemeral,
     });
     return true;
   }
-
-  return false;
 };

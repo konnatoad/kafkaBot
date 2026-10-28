@@ -1,14 +1,14 @@
-const { testServer } = require("../../config.json");
 const { MessageFlags } = require("discord.js");
+const { testServer } = require("../../config.json");
 
 module.exports = (interaction, commandObject) => {
-  if (commandObject.testOnly) {
-    if (!(interaction.guild.id === testServer)) {
-      interaction.reply({
-        content: "This command cannot be ran here.",
-        flags: MessageFlags.Ephemeral,
-      });
-      return true;
-    }
+  if (!commandObject.testOnly) return;
+
+  if (interaction.guildId !== testServer) {
+    interaction.reply({
+      content: "This command cannot be run here.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return true;
   }
 };
