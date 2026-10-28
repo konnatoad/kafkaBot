@@ -3,7 +3,6 @@ const UserProfile = require("../../../schemas/UserProfile");
 const logger = require("../../../extra/logger");
 
 module.exports = {
-  deleted: false,
   run: async ({ interaction }) => {
     if (!interaction.inGuild()) {
       interaction.reply({
@@ -48,7 +47,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("balance")
     .setDescription("Check your balance")
-    .addMentionableOption((option) =>
+    .addUserOption((option) =>
       option
         .setName("target-user")
         .setDescription("The user whose balance you want to see."),

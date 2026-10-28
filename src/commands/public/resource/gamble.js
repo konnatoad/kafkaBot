@@ -1,8 +1,9 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
 
+const MIN_BET = 10;
+
 module.exports = {
-  deleted: false,
   run: async ({ interaction }) => {
     if (!interaction.inGuild()) {
       interaction.reply({
@@ -12,9 +13,15 @@ module.exports = {
       return;
     }
 
-    const amount = interaction.options.getNumber("amount");
+    const amount = interaction.options.getInteger("amount");
     const allIn = interaction.options.getBoolean("all-in");
     const query = { userId: interaction.user.id, Guild: interaction.guild.id };
+    if (!allIn && amount === null) {
+      return interaction.reply({
+        content: "Give an amount to gamble, or pick all-in.",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
     const riggedId = process.env.RIGGED_USER_ID;
     const winChance =
@@ -42,9 +49,6 @@ module.exports = {
       }
       bet = old.balance;
     } else {
-      if (amount < 10) {
-        return interaction.reply("You must gamble at least 10 rice grains.");
-      }
       // Atomically deduct only if balance is sufficient
       const updated = await UserProfile.findOneAndUpdate(
         { ...query, balance: { $gte: amount } },
@@ -99,11 +103,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("gamble")
     .setDescription("Gamble some of your rice grains.")
-    .addNumberOption((option) =>
+    .addIntegerOption((option) =>
       option
         .setName("amount")
         .setDescription("The amount you want to gamble.")
-        .setRequired(true),
+        .setMinValue(MIN_BET),
     )
     .addBooleanOption((option) =>
       option

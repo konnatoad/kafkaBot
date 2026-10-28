@@ -1,13 +1,24 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
 const logger = require("../../../extra/logger");
+const { pickOne } = require("../../../utils/random");
 
 const baseDailyAmount = 10;
 const maxDailyAmount = 100;
 const dailyIncrement = 5;
 
+const alreadyCollected = (wait) => [
+  `You have already collected your dailies today.\nCome back in **${wait}**.`,
+  `Hey don't get too greedy!\nCome back in **${wait}**.`,
+  `You know, they're called dailies for a reason. That means you can only get them once per day.\nTry again in **${wait}**.`,
+  `Did you forget, you already claimed that today. \nCome back in **${wait}**.`,
+  `You can't just collect dailies whenever you want. That's not how it works \nCome back in **${wait}**.`,
+];
+
+// lastDailyCollected has always been stored as a Finnish date string, "28.10.2026"
+const dayString = (date) => date.toLocaleDateString("fi-FI");
+
 module.exports = {
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("daily")
     .setDescription("Collect your dailies!"),
@@ -23,88 +34,60 @@ module.exports = {
 
     try {
       await interaction.deferReply();
-
       const { default: prettyMs } = await import("pretty-ms");
 
-      let userProfile = await UserProfile.findOne({
-        userId: interaction.member.id,
-        Guild: interaction.guild.id,
-      });
-
       const now = new Date();
-      const nextReset = new Date(now.getTime());
+      const today = dayString(now);
+      const dayBefore = new Date(now);
+      dayBefore.setDate(now.getDate() - 1);
+      const yesterday = dayString(dayBefore);
+      const owner = {
+        userId: interaction.user.id,
+        Guild: interaction.guild.id,
+      };
 
-      nextReset.setHours(24, 0, 0, 0);
+      const replyAlreadyCollected = () => {
+        const midnight = new Date(now);
+        midnight.setHours(24, 0, 0, 0);
+        const wait = prettyMs(midnight - now, { unitCount: 2 });
+        return interaction.editReply(pickOne(alreadyCollected(wait)));
+      };
 
-      let remaining = nextReset.getTime() - now.getTime();
-      if (remaining < 0) remaining = 0;
+      const profile = await UserProfile.findOne(owner);
+      const lastCollected = profile?.lastDailyCollected ?? null;
+      if (lastCollected === today) return replyAlreadyCollected();
 
-      const dailies = [
-        `You have already collected your dailies today.\nCome back in **${prettyMs(remaining, { unitCount: 2 })}**.`,
-        `Hey don't get too greedy!\nCome back in **${prettyMs(remaining, { unitCount: 2 })}**.`,
-        `You know, they're called dailies for a reason. That means you can only get them once per day.\nTry again in **${prettyMs(remaining, { unitCount: 2 })}**.`,
-        `Did you forget, you already claimed that today. \nCome back in **${prettyMs(remaining, { unitCount: 2 })}**.`,
-        `You can't just collect dailies whenever you want. That's not how it works \nCome back in **${prettyMs(remaining, { unitCount: 2 })}**.`,
-      ];
-      const dailycooldown = dailies[Math.floor(Math.random() * dailies.length)];
+      const dailyStreak =
+        lastCollected === yesterday ? (profile.dailyStreak || 0) + 1 : 0;
+      const dailyAmount = Math.min(
+        baseDailyAmount + dailyStreak * dailyIncrement,
+        maxDailyAmount,
+      );
 
-      if (userProfile) {
-        const lastDailyDate = userProfile.lastDailyCollected?.toString();
-        const currentDate = new Date().toLocaleDateString("fi-FI");
-
-        if (lastDailyDate === currentDate) {
-          interaction.editReply({
-            content: `${dailycooldown}`,
-          });
-          return;
-        }
-
-        // Handle streak calculation
-        const lastCollectedDate = lastDailyDate
-          ? new Date(lastDailyDate.split(".").reverse().join("-"))
-          : null;
-        const previousDay = new Date();
-        previousDay.setDate(previousDay.getDate() - 1);
-
-        if (
-          lastCollectedDate &&
-          lastCollectedDate.toLocaleDateString("fi-FI") ===
-            previousDay.toLocaleDateString("fi-FI")
-        ) {
-          userProfile.dailyStreak = (userProfile.dailyStreak || 0) + 1;
-        } else {
-          userProfile.dailyStreak = 0;
-        }
-      } else {
-        userProfile = new UserProfile({
-          userId: interaction.member.id,
-          Guild: interaction.guild.id,
-          balance: 0,
-          dailyStreak: 0, // Initialize streak if it's a new profile
-        });
+      // Only matches while lastDailyCollected is still what we just read, so a
+      // second click racing this one can't collect twice. With no profile yet the
+      // upsert creates it, and a racing click hits the unique index instead.
+      let updated;
+      try {
+        updated = await UserProfile.findOneAndUpdate(
+          { ...owner, lastDailyCollected: lastCollected },
+          {
+            $set: { lastDailyCollected: today, dailyStreak },
+            $inc: { balance: dailyAmount },
+          },
+          { upsert: true, returnDocument: "after" },
+        );
+      } catch (err) {
+        if (err.code !== 11000) throw err;
       }
+      if (!updated) return replyAlreadyCollected();
 
-      // Calculate daily reward based on streak
-      let dailyAmount =
-        baseDailyAmount + userProfile.dailyStreak * dailyIncrement;
-      if (dailyAmount > maxDailyAmount) {
-        dailyAmount = maxDailyAmount;
-      }
-
-      userProfile.balance += dailyAmount;
-      userProfile.lastDailyCollected = new Date().toLocaleDateString("fi-FI");
-
-      await userProfile.save();
-
-      interaction.editReply({
-        content: `${dailyAmount} was added to your balance.\nNew balance: ${userProfile.balance} rice grains\nStreak: ${userProfile.dailyStreak} days`,
-      });
+      await interaction.editReply(
+        `${dailyAmount} was added to your balance.\nNew balance: ${updated.balance} rice grains\nStreak: ${dailyStreak} days`,
+      );
     } catch (error) {
       logger.error(`Error handling /daily: ${error}`);
-      interaction.editReply({
-        content: "Something went wrong. Please try again later.",
-        flags: MessageFlags.Ephemeral,
-      });
+      interaction.editReply("Something went wrong. Please try again later.");
     }
   },
 };
