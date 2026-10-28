@@ -3,8 +3,16 @@ const {
   PermissionFlagsBits,
   EmbedBuilder,
   MessageFlags,
+  ChannelType,
 } = require("discord.js");
 const reactor = require("../../../../schemas/reactorschema");
+
+const TEXT_CHANNELS = [ChannelType.GuildText, ChannelType.GuildAnnouncement];
+// a custom emoji like <:name:123> / <a:name:123>, or text with an emoji character
+// in it; flags (🇫🇮) and keycaps (1️⃣) are built from characters of their own
+const looksLikeEmoji = (text) =>
+  /^<a?:\w+:\d+>$/.test(text) ||
+  /\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20E3/u.test(text);
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,6 +34,7 @@ module.exports = {
             .setDescription(
               "The channel you want your auto reactor system to be in",
             )
+            .addChannelTypes(...TEXT_CHANNELS)
             .setRequired(false),
         ),
     )
@@ -37,6 +46,7 @@ module.exports = {
           option
             .setName("channel")
             .setDescription("The channel to remove from the auto reactor")
+            .addChannelTypes(...TEXT_CHANNELS)
             .setRequired(true),
         ),
     )
@@ -50,91 +60,66 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   run: async ({ interaction }) => {
-    const { options } = interaction;
-    const channel = options.getChannel("channel") || interaction.channel;
-    const sub = options.getSubcommand();
-    const data = await reactor.findOne({
-      Guild: interaction.guild.id,
-      Channel: channel.id,
-    });
+    const reply = (text, { embed = false } = {}) =>
+      interaction.reply({
+        ...(embed
+          ? {
+              embeds: [
+                new EmbedBuilder().setColor("Blurple").setDescription(text),
+              ],
+            }
+          : { content: text }),
+        flags: MessageFlags.Ephemeral,
+      });
+    const guild = { Guild: interaction.guildId };
+    const channel =
+      interaction.options.getChannel("channel") || interaction.channel;
 
-    switch (sub) {
-      case "setup":
-        if (data) {
-          return await interaction.reply({
-            content: `You already have this system setup for ${channel}`,
-            flags: MessageFlags.Ephemeral,
-          });
-        } else {
-          const emojis = options.getString("emojis").split(" ");
-
-          await reactor.create({
-            Guild: interaction.guild.id,
-            Channel: channel.id,
-            Emojis: emojis,
-          });
-
-          const embed = new EmbedBuilder()
-            .setColor("Blurple")
-            .setDescription(
-              `The auto reactor system has been enabled for ${channel}`,
-            );
-
-          await interaction.reply({
-            embeds: [embed],
-            flags: MessageFlags.Ephemeral,
-          });
+    switch (interaction.options.getSubcommand()) {
+      case "setup": {
+        if (await reactor.exists({ ...guild, Channel: channel.id })) {
+          return reply(`You already have this system setup for ${channel}`);
         }
-
-        break;
-      case "disable":
-        if (!data) {
-          return await interaction.reply({
-            content: `You don't have this system setup yet for ${channel}`,
-            flags: MessageFlags.Ephemeral,
-          });
-        } else {
-          await reactor.deleteMany({
-            Guild: interaction.guild.id,
-            Channel: channel.id,
-          });
-
-          const embed = new EmbedBuilder()
-            .setColor("Blurple")
-            .setDescription(
-              `The auto reactor system has been disabled for ${channel}`,
-            );
-
-          await interaction.reply({
-            embeds: [embed],
-            flags: MessageFlags.Ephemeral,
-          });
+        // any run of spaces separates emojis
+        const emojis = interaction.options
+          .getString("emojis")
+          .split(/\s+/)
+          .filter(Boolean);
+        const notEmoji = emojis.filter((text) => !looksLikeEmoji(text));
+        if (!emojis.length || notEmoji.length) {
+          return reply(
+            `These aren't emojis: ${notEmoji.join(" ") || "(nothing given)"}. Separate emojis with spaces.`,
+          );
         }
-
-        break;
-      case "remove-all": {
-        const removedata = await reactor.findOne({
-          Guild: interaction.guild.id,
+        await reactor.create({ ...guild, Channel: channel.id, Emojis: emojis });
+        return reply(
+          `The auto reactor system has been enabled for ${channel}`,
+          { embed: true },
+        );
+      }
+      case "disable": {
+        const { deletedCount } = await reactor.deleteMany({
+          ...guild,
+          Channel: channel.id,
         });
-        if (!removedata) {
-          return await interaction.reply({
-            content: `It looks like this system has not been yet setup in this server`,
-            flags: MessageFlags.Ephemeral,
-          });
-        } else {
-          await reactor.deleteMany({ Guild: interaction.guild.id });
-
-          const embed = new EmbedBuilder()
-            .setColor("Blurple")
-            .setDescription(
-              `The auto reactor system has been disabled for the entire server`,
+        return deletedCount
+          ? reply(`The auto reactor system has been disabled for ${channel}`, {
+              embed: true,
+            })
+          : reply(`You don't have this system setup yet for ${channel}`);
+      }
+      case "remove-all": {
+        const { deletedCount } = await reactor.deleteMany(guild);
+        return deletedCount
+          ? reply(
+              "The auto reactor system has been disabled for the entire server",
+              {
+                embed: true,
+              },
+            )
+          : reply(
+              "It looks like this system has not been yet setup in this server",
             );
-
-          await interaction.reply({
-            embeds: [embed],
-            flags: MessageFlags.Ephemeral,
-          });
-        }
       }
     }
   },

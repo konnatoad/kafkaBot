@@ -4,6 +4,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 const StoreItem = require("../../../../schemas/Store");
+const { whyBotCantGive } = require("../../../../utils/roles");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -24,6 +25,8 @@ module.exports = {
           option
             .setName("cost")
             .setDescription("The cost of the role in rice grains")
+            // a negative cost would pay people for buying it
+            .setMinValue(1)
             .setRequired(true),
         ),
     )
@@ -45,6 +48,13 @@ module.exports = {
     if (subcommand === "add") {
       const roleToAdd = interaction.options.getRole("role");
       const cost = interaction.options.getInteger("cost");
+      const refusal = whyBotCantGive(interaction.guild, roleToAdd);
+      if (refusal) {
+        return interaction.reply({
+          content: refusal,
+          flags: MessageFlags.Ephemeral,
+        });
+      }
 
       const existingItem = await StoreItem.findOne({
         guildId,

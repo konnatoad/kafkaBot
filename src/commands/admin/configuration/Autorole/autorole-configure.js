@@ -5,46 +5,9 @@ const {
 } = require("discord.js");
 const AutoRole = require("../../../../schemas/AutoRole");
 const logger = require("../../../../extra/logger");
+const { whyBotCantGive } = require("../../../../utils/roles");
 
 module.exports = {
-  run: async ({ interaction }) => {
-    if (!interaction.inGuild()) {
-      interaction.reply("You can only run this command inside a server.");
-      return;
-    }
-
-    const targetRoleId = interaction.options.get("role").value;
-
-    try {
-      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-
-      let autoRole = await AutoRole.findOne({ guildId: interaction.guild.id });
-
-      if (autoRole) {
-        if (autoRole.roleId === targetRoleId) {
-          interaction.editReply(
-            "Auto role has already been configured for that role. To disable run `/autorole-disable`",
-          );
-          return;
-        }
-
-        autoRole.roleId = targetRoleId;
-      } else {
-        autoRole = new AutoRole({
-          guildId: interaction.guild.id,
-          roleId: targetRoleId,
-        });
-      }
-
-      await autoRole.save();
-      interaction.editReply(
-        "Autorole has now been configured. To disable run `/autorole-disable`",
-      );
-    } catch (error) {
-      logger.error(error);
-    }
-  },
-
   data: new SlashCommandBuilder()
     .setName("autorole-configure")
     .setDescription("Configure your auto-role for this server.")
@@ -55,4 +18,36 @@ module.exports = {
         .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+  run: async ({ interaction }) => {
+    if (!interaction.inGuild()) {
+      return interaction.reply(
+        "You can only run this command inside a server.",
+      );
+    }
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+    const role = interaction.options.getRole("role", true);
+    const refusal = whyBotCantGive(interaction.guild, role);
+    if (refusal) return interaction.editReply(refusal);
+
+    try {
+      const before = await AutoRole.findOneAndUpdate(
+        { guildId: interaction.guildId },
+        { roleId: role.id },
+        { upsert: true },
+      );
+      return interaction.editReply(
+        before?.roleId === role.id
+          ? "Auto role has already been configured for that role. To disable run `/autorole-disable`"
+          : "Autorole has now been configured. To disable run `/autorole-disable`",
+      );
+    } catch (error) {
+      logger.error(
+        `autorole-configure failed in guild ${interaction.guildId}:`,
+        error,
+      );
+      return interaction.editReply("Couldn't save the auto role, try again.");
+    }
+  },
 };
