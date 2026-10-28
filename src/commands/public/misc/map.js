@@ -30,8 +30,8 @@ function parseBeatmapId(input) {
     const url = new URL(input);
     const p = url.pathname;
     const h = url.hash || "";
-    let m =
-      p.match(/\/b(?:eatmaps?)?\/(\d+)/i) || p.match(/\/beatmaps\/(\d+)/i);
+    // /b/123, /beatmaps/123, or /beatmapsets/1#osu/123
+    let m = p.match(/\/b(?:eatmaps?)?\/(\d+)/i);
     if (m) return m[1];
     m = h.match(/#\w+\/(\d+)/i);
     if (m) return m[1];
@@ -67,7 +67,7 @@ function normalizeMods(selected) {
   const order = ["NF", "EZ", "HD", "HR", "DT", "NC", "SO", "FL"];
   const list = order.filter((m) => set.has(m));
   const combined = list.join("");
-  const display = set.has("NM") || !combined ? "NM" : list.join("");
+  const display = set.has("NM") || !combined ? "NM" : combined;
   return { ok: true, combined, display };
 }
 
@@ -87,43 +87,11 @@ function extractMeta(osuText) {
   return { artist, title, version, mapper, ar, od, cs, hp };
 }
 
-function totalObjectsOf(map) {
-  if (typeof map.nObjects === "number") return map.nObjects;
-  const a = ["nCircles", "nSliders", "nSpinners"]
-    .map((k) => Number(map[k] || 0))
-    .reduce((s, x) => s + x, 0);
-  return a || undefined;
-}
-
 function accFromCounts(n300, n100, n50, misses) {
   const total = n300 + n100 + n50 + misses;
   if (total <= 0) return 0;
   const points = 300 * n300 + 100 * n100 + 50 * n50;
   return (points / (300 * total)) * 100;
-}
-
-function estimateCountsFromAcc(total, acc, misses) {
-  const miss = Math.max(0, Number(misses || 0));
-  const nRemain = Math.max(0, total - miss);
-  const target = Math.round((acc / 100) * 300 * (nRemain + miss));
-  let drop = 300 * (nRemain + miss) - target - 300 * miss;
-  if (drop <= 0) return { n300: nRemain, n100: 0, n50: 0, misses: miss };
-  const r = ((drop % 200) + 200) % 200;
-  let n50 = Math.min(3, Math.round(r / 50));
-  let rest = drop - 250 * n50;
-  if (rest < 0) {
-    n50 = Math.max(0, Math.ceil(drop / 250));
-    rest = drop - 250 * n50;
-  }
-  let n100 = Math.max(0, Math.floor(rest / 200));
-  if (n50 + n100 > nRemain) {
-    if (n50 > nRemain) {
-      n50 = nRemain;
-      n100 = 0;
-    } else n100 = nRemain - n50;
-  }
-  let n300 = Math.max(0, nRemain - n100 - n50);
-  return { n300, n100, n50, misses: miss };
 }
 
 function calcPP(osuText, modStr, accList, extras) {
@@ -139,7 +107,7 @@ function calcPP(osuText, modStr, accList, extras) {
       ? { ...base, combo: extras.combo }
       : base;
 
-    const total = totalObjectsOf(map);
+    const total = map.nObjects;
     const countsProvided =
       Number.isFinite(extras?.n100) ||
       Number.isFinite(extras?.n50) ||
@@ -164,10 +132,25 @@ function calcPP(osuText, modStr, accList, extras) {
         acc,
       };
     } else if (accList.length === 1 && Number.isFinite(total)) {
+      // rosu-pp picks the hit counts for the accuracy and says which it used
       const acc = Number(accList[0].toFixed(2));
-      const counts = estimateCountsFromAcc(total, accList[0], extras?.misses);
-      table[acc] = ppFor({ ...withCombo, ...counts });
-      info = { ...counts, combo: extras?.combo, estimated: true, acc };
+      const misses = Math.max(0, Number(extras?.misses || 0));
+      const result = new ro.Performance({
+        ...withCombo,
+        accuracy: acc,
+        misses,
+      }).calculate(diffAttrs);
+      const { n300, n100, n50 } = result.state;
+      table[acc] = Math.round(result.pp);
+      info = {
+        n300,
+        n100,
+        n50,
+        misses,
+        combo: extras?.combo,
+        estimated: true,
+        acc,
+      };
     } else {
       for (const acc of accList) table[acc] = ppFor({ ...base, accuracy: acc });
       info = { estimated: false };
@@ -200,7 +183,8 @@ function makeEmbed(meta, modsLabel, stars, table, info) {
   if (Number.isFinite(info?.n50))
     extra.push(`50s ${info.n50}${info.estimated ? " (est.)" : ""}`);
   if (Number.isFinite(info?.misses))
-    extra.push(`Misses ${info.misses}${info.estimated ? " (est.)" : ""}`);
+    // misses always come from the user, only the 100s and 50s get estimated
+    extra.push(`Misses ${info.misses}`);
   if (
     Number.isFinite(info?.acc) &&
     (info.n100 != null || info.n50 != null || info.misses != null)
@@ -279,17 +263,23 @@ module.exports = {
     await interaction.deferReply();
 
     const select = new StringSelectMenuBuilder()
-      .setCustomId(`mods:${interaction.user.id}:${beatmapId}`)
+      .setCustomId("map_mods")
       .setPlaceholder("Select mods. Leave empty for NM.")
       .setMinValues(0)
       .setMaxValues(MOD_OPTIONS.length)
       .addOptions(MOD_OPTIONS);
-    const calcBtn = new ButtonBuilder()
-      .setCustomId(`calc:${interaction.user.id}:${beatmapId}`)
+    const calculate = new ButtonBuilder()
+      .setCustomId("map_calculate")
       .setLabel("Calculate")
       .setStyle(ButtonStyle.Primary);
-    const row1 = new ActionRowBuilder().addComponents(select);
-    const row2 = new ActionRowBuilder().addComponents(calcBtn);
+    const controls = (disabled = false) => [
+      new ActionRowBuilder().addComponents(
+        StringSelectMenuBuilder.from(select).setDisabled(disabled),
+      ),
+      new ActionRowBuilder().addComponents(
+        ButtonBuilder.from(calculate).setDisabled(disabled),
+      ),
+    ];
 
     const extras = {
       combo: interaction.options.getInteger("combo") ?? undefined,
@@ -301,106 +291,77 @@ module.exports = {
 
     const prompt = await interaction.editReply({
       content: promptText(beatmapId, accList, extras),
-      components: [row1, row2],
+      components: controls(),
     });
 
     let currentMods = ["NM"];
-    const filter = (i) => {
-      const [kind, uid, id] = i.customId.split(":");
-      return (
-        uid === interaction.user.id &&
-        id === String(beatmapId) &&
-        (kind === "mods" || kind === "calc")
-      );
-    };
+    // the collector is on this reply, so only who clicked needs checking
     const collector = prompt.createMessageComponentCollector({
-      filter,
-      time: 120000,
+      filter: (i) => i.user.id === interaction.user.id,
+      time: 2 * 60 * 1000,
     });
+    const finish = (content, embeds = []) => {
+      collector.stop("finished");
+      return interaction.editReply({ content, embeds, components: [] });
+    };
 
     collector.on("collect", async (i) => {
       try {
-        const [kind] = i.customId.split(":");
-        if (kind === "mods") {
+        if (i.customId === "map_mods")
           currentMods = i.values.length ? i.values : ["NM"];
-          const norm = normalizeMods(currentMods);
-          if (!norm.ok)
-            return i.reply({
-              content: norm.reason,
-              flags: MessageFlags.Ephemeral,
-            });
-          return i.update({
-            content: promptText(beatmapId, accList, extras, currentMods),
-            components: [row1, row2],
-          });
-        }
-        if (kind === "calc") {
-          const norm = normalizeMods(currentMods);
-          if (!norm.ok)
-            return i.reply({
-              content: norm.reason,
-              flags: MessageFlags.Ephemeral,
-            });
-          await i.deferUpdate();
-          const osuText = await beatmapText(beatmapId);
-          if (!osuText) {
-            collector.stop("error");
-            return interaction.editReply({
-              content: "Failed to download the .osu file for that beatmap.",
-              components: [],
-            });
-          }
-          const meta = extractMeta(osuText);
-          try {
-            const { stars, table, info } = calcPP(
-              osuText,
-              norm.combined,
-              accList,
-              extras,
-            );
-            const embed = makeEmbed(meta, norm.display, stars, table, info);
-            collector.stop("done");
-            return interaction.editReply({
-              content: null,
-              embeds: [embed],
-              components: [],
-            });
-          } catch (err) {
-            collector.stop("error");
-            return interaction.editReply({
-              content: `PP calculation failed: ${String(err?.message || err)}`,
-              components: [],
-            });
-          }
-        }
-      } catch (err) {
-        logger.error("Component error:", err);
-        try {
-          await i.reply({
-            content: "Unexpected error. Try again.",
+        const mods = normalizeMods(currentMods);
+        if (!mods.ok) {
+          return i.reply({
+            content: mods.reason,
             flags: MessageFlags.Ephemeral,
           });
-        } catch (e) {
-          logger.error(e);
         }
+        if (i.customId === "map_mods") {
+          return i.update({
+            content: promptText(beatmapId, accList, extras, currentMods),
+            components: controls(),
+          });
+        }
+
+        await i.deferUpdate();
+        const osuText = await beatmapText(beatmapId);
+        if (!osuText)
+          return finish("Failed to download the .osu file for that beatmap.");
+        try {
+          const { stars, table, info } = calcPP(
+            osuText,
+            mods.combined,
+            accList,
+            extras,
+          );
+          return finish(null, [
+            makeEmbed(extractMeta(osuText), mods.display, stars, table, info),
+          ]);
+        } catch (err) {
+          logger.warn(
+            `/map: pp calculation failed for beatmap ${beatmapId}: ${err}`,
+          );
+          return finish(`PP calculation failed: ${err?.message || err}`);
+        }
+      } catch (err) {
+        logger.error("/map: button handling failed:", err);
+        await i
+          .reply({
+            content: "Unexpected error. Try again.",
+            flags: MessageFlags.Ephemeral,
+          })
+          .catch(() => {});
       }
     });
 
-    collector.on("end", async (_c, reason) => {
-      if (reason === "done") return;
-      try {
-        const disabledSelect =
-          StringSelectMenuBuilder.from(select).setDisabled(true);
-        const disabledBtn = ButtonBuilder.from(calcBtn).setDisabled(true);
-        await interaction.editReply({
-          components: [
-            new ActionRowBuilder().addComponents(disabledSelect),
-            new ActionRowBuilder().addComponents(disabledBtn),
-          ],
-        });
-      } catch (err) {
-        logger.error(err);
-      }
+    // timed out without a result: leave the prompt up, but greyed out
+    collector.on("end", async (_collected, reason) => {
+      if (reason === "finished") return;
+      await interaction
+        .editReply({ components: controls(true) })
+        .catch((err) =>
+          logger.warn(`/map: couldn't disable the controls: ${err}`),
+        );
     });
   },
 };

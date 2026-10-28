@@ -60,190 +60,145 @@ const subcommand = (subcommand) =>
         .setRequired(true),
     );
 
+const MATCHES = 50;
+// Riot's development keys allow 20 requests a second; 5 at a time with a pause stays under
+const BATCH = 5;
+const BATCH_PAUSE_MS = 1200;
+
+async function riotGet(host, path) {
+  const { data } = await axios.get(`https://${host}.api.riotgames.com${path}`, {
+    headers: { "X-Riot-Token": process.env.RIOT_API },
+  });
+  return data;
+}
+
+const percent = (part, whole) =>
+  whole ? `${((part / whole) * 100).toFixed(2)}%` : "N/A";
+
+/** Match details for `ids`, in batches; ones that fail (rate limits too) are left out. */
+async function fetchMatches(host, ids) {
+  const matches = [];
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const batch = await Promise.all(
+      ids
+        .slice(i, i + BATCH)
+        .map((id) =>
+          riotGet(host, `/tft/match/v1/matches/${id}`).catch(() => null),
+        ),
+    );
+    matches.push(...batch.filter(Boolean));
+    await new Promise((resolve) => setTimeout(resolve, BATCH_PAUSE_MS));
+  }
+  return matches;
+}
+
 async function run(interaction) {
   const player = interaction.options.getString("player");
   const region = interaction.options.getString("region");
-
   await interaction.deferReply();
 
   const { name, tag } = splitRiotId(player);
   if (!name || !tag) {
-    return interaction.editReply({
-      content: "Invalid Riot ID format. Use `Player#Tag`.",
-    });
+    return interaction.editReply("Invalid Riot ID format. Use `Player#Tag`.");
+  }
+  const route = ROUTES[region];
+  if (!route) {
+    return interaction.editReply(
+      `Error: The region "${region}" is not supported.`,
+    );
   }
 
   try {
-    const riotAccountResponse = await axios.get(
-      `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(
-        name,
-      )}/${encodeURIComponent(tag)}`,
-      {
-        headers: { "X-Riot-Token": process.env.RIOT_API },
-      },
+    const { puuid } = await riotGet(
+      "europe",
+      `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`,
     );
-    const puuid = riotAccountResponse.data.puuid;
+    const summoner = await riotGet(
+      route.platform,
+      `/tft/summoner/v1/summoners/by-puuid/${puuid}`,
+    );
+    const leagues = await riotGet(
+      route.platform,
+      `/tft/league/v1/entries/by-summoner/${summoner.id}`,
+    );
+    const ranked = leagues.find((entry) => entry.queueType === "RANKED_TFT");
 
-    const route = ROUTES[region];
-    const tftApiRegion = route?.platform;
-    const matchHistoryRegion = route?.matches;
-
-    if (!tftApiRegion || !matchHistoryRegion) {
-      return interaction.editReply({
-        content: `Error: The region "${region}" is not supported.`,
-      });
+    const matchIds = await riotGet(
+      route.matches,
+      `/tft/match/v1/matches/by-puuid/${puuid}/ids?count=${MATCHES}`,
+    );
+    if (!matchIds.length) {
+      return interaction.editReply("No recent TFT matches found.");
+    }
+    const matches = await fetchMatches(route.matches, matchIds);
+    if (!matches.length) {
+      return interaction.editReply("No valid match data found.");
     }
 
-    const summonerResponse = await axios.get(
-      `https://${tftApiRegion}.api.riotgames.com/tft/summoner/v1/summoners/by-puuid/${puuid}`,
-      {
-        headers: { "X-Riot-Token": process.env.RIOT_API },
-      },
-    );
+    const placements = matches
+      .map(
+        (match) =>
+          match.info.participants.find((p) => p.puuid === puuid)?.placement,
+      )
+      .filter(Boolean);
+    const total = placements.reduce((sum, placement) => sum + placement, 0);
 
-    const summonerData = summonerResponse.data;
-
-    const rankResponse = await axios.get(
-      `https://${tftApiRegion}.api.riotgames.com/tft/league/v1/entries/by-summoner/${summonerData.id}`,
-      {
-        headers: { "X-Riot-Token": process.env.RIOT_API },
-      },
-    );
-    const rankData = rankResponse.data.find(
-      (entry) => entry.queueType === "RANKED_TFT",
-    );
-
-    let rank = "Unranked",
-      lp = "0 LP",
-      wins = 0,
-      losses = 0,
-      gamesPlayed = 0,
-      winRate = "N/A";
-
-    if (rankData) {
-      rank = `${rankData.tier} ${rankData.rank}`;
-      lp = `${rankData.leaguePoints} LP`;
-      wins = rankData.wins;
-      losses = rankData.losses;
-      gamesPlayed = wins + losses;
-      winRate =
-        gamesPlayed > 0 ? ((wins / gamesPlayed) * 100).toFixed(2) + "%" : "N/A";
-    }
-
-    const matchHistoryResponse = await axios.get(
-      `https://${matchHistoryRegion}.api.riotgames.com/tft/match/v1/matches/by-puuid/${puuid}/ids?count=50`,
-      {
-        headers: { "X-Riot-Token": process.env.RIOT_API },
-      },
-    );
-
-    let matchIds = matchHistoryResponse.data;
-    if (!Array.isArray(matchIds) || matchIds.length === 0) {
-      return interaction.editReply({
-        content: "No recent TFT matches found.",
-      });
-    }
-
-    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    const batchSize = 5;
-    let matchResults = [];
-
-    for (let i = 0; i < matchIds.length; i += batchSize) {
-      const batch = matchIds.slice(i, i + batchSize);
-
-      const batchResults = await Promise.allSettled(
-        batch.map((matchId) =>
-          axios
-            .get(
-              `https://${matchHistoryRegion}.api.riotgames.com/tft/match/v1/matches/${matchId}`,
-              { headers: { "X-Riot-Token": process.env.RIOT_API } },
-            )
-            .then((res) => res.data)
-            .catch((err) => {
-              if (err.response?.status === 429) return null;
-              return null;
-            }),
-        ),
-      );
-
-      const successfulMatches = batchResults
-        .filter((result) => result.status === "fulfilled" && result.value)
-        .map((result) => result.value);
-
-      matchResults.push(...successfulMatches);
-      await delay(1200);
-    }
-
-    if (matchResults.length === 0) {
-      return interaction.editReply({
-        content: "No valid match data found.",
-      });
-    }
-
-    let totalPlacement = 0,
-      top4Count = 0,
-      firstPlaceCount = 0;
-
-    matchResults.forEach((match) => {
-      const playerData = match.info.participants.find((p) => p.puuid === puuid);
-      if (playerData) {
-        totalPlacement += playerData.placement;
-        if (playerData.placement <= 4) top4Count++;
-        if (playerData.placement === 1) firstPlaceCount++;
-      }
-    });
-
-    const avgPlacement =
-      matchResults.length > 0
-        ? (totalPlacement / matchResults.length).toFixed(2)
-        : "N/A";
-
-    const top4Rate = matchResults.length
-      ? ((top4Count / matchResults.length) * 100).toFixed(2) + "%"
-      : "N/A";
-    const firstPlaceRate = matchResults.length
-      ? ((firstPlaceCount / matchResults.length) * 100).toFixed(2) + "%"
-      : "N/A";
-
-    const ddragonVersionsRes = await axios.get(
-      "https://ddragon.leagueoflegends.com/api/versions.json",
-    );
-    const latestVersion = ddragonVersionsRes.data?.[0];
-
-    const profileIconId = summonerData.profileIconId;
-    const profileIcon = profileIconId
-      ? `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/profileicon/${profileIconId}.png`
-      : `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/profileicon/0.png`;
+    const [latestVersion] = (
+      await axios.get("https://ddragon.leagueoflegends.com/api/versions.json")
+    ).data;
+    const profileIcon = `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/profileicon/${summoner.profileIconId ?? 0}.png`;
 
     const embed = new EmbedBuilder()
       .setColor("Blurple")
-      .setTitle(`${name}#${tag} - TFT Stats (Last 50 Games)`)
+      .setTitle(`${name}#${tag} - TFT Stats (Last ${matches.length} Games)`)
       .setThumbnail(profileIcon)
       .addFields(
         { name: "Region", value: region.toUpperCase(), inline: true },
-        { name: "Rank", value: `${rank} (${lp})`, inline: true },
         {
-          name: "Total Games",
-          value: `${matchResults.length}`,
+          name: "Rank",
+          value: ranked
+            ? `${ranked.tier} ${ranked.rank} (${ranked.leaguePoints} LP)`
+            : "Unranked (0 LP)",
           inline: true,
         },
-        { name: "Avg Placement", value: `${avgPlacement}`, inline: true },
-        { name: "Top 4 Rate", value: `${top4Rate}`, inline: true },
+        { name: "Total Games", value: `${matches.length}`, inline: true },
+        {
+          name: "Avg Placement",
+          value: matches.length ? (total / matches.length).toFixed(2) : "N/A",
+          inline: true,
+        },
+        {
+          name: "Top 4 Rate",
+          value: percent(
+            placements.filter((p) => p <= 4).length,
+            matches.length,
+          ),
+          inline: true,
+        },
         {
           name: "1st Place Rate",
-          value: `${firstPlaceRate}`,
+          value: percent(
+            placements.filter((p) => p === 1).length,
+            matches.length,
+          ),
           inline: true,
         },
-        { name: "Win Rate", value: `${winRate}`, inline: true },
+        {
+          name: "Win Rate",
+          value: ranked
+            ? percent(ranked.wins, ranked.wins + ranked.losses)
+            : "N/A",
+          inline: true,
+        },
       )
       .setFooter({ text: "Data provided by Riot API" });
 
     await interaction.editReply({ embeds: [embed] });
   } catch (error) {
-    logger.error("Full API Error:", error.response?.data || error.message);
-    await interaction.editReply({
-      content: "Error retrieving TFT stats. Check the Riot ID and try again.",
-    });
+    logger.error("TFT stats lookup failed:", error.response?.data ?? error);
+    await interaction.editReply(
+      "Error retrieving TFT stats. Check the Riot ID and try again.",
+    );
   }
 }
 

@@ -26,141 +26,118 @@ const subcommand = (subcommand) =>
         ),
     );
 
+const API = "https://osu.ppy.sh/api/v2";
+
+async function osuGet(path, token) {
+  const { data } = await axios.get(`${API}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+/** pp for a play from its beatmap, or "N/A" when the map can't be had */
+async function estimatePp(play) {
+  const osuText = await beatmapText(play.beatmap.id);
+  if (!osuText) return "N/A";
+  const beatmap = new Beatmap(osuText);
+  try {
+    return new Performance({
+      mods: play.mods.join(""),
+      combo: play.max_combo,
+      n300: play.statistics.count_300,
+      n100: play.statistics.count_100,
+      n50: play.statistics.count_50,
+      misses: play.statistics.count_miss,
+      accuracy: play.accuracy * 100,
+    })
+      .calculate(beatmap)
+      .pp.toFixed(2);
+  } finally {
+    // wasm memory: not freed by the garbage collector
+    beatmap.free();
+  }
+}
+
+function playField(play, heading, ppLine) {
+  const { beatmap, beatmapset: set, statistics: hits } = play;
+  return {
+    name: `${heading}${set.artist} - ${set.title} [${beatmap.version}]\nhttps://osu.ppy.sh/beatmaps/${beatmap.id}\n`,
+    value: [
+      `▸ **Rank:** ${play.rank}`,
+      `▸ **Score:** ${play.score.toLocaleString()}`,
+      `▸ **Combo:** ${play.max_combo}x`,
+      `▸ **Mods:** ${play.mods.length ? play.mods.join(", ") : "None"}`,
+      `▸ **Accuracy:** ${(play.accuracy * 100).toFixed(2)}%`,
+      ppLine,
+      `▸ **Hit Counts:** { ${hits.count_300} / ${hits.count_100} / ${hits.count_50} / ${hits.count_miss} }`,
+    ].join("\n"),
+  };
+}
+
 async function run(interaction) {
   const player = interaction.options.getString("player");
   const type = interaction.options.getString("type");
-
   await interaction.deferReply();
 
   try {
-    const accessToken = await getOsuAccessToken();
-    if (!accessToken) {
-      return interaction.editReply({
-        content: "Failed to retrieve osu! API token.",
-      });
+    const token = await getOsuAccessToken();
+    if (!token)
+      return interaction.editReply("Failed to retrieve osu! API token.");
+
+    let user;
+    try {
+      user = await osuGet(`/users/${encodeURIComponent(player)}/osu`, token);
+    } catch (error) {
+      // osu! answers an unknown name with a 404
+      if (error.response?.status === 404) {
+        return interaction.editReply("User not found on osu!");
+      }
+      throw error;
     }
 
-    const userResponse = await axios.get(
-      `https://osu.ppy.sh/api/v2/users/${encodeURIComponent(player)}/osu`,
-      { headers: { Authorization: `Bearer ${accessToken}` } },
+    const plays = await osuGet(
+      type === "top"
+        ? `/users/${user.id}/scores/best?limit=5`
+        : `/users/${user.id}/scores/recent?limit=1&include_fails=1`,
+      token,
     );
-    const user = userResponse.data;
-    if (!user || !user.id) {
-      return interaction.editReply({
-        content: "User not found on osu!",
-      });
-    }
-
-    let apiUrl = "";
-    if (type === "top") {
-      apiUrl = `https://osu.ppy.sh/api/v2/users/${user.id}/scores/best?limit=5`;
-    } else if (type === "recent") {
-      apiUrl = `https://osu.ppy.sh/api/v2/users/${user.id}/scores/recent?limit=1&include_fails=1`;
-    } else {
-      return interaction.editReply({
-        content: "Invalid type. Use `top` or `recent`.",
-      });
-    }
-
-    const playsResponse = await axios.get(apiUrl, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const plays = playsResponse.data;
-
-    if (!Array.isArray(plays) || plays.length === 0) {
-      return interaction.editReply({
-        content: `No ${type} plays found for this user.`,
-      });
+    if (!plays.length) {
+      return interaction.editReply(`No ${type} plays found for this user.`);
     }
 
     const embed = new EmbedBuilder()
       .setColor("Blue")
       .setTitle(
-        `${user.username}'s ${
-          type === "top" ? "Top Plays" : "Most Recent Play"
-        }`,
+        `${user.username}'s ${type === "top" ? "Top Plays" : "Most Recent Play"}`,
       )
       .setThumbnail(user.avatar_url)
       .setURL(`https://osu.ppy.sh/users/${user.id}`)
       .setFooter({ text: "osu! profile", iconURL: user.avatar_url });
 
     if (type === "top") {
-      for (const [index, play] of plays.entries()) {
-        const beatmap = play.beatmap;
-        const set = play.beatmapset;
-        const mods = play.mods.length > 0 ? play.mods.join(", ") : "None";
-        const accuracy = (play.accuracy * 100).toFixed(2);
-        const rank = play.rank;
-        const mapURL = `https://osu.ppy.sh/beatmaps/${beatmap.id}`;
-        const officialPp = play.pp ? play.pp.toFixed(2) : "0.00";
-        const fieldName = `#${index + 1} - ${set.artist} - ${set.title} [${
-          beatmap.version
-        }]\n${mapURL}\n`;
-
-        embed.addFields({
-          name: fieldName,
-          value:
-            `▸ **Rank:** ${rank}\n` +
-            `▸ **Score:** ${play.score.toLocaleString()}\n` +
-            `▸ **Combo:** ${play.max_combo}x\n` +
-            `▸ **Mods:** ${mods}\n` +
-            `▸ **Accuracy:** ${accuracy}%\n` +
-            `▸ **PP:** ${officialPp}\n` +
-            `▸ **Hit Counts:** { ${play.statistics.count_300} / ${play.statistics.count_100} / ${play.statistics.count_50} / ${play.statistics.count_miss} }`,
-          inline: false,
-        });
-      }
+      embed.addFields(
+        plays.map((play, i) =>
+          playField(
+            play,
+            `#${i + 1} - `,
+            `▸ **PP:** ${play.pp ? play.pp.toFixed(2) : "0.00"}`,
+          ),
+        ),
+      );
     } else {
-      const play = plays[0];
-      const beatmap = play.beatmap;
-      const set = play.beatmapset;
-      const mods = play.mods.length > 0 ? play.mods.join(", ") : "None";
-      const accuracy = (play.accuracy * 100).toFixed(2);
-      const rank = play.rank;
-      const mapURL = `https://osu.ppy.sh/beatmaps/${beatmap.id}`;
-
-      const osuText = await beatmapText(beatmap.id);
-      let ppValue = "N/A";
-
-      if (osuText) {
-        const beatmapData = new Beatmap(osuText);
-        const performance = new Performance({
-          mods: play.mods.join(""),
-          combo: play.max_combo,
-          n300: play.statistics.count_300,
-          n100: play.statistics.count_100,
-          n50: play.statistics.count_50,
-          misses: play.statistics.count_miss,
-          accuracy: play.accuracy * 100,
-        });
-        ppValue = performance.calculate(beatmapData).pp.toFixed(2);
-        // wasm memory: not freed by the garbage collector
-        beatmapData.free();
-      }
-
-      embed.addFields({
-        name: `${set.artist} - ${set.title} [${beatmap.version}]\n${mapURL}\n`,
-        value:
-          `▸ **Rank:** ${rank}\n` +
-          `▸ **Score:** ${play.score.toLocaleString()}\n` +
-          `▸ **Combo:** ${play.max_combo}x\n` +
-          `▸ **Mods:** ${mods}\n` +
-          `▸ **Accuracy:** ${accuracy}%\n` +
-          `▸ **PP (est.):** ${ppValue}\n` +
-          `▸ **Hit Counts:** { ${play.statistics.count_300} / ${play.statistics.count_100} / ${play.statistics.count_50} / ${play.statistics.count_miss} }`,
-        inline: false,
-      });
+      // recent plays have no pp from osu!, so it's worked out from the map
+      const [play] = plays;
+      embed.addFields(
+        playField(play, "", `▸ **PP (est.):** ${await estimatePp(play)}`),
+      );
     }
 
     await interaction.editReply({ embeds: [embed] });
   } catch (error) {
-    logger.error(
-      "Error retrieving osu! stats:",
-      error.response?.data || error.message,
+    logger.error("Error retrieving osu! stats:", error.response?.data ?? error);
+    await interaction.editReply(
+      "An error occurred while retrieving osu! stats.",
     );
-    await interaction.editReply({
-      content: "An error occurred while retrieving osu! stats.",
-    });
   }
 }
 
