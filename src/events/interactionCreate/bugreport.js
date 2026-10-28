@@ -31,6 +31,8 @@ module.exports = async (interaction, client) => {
         flags: MessageFlags.Ephemeral,
       });
     }
+    // the GitHub issue can take longer than Discord's 3 seconds to answer in
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     // Create GitHub issue (public, so reporter and server details only go to the Discord embed)
     let issueUrl = null;
@@ -115,16 +117,18 @@ module.exports = async (interaction, client) => {
       );
     }
 
-    await channel
+    const delivered = await channel
       .send({ embeds: [embed], components: [buttons] })
+      .then(() => true)
       .catch((err) => {
         logger.error("bugreport: failed to send to bug channel:", err);
+        return false;
       });
 
-    await interaction.reply({
-      content:
-        "Your report has been recorded. My developer will look into this issue, and reach out with any further questions.",
-      flags: MessageFlags.Ephemeral,
-    });
+    await interaction.editReply(
+      delivered || issueUrl
+        ? "Your report has been recorded. My developer will look into this issue, and reach out with any further questions."
+        : "Sorry, your report couldn't be delivered. Please try again in a bit.",
+    );
   }
 };

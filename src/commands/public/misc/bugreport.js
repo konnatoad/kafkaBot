@@ -7,6 +7,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 
+// each answer ends up in an embed field, which holds at most 1024 characters
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("bug-report")
@@ -28,35 +29,40 @@ module.exports = {
       .setRequired(true)
       .setPlaceholder("e.g. /leaderboard, Twitch notifications")
       .setLabel("What feature has a bug?")
-      .setStyle(TextInputStyle.Short);
+      .setStyle(TextInputStyle.Short)
+      .setMaxLength(100);
 
     const description = new TextInputBuilder()
       .setCustomId("description")
       .setRequired(true)
       .setPlaceholder("Describe what is happening")
       .setLabel("Describe the bug")
-      .setStyle(TextInputStyle.Paragraph);
+      .setStyle(TextInputStyle.Paragraph)
+      .setMaxLength(1000);
 
     const steps = new TextInputBuilder()
       .setCustomId("steps")
       .setRequired(true)
       .setPlaceholder("1. Run /command\n2. See error")
       .setLabel("Steps to reproduce")
-      .setStyle(TextInputStyle.Paragraph);
+      .setStyle(TextInputStyle.Paragraph)
+      .setMaxLength(1000);
 
     const expected = new TextInputBuilder()
       .setCustomId("expected")
       .setRequired(true)
       .setPlaceholder("What should happen vs what actually happens")
       .setLabel("Expected vs actual behavior")
-      .setStyle(TextInputStyle.Paragraph);
+      .setStyle(TextInputStyle.Paragraph)
+      .setMaxLength(1000);
 
     const severity = new TextInputBuilder()
       .setCustomId("severity")
       .setRequired(true)
       .setPlaceholder("low / medium / high")
       .setLabel("Severity (low / medium / high)")
-      .setStyle(TextInputStyle.Short);
+      .setStyle(TextInputStyle.Short)
+      .setMaxLength(100);
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(feature),

@@ -43,16 +43,21 @@ module.exports = async (interaction, client) => {
       })
       .setTimestamp();
 
-    await feedbackChannel.send({ embeds: [feedbackEmbed] }).catch((err) => {
-      logger.error(
-        "feedback-handler: failed to send to feedback channel:",
-        err,
-      );
-    });
+    const delivered = await feedbackChannel
+      .send({ embeds: [feedbackEmbed] })
+      .then(() => true)
+      .catch((err) => {
+        logger.error(
+          "feedback-handler: failed to send to feedback channel:",
+          err,
+        );
+        return false;
+      });
 
     await interaction.reply({
-      content:
-        "Thank you for your feedback! The developer will review it soon.",
+      content: delivered
+        ? "Thank you for your feedback! The developer will review it soon."
+        : "Sorry, your feedback couldn't be delivered. Please try again in a bit.",
       flags: MessageFlags.Ephemeral,
     });
   }

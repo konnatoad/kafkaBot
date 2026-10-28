@@ -7,6 +7,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 
+// each answer ends up in an embed field, which holds at most 1024 characters
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("feedback")
@@ -30,14 +31,16 @@ module.exports = {
         "What feature or aspect of the bot are you giving feedback on?",
       )
       .setLabel("Feature or Topic")
-      .setStyle(TextInputStyle.Short);
+      .setStyle(TextInputStyle.Short)
+      .setMaxLength(100);
 
     const feedbackDescription = new TextInputBuilder()
       .setCustomId("feedbackDescription")
       .setRequired(true)
       .setPlaceholder("Provide detailed feedback or suggestions")
       .setLabel("Your Feedback")
-      .setStyle(TextInputStyle.Paragraph);
+      .setStyle(TextInputStyle.Paragraph)
+      .setMaxLength(1000);
 
     const row1 = new ActionRowBuilder().addComponents(feature);
     const row2 = new ActionRowBuilder().addComponents(feedbackDescription);

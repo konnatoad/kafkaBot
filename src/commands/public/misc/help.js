@@ -10,218 +10,113 @@ const {
   MessageFlags,
 } = require("discord.js");
 
+const COMMANDS_DIR = path.join(__dirname, "../..");
+const PER_PAGE = 5;
+const GROUPS = {
+  public: { title: "Public", color: "#0099ff" },
+  admin: { title: "Admin", color: "#ff9999" },
+};
+
+function commandFiles(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const file = path.join(dir, entry.name);
+    if (entry.isDirectory()) return commandFiles(file);
+    return entry.name.endsWith(".js") ? [file] : [];
+  });
+}
+
+/** group -> embeds of PER_PAGE commands each. Commands only change on restart. */
+let pages;
+function helpPages() {
+  if (pages) return pages;
+  pages = {};
+  for (const [group, { title, color }] of Object.entries(GROUPS)) {
+    const commands = commandFiles(path.join(COMMANDS_DIR, group)).map(
+      (file) => require(file).data,
+    );
+    const count = Math.ceil(commands.length / PER_PAGE);
+    pages[group] = Array.from({ length: count }, (_, page) => {
+      const list = commands
+        .slice(page * PER_PAGE, (page + 1) * PER_PAGE)
+        .map(
+          (command) =>
+            `**/${command.name}**\n${command.description || "No description provided"}\n\n`,
+        )
+        .join("");
+      return new EmbedBuilder()
+        .setTitle(`***Commands for ${title}***`)
+        .setDescription(`Page ${page + 1} of ${count}`)
+        .addFields({ name: "***Commands***", value: list })
+        .setColor(color);
+    });
+  }
+  return pages;
+}
+
+function buttons(group) {
+  const other = group === "admin" ? "public" : "admin";
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("help_previous")
+      .setLabel("Previous")
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId("help_next")
+      .setLabel("Next")
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId("help_switch")
+      .setLabel(`Show ${GROUPS[other].title} Commands`)
+      .setStyle(ButtonStyle.Secondary),
+  );
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("help")
     .setDescription("Displays list of available commands"),
 
-  async run({ interaction, client }) {
-    if (!client.activeEphemeralMessages) {
-      client.activeEphemeralMessages = new Map();
-    }
+  async run({ interaction }) {
+    const all = helpPages();
+    let group = "public";
+    let page = 0;
+    const view = () => ({
+      embeds: [all[group][page]],
+      components: [buttons(group)],
+    });
 
-    const userId = interaction.user.id;
+    // collected on the reply itself, so several help messages can be open at once
+    const reply = await interaction.reply({
+      ...view(),
+      flags: MessageFlags.Ephemeral,
+      withResponse: true,
+    });
+    const collector = reply.resource.message.createMessageComponentCollector({
+      filter: (i) => i.user.id === interaction.user.id,
+      time: 5 * 60 * 1000,
+    });
 
-    // Check if the user already has an active ephemeral message
-    if (client.activeEphemeralMessages.has(userId)) {
-      return interaction.reply({
-        content:
-          "You already have an active help message. Please dismiss it and wait ~5min before running the command again.",
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    try {
-      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-
-      const commandDirectory = path.resolve(__dirname, "../../../commands");
-      const commandFiles = readCommandsDirectory(commandDirectory);
-      const commands = categorizeCommands(commandFiles, commandDirectory);
-      const embeds = createEmbeds(commands);
-
-      if (!embeds.admin.length && !embeds.public.length) {
-        return await interaction.editReply({
-          content: "No commands found.",
-          flags: MessageFlags.Ephemeral,
-        });
+    collector.on("collect", async (button) => {
+      const count = all[group].length;
+      if (button.customId === "help_previous")
+        page = (page - 1 + count) % count;
+      if (button.customId === "help_next") page = (page + 1) % count;
+      if (button.customId === "help_switch") {
+        group = group === "admin" ? "public" : "admin";
+        page = 0;
       }
+      await button
+        .update(view())
+        .catch((error) => logger.error("/help: failed to change page:", error));
+    });
 
-      let currentGroup = "public"; // Start with public commands
-      let currentPage = { admin: 0, public: 0 };
-      const uniqueId = `${userId}-${Date.now()}`;
-
-      const row = createButtonRow(currentGroup, uniqueId);
-
-      await interaction.editReply({
-        embeds: [embeds[currentGroup][currentPage[currentGroup]]],
-        components: [row],
-      });
-
-      client.activeEphemeralMessages.set(userId, interaction);
-
-      const collector = interaction.channel.createMessageComponentCollector({
-        filter: (i) => i.user.id === userId && i.customId.endsWith(uniqueId),
-        time: 300000,
-      });
-
-      collector.on("collect", async (buttonInteraction) => {
-        const { customId } = buttonInteraction;
-        if (
-          customId === `previous_button_${uniqueId}` ||
-          customId === `next_button_${uniqueId}`
-        ) {
-          // Handle Previous and Next button clicks
-          if (customId === `previous_button_${uniqueId}`) {
-            currentPage[currentGroup] =
-              (currentPage[currentGroup] - 1 + embeds[currentGroup].length) %
-              embeds[currentGroup].length;
-          } else if (customId === `next_button_${uniqueId}`) {
-            currentPage[currentGroup] =
-              (currentPage[currentGroup] + 1) % embeds[currentGroup].length;
-          }
-
-          await buttonInteraction.update({
-            embeds: [embeds[currentGroup][currentPage[currentGroup]]],
-            components: [row],
-          });
-        } else if (customId === `toggle_group_button_${uniqueId}`) {
-          // Handle Show Admin/Public Commands button click
-          currentGroup = currentGroup === "admin" ? "public" : "admin";
-          currentPage[currentGroup] = 0;
-          row.components[2].setLabel(
-            `Show ${currentGroup === "admin" ? "Public" : "Admin"} Commands`,
-          );
-
-          await buttonInteraction.update({
-            embeds: [embeds[currentGroup][currentPage[currentGroup]]],
-            components: [row],
-          });
+    collector.on("end", () =>
+      interaction.editReply({ components: [] }).catch((error) => {
+        // the help message was dismissed (10008) or its token ran out (50027)
+        if (![10008, 50027].includes(error.code)) {
+          logger.error("/help: failed to remove buttons:", error);
         }
-      });
-
-      collector.on("end", async () => {
-        client.activeEphemeralMessages.delete(userId);
-        try {
-          await interaction.editReply({
-            embeds: [embeds[currentGroup][currentPage[currentGroup]]],
-            components: [],
-          });
-        } catch (error) {
-          if (error.code !== 50027) {
-            logger.error(
-              "Error clearing help components on collector end:",
-              error,
-            );
-          }
-        }
-      });
-    } catch (error) {
-      logger.error("Error processing help command:", error);
-      await interaction.editReply({
-        content: "An error occurred while processing the help command.",
-        flags: MessageFlags.Ephemeral,
-      });
-    }
+      }),
+    );
   },
 };
-
-// Function to recursively read directories
-function readCommandsDirectory(directory) {
-  const commandFiles = [];
-  const files = fs.readdirSync(directory, { withFileTypes: true });
-
-  for (const file of files) {
-    const filePath = path.resolve(directory, file.name);
-    if (file.isDirectory()) {
-      commandFiles.push(...readCommandsDirectory(filePath));
-    } else if (file.isFile() && filePath.endsWith(".js")) {
-      try {
-        const command = require(filePath);
-        commandFiles.push({ command, filePath });
-      } catch (error) {
-        logger.error(`Error loading command file ${filePath}:`, error);
-      }
-    }
-  }
-  return commandFiles;
-}
-
-// Function to categorize commands into groups
-function categorizeCommands(commandFiles, commandDirectory) {
-  const commands = { admin: [], public: [] };
-  for (const { command, filePath } of commandFiles) {
-    const relativePath = path.relative(commandDirectory, filePath);
-    const mainFolder = relativePath.split(path.sep)[0];
-    if (commands[mainFolder]) {
-      commands[mainFolder].push(command);
-    }
-  }
-  return commands;
-}
-
-// Function to create embeds for each group of commands
-function createEmbeds(commands) {
-  const embeds = { admin: [], public: [] };
-  for (const [mainFolder, cmds] of Object.entries(commands)) {
-    let embedsArray = [];
-    let totalCommands = cmds.length;
-    let totalPages = Math.ceil(totalCommands / 5); // Assuming 5 commands per page
-    for (let currentPage = 0; currentPage < totalPages; currentPage++) {
-      const embed = new EmbedBuilder()
-        .setTitle(`***Commands for ${capitalize(mainFolder)}***`)
-        .setDescription(`Page ${currentPage + 1} of ${totalPages}`);
-
-      let commandList = ""; // Declare commandList variable here
-      for (
-        let i = currentPage * 5;
-        i < Math.min((currentPage + 1) * 5, totalCommands);
-        i++
-      ) {
-        const cmd = cmds[i];
-        commandList += `**/${cmd.data.name}**\n${
-          cmd.data.description || "No description provided"
-        }\n\n`; // Add an empty line after each command
-      }
-
-      embed.addFields({
-        name: "***Commands***", // Ensure there's an empty line after "Commands"
-        value: commandList,
-      });
-
-      if (mainFolder === "public") {
-        embed.setColor("#0099ff"); // Blue color for public commands
-      } else {
-        embed.setColor("#ff9999"); // Red color for admin commands
-      }
-
-      embedsArray.push(embed);
-    }
-    embeds[mainFolder] = embedsArray;
-  }
-  return embeds;
-}
-
-// Helper function to create the button row
-function createButtonRow(currentGroup, uniqueId) {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`previous_button_${uniqueId}`)
-      .setLabel("Previous")
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId(`next_button_${uniqueId}`)
-      .setLabel("Next")
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId(`toggle_group_button_${uniqueId}`)
-      .setLabel(
-        `Show ${currentGroup === "admin" ? "Public" : "Admin"} Commands`,
-      )
-      .setStyle(ButtonStyle.Secondary),
-  );
-}
-
-// Helper function to capitalize a string
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}

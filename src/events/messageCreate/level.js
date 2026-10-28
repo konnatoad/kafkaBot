@@ -3,13 +3,12 @@ const levelSchema = require("../../schemas/level");
 const UserProfile = require("../../schemas/UserProfile");
 const logger = require("../../extra/logger");
 const { xpIgnoredChannels } = require("../../../config.json");
+const { xpForNextLevel } = require("../../utils/levels");
 
 const XP_PER_MESSAGE = 1;
 const LEVEL_UP_REWARD = 50;
 /** Balance someone starts with the first time they talk. */
 const STARTING_BALANCE = 25;
-
-const xpForNextLevel = (level) => level * level * 20 + 20;
 
 module.exports = async (message) => {
   const { guild, author, channel } = message;

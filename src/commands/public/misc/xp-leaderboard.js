@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 const levelSchema = require("../../../schemas/level");
+const { replyWithLeaderboard } = require("../../../utils/leaderboard");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -7,50 +8,18 @@ module.exports = {
     .setDescription("This gets a servers xp leaderboard."),
 
   run: async ({ interaction }) => {
-    const { guild, client } = interaction;
-
-    let text = "";
-
-    const embed1 = new EmbedBuilder()
-      .setColor("Blurple")
-      .setDescription("No one is on the leaderboard yet...");
-
-    const Duata = await levelSchema.findOne({
-      Guild: guild.id,
-    });
-
-    const Data = await levelSchema
-      .find({ Guild: guild.id })
-      .sort({
-        XP: -1,
-        level: -1,
-      })
+    // XP only ever grows, so the most XP is also the highest level
+    const top = await levelSchema
+      .find({ Guild: interaction.guildId })
+      .sort({ XP: -1 })
       .limit(10);
-
-    if (!Duata) return await interaction.reply({ embeds: [embed1] });
-
-    await interaction.deferReply();
-
-    for (let counter = 0; counter < Data.length; ++counter) {
-      let { User, XP, Level } = Data[counter];
-
-      const value = (await client.users.fetch(User)) || "Unknown Member";
-
-      const member = value.tag;
-
-      text += `${counter + 1}. ${member} | XP: ${XP} | Level: ${Level} \n`;
-
-      const embed = new EmbedBuilder()
-        .setColor("Blurple")
-        .setTitle(`${interaction.guild.name}'s XP Leaderboard:`)
-        .setDescription(`\`\`\`${text}\`\`\``)
-        .setTimestamp()
-        .setFooter({
-          text: "XP Leaderboard",
-          iconURL: "https://vou.s-ul.eu/ts9RQjxl",
-        });
-
-      interaction.editReply({ embeds: [embed] });
-    }
+    return replyWithLeaderboard(interaction, {
+      title: `${interaction.guild.name}'s XP Leaderboard:`,
+      footer: "XP Leaderboard",
+      rows: top.map(({ User, XP, Level }) => ({
+        userId: User,
+        score: `XP: ${XP} | Level: ${Level}`,
+      })),
+    });
   },
 };

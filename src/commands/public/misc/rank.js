@@ -1,10 +1,15 @@
+const path = require("path");
 const {
   SlashCommandBuilder,
   EmbedBuilder,
   AttachmentBuilder,
 } = require("discord.js");
-const levelSchema = require("../../../schemas/level");
 const { RankCardBuilder, Font } = require("canvacord");
+const levelSchema = require("../../../schemas/level");
+const { xpForNextLevel } = require("../../../utils/levels");
+
+const FONT_FILE = path.join(__dirname, "../../../static/Roboto-BoldItalic.ttf");
+let font;
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -18,55 +23,49 @@ module.exports = {
     ),
 
   run: async ({ interaction }) => {
-    const { options, user, guild } = interaction;
+    // the resolved member comes with the interaction, cached or not
+    const member = interaction.options.getMember("user") ?? interaction.member;
+    if (
+      interaction.options.getUser("user") &&
+      !interaction.options.getMember("user")
+    ) {
+      return interaction.reply("That user isn't in this server.");
+    }
 
-    const Member = options.getMember("user") || user;
-
-    const member = guild.members.cache.get(Member.id);
-
-    const Data = await levelSchema.findOne({
-      Guild: guild.id,
+    const level = await levelSchema.findOne({
+      Guild: interaction.guildId,
       User: member.id,
     });
-
-    const embed = new EmbedBuilder()
-      .setColor("Blurple")
-      .setDescription(`${member} has not gained any xp yet.`);
-
-    if (!Data) return await interaction.reply({ embeds: [embed] });
+    if (!level) {
+      const embed = new EmbedBuilder()
+        .setColor("Blurple")
+        .setDescription(`${member} has not gained any xp yet.`);
+      return interaction.reply({ embeds: [embed] });
+    }
 
     await interaction.deferReply();
+    font ??= await Font.fromFile(FONT_FILE);
 
-    const Required = Data.Level * Data.Level * 20 + 20;
-
-    const font = await Font.fromFile("src/static/Roboto-BoldItalic.ttf");
-
-    const rank = new RankCardBuilder()
+    const card = await new RankCardBuilder()
       .setFonts(font)
       .setAvatar(member.displayAvatarURL({ forceStatic: true }))
       .setOverlay(true)
       .setBackground(`https://vou.s-ul.eu/UlU1YgmA`)
-      .setCurrentXP(Data.XP)
-      .setRequiredXP(Required)
-      .setLevel(Data.Level, "Level")
-      .setUsername(member.user.username);
+      .setCurrentXP(level.XP)
+      .setRequiredXP(xpForNextLevel(level.Level))
+      .setLevel(level.Level, "Level")
+      .setUsername(member.user.username)
+      .build({ format: "png" });
 
-    const Card = await rank.build({
-      format: "png",
-    });
-
-    const attachment = new AttachmentBuilder(Card, { name: "rank.png" });
-
-    const embed2 = new EmbedBuilder()
+    const embed = new EmbedBuilder()
       .setColor("DarkPurple")
       .setTitle(`**${member.user.username}'s Level / XP**`)
       .setImage("attachment://rank.png")
       .setTimestamp()
-      .setFooter({
-        text: "Level/XP",
-        iconURL: "https://vou.s-ul.eu/ts9RQjxl",
-      });
-
-    await interaction.editReply({ embeds: [embed2], files: [attachment] });
+      .setFooter({ text: "Level/XP", iconURL: "https://vou.s-ul.eu/ts9RQjxl" });
+    await interaction.editReply({
+      embeds: [embed],
+      files: [new AttachmentBuilder(card, { name: "rank.png" })],
+    });
   },
 };
