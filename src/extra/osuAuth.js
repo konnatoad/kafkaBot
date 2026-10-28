@@ -2,13 +2,13 @@ const axios = require("axios");
 const logger = require("./logger");
 
 let osuAccessToken = null;
-let tokenExpiration = 0; // Store expiration timestamp
+let tokenExpiration = 0; // unix seconds
 
 async function getOsuAccessToken() {
-  const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+  const currentTime = Math.floor(Date.now() / 1000);
 
   if (osuAccessToken && currentTime < tokenExpiration) {
-    return osuAccessToken; // Return cached token if still valid
+    return osuAccessToken;
   }
 
   try {

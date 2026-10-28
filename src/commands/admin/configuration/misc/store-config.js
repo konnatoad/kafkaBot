@@ -6,7 +6,6 @@ const {
 const StoreItem = require("../../../../schemas/Store");
 
 module.exports = {
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("store-setup")
     .setDescription("Configure the store system for rice grains")
@@ -41,13 +40,12 @@ module.exports = {
     ),
   run: async ({ interaction }) => {
     const subcommand = interaction.options.getSubcommand();
-    const guildId = interaction.guild.id; // Get the guild ID
+    const guildId = interaction.guild.id;
 
     if (subcommand === "add") {
       const roleToAdd = interaction.options.getRole("role");
       const cost = interaction.options.getInteger("cost");
 
-      // Check if role is already in the store
       const existingItem = await StoreItem.findOne({
         guildId,
         roleId: roleToAdd.id,
@@ -60,7 +58,6 @@ module.exports = {
         });
       }
 
-      // Create new store item
       const newItem = new StoreItem({
         guildId: guildId,
         roleId: roleToAdd.id,
@@ -75,7 +72,6 @@ module.exports = {
     } else if (subcommand === "remove") {
       const roleToRemove = interaction.options.getRole("role");
 
-      // Check if role is in the store
       const existingItem = await StoreItem.findOne({
         guildId,
         roleId: roleToRemove.id,
@@ -87,7 +83,6 @@ module.exports = {
         });
       }
 
-      // Remove store item
       await StoreItem.findOneAndDelete({ guildId, roleId: roleToRemove.id });
 
       return interaction.reply({

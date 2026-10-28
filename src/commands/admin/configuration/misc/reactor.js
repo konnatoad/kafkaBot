@@ -7,7 +7,6 @@ const {
 const reactor = require("../../../../schemas/reactorschema");
 
 module.exports = {
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("reactor")
     .setDescription("Manage your auto reaction system")

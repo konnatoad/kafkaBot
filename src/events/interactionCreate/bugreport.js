@@ -1,5 +1,4 @@
 const logger = require("../../extra/logger");
-require("dotenv").config();
 const {
   EmbedBuilder,
   ActionRowBuilder,

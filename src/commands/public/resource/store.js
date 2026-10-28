@@ -15,7 +15,6 @@ module.exports = {
       const guildName = interaction.guild.name;
       const guildId = interaction.guild.id;
 
-      // Fetch all roles available in the store for the current guild
       const storeItems = await StoreItem.find({ guildId });
 
       if (!storeItems || storeItems.length === 0) {
@@ -32,7 +31,6 @@ module.exports = {
         .setTimestamp()
         .setFooter({ text: "Store", iconURL: "https://vou.s-ul.eu/ts9RQjxl" });
 
-      // Add each role with its price and ID as a field in the embed
       for (const item of storeItems) {
         const role = interaction.guild.roles.cache.get(item.roleId);
         if (role) {

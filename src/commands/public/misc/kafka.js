@@ -1,17 +1,7 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
-const fs = require("fs");
-
-function seededRandom(seed) {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
-}
-
-function getRandomInt(seed, max) {
-  return Math.floor(seededRandom(seed) * max);
-}
+const { pickPicture } = require("../../../utils/pictures");
 
 module.exports = {
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("kafka")
     .setDescription(
@@ -20,18 +10,12 @@ module.exports = {
     .setNSFW(true),
 
   run: async ({ interaction }) => {
-    if (!interaction.channel.nsfw)
+    if (!interaction.channel?.nsfw)
       return interaction.reply({
         content:
           "This channel is not NSFW and this command cannot be ran here!",
         flags: MessageFlags.Ephemeral,
       });
-    let files = fs.readdirSync("src/static/kafka");
-    const seed = Date.now() + Math.random();
-    let picture = files[getRandomInt(seed, files.length)];
-    await interaction.reply({
-      files: [`./src/static/kafka/${picture}`],
-    });
+    await interaction.reply({ files: [pickPicture("kafka")] });
   },
-  testOnly: false,
 };

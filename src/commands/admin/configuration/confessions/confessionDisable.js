@@ -8,7 +8,6 @@ const ConfessionConfig = require("../../../../schemas/ConfessionConfig");
 const logger = require("../../../../extra/logger");
 
 module.exports = {
-  testOnly: false,
   data: new SlashCommandBuilder()
     .setName("confessions-disable")
     .setDescription("Disable anonymous confessions in this server.")

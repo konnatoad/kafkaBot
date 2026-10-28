@@ -1,6 +1,4 @@
-const path = require("path");
 const { inspect } = require("node:util");
-require("dotenv").config({ path: path.join(__dirname, "../../.env") });
 const { createLogger, format, transports } = require("winston");
 const DiscordLogTransport = require("../utils/discordLogTransport");
 const { combine, timestamp, colorize, printf } = format;

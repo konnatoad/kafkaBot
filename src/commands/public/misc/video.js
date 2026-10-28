@@ -1,16 +1,9 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { videos, easterEggs } = require("../../../../video-urls.json");
+const { shuffle } = require("../../../utils/random");
 
 let shuffledOptions = [];
 let currentIndex = 0;
-
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
 
 function buildPool(user) {
   const eggs = easterEggs.map((url) =>
@@ -23,19 +16,16 @@ function buildPool(user) {
 
 module.exports = {
   witchOnly: true,
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("video")
     .setDescription("random witchii video"),
-
-  testOnly: false,
 
   run: async ({ interaction }) => {
     if (
       shuffledOptions.length === 0 ||
       currentIndex >= shuffledOptions.length
     ) {
-      shuffledOptions = shuffleArray(buildPool(interaction.user));
+      shuffledOptions = shuffle(buildPool(interaction.user));
       currentIndex = 0;
     }
 

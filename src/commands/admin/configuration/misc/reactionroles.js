@@ -7,7 +7,6 @@ const reaction = require("../../../../schemas/reactions");
 const logger = require("../../../../extra/logger");
 
 module.exports = {
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("reaction-roles")
     .setDescription("Manage your reaction roles system")

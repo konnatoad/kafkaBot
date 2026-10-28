@@ -1,6 +1,7 @@
 const path = require("path");
-const logger = require("./extra/logger");
+// before anything else: the logger reads LOG_WEBHOOK_URL when it's first required
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
+const logger = require("./extra/logger");
 const { Client, IntentsBitField, Partials } = require("discord.js");
 const mongoose = require("mongoose");
 const { CommandHandler } = require("djs-commander");
@@ -28,7 +29,6 @@ new CommandHandler({
   commandsPath: path.join(__dirname, "commands"),
   eventsPath: path.join(__dirname, "events"),
   validationsPath: path.join(__dirname, "validations"),
-  functions: path.join(__dirname, "functions"),
 });
 
 // Resolve the guild from the channel ID in a Discord API error URL so errors say which server they came from
