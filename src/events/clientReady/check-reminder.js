@@ -1,65 +1,60 @@
+const cron = require("node-cron");
 const UserProfile = require("../../schemas/UserProfile");
 const logger = require("../../extra/logger");
 
-module.exports = (client) => {
-  checkReminders();
-  setInterval(checkReminders, 60000); // Check every minute
+// "08:05". Times used to be saved exactly as typed, so "8:05" is in the database
+// too and gets matched as well.
+function currentTimes() {
+  const now = new Date();
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return [
+    `${String(now.getHours()).padStart(2, "0")}:${minutes}`,
+    `${now.getHours()}:${minutes}`,
+  ];
+}
 
-  async function checkReminders() {
-    try {
-      const userProfiles = await UserProfile.find({
-        reminderTime: { $ne: null },
-      });
-
-      for (const userProfile of userProfiles) {
-        const { userId, Guild, reminderTime } = userProfile;
-
-        // If the user has a reminder time set
-        if (reminderTime) {
-          const currentTime = new Date().toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          }); // Get current time in HH:MM format (24-hour)
-
-          // Check if the current time matches the reminder time
-          if (currentTime === reminderTime) {
-            const targetGuild =
-              client.guilds.cache.get(Guild) ||
-              (await client.guilds.fetch(Guild));
-
-            if (!targetGuild) {
-              logger.error(`Guild not found for userId: ${userId}`);
-              continue;
-            }
-
-            const targetMember = await targetGuild.members
-              .fetch(userId)
-              .catch(() => null);
-            if (!targetMember) {
-              logger.error(`Member not found for userId: ${userId}`);
-              continue;
-            }
-
-            const targetChannel = await targetMember
-              .send(
-                `Hey <@${userId}>, it's time for your daily reminder to collect your dailies!`,
-              )
-              .catch(() => null);
-
-            if (!targetChannel) {
-              logger.error(`Failed to send reminder to userId: ${userId}`);
-              continue;
-            }
-
-            logger.info(
-              `Reminder sent to ${targetMember.user.tag} in ${targetGuild.name}`,
-            );
-          }
-        }
-      }
-    } catch (error) {
-      logger.error(`Error in checkReminders:\n`, error);
-    }
+async function remind(client, { userId, Guild }) {
+  const guild =
+    client.guilds.cache.get(Guild) ||
+    (await client.guilds.fetch(Guild).catch(() => null));
+  if (!guild) {
+    logger.warn(
+      `reminder: bot is no longer in guild ${Guild}, skipped ${userId}`,
+    );
+    return;
   }
+  const member = await guild.members.fetch(userId).catch(() => null);
+  if (!member) {
+    logger.warn(`reminder: ${userId} has left guild ${Guild}, skipped`);
+    return;
+  }
+  try {
+    await member.send(
+      `Hey <@${userId}>, it's time for your daily reminder to collect your dailies!`,
+    );
+    logger.info(`Reminder sent to ${member.user.tag} in ${guild.name}`);
+  } catch (err) {
+    // 50007: their DMs are closed, nothing to fix on our side
+    if (err.code !== 50007)
+      logger.error(`reminder: failed to DM ${userId}:`, err);
+  }
+}
+
+module.exports = (client) => {
+  // cron fires at second 0 of each minute; a 60s setInterval slowly drifts and
+  // could step over a minute entirely, skipping everyone set for it
+  cron.schedule("* * * * *", async () => {
+    let due;
+    try {
+      due = await UserProfile.find({ reminderTime: { $in: currentTimes() } });
+    } catch (error) {
+      logger.error("reminder: failed to load reminders:", error);
+      return;
+    }
+    for (const profile of due) {
+      await remind(client, profile).catch((error) =>
+        logger.error(`reminder: failed for ${profile.userId}:`, error),
+      );
+    }
+  });
 };

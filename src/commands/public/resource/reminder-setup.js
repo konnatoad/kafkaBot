@@ -3,7 +3,6 @@ const UserProfile = require("../../../schemas/UserProfile");
 const logger = require("../../../extra/logger");
 
 module.exports = {
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("remind")
     .setDescription("Manage your daily reminders.")
@@ -38,49 +37,37 @@ module.exports = {
     try {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-      let userProfile = await UserProfile.findOne({
-        userId: interaction.member.id,
+      const owner = {
+        userId: interaction.user.id,
         Guild: interaction.guild.id,
-      });
+      };
 
       if (subcommand === "set") {
-        const reminderTime = interaction.options.getString("time");
-
-        const timeFormat = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-        if (!timeFormat.test(reminderTime)) {
-          interaction.editReply({
-            content: "Invalid time format. Please use HH:MM.",
-            flags: MessageFlags.Ephemeral,
-          });
+        const typed = interaction.options.getString("time").trim();
+        const match = typed.match(/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/);
+        if (!match) {
+          interaction.editReply("Invalid time format. Please use HH:MM.");
           return;
         }
+        // saved as "08:30" because that's what the reminder check compares to
+        const reminderTime = `${match[1].padStart(2, "0")}:${match[2]}`;
 
-        if (!userProfile) {
-          userProfile = new UserProfile({
-            userId: interaction.member.id,
-            Guild: interaction.guild.id,
-            balance: 0,
-            dailyStreak: 0,
-          });
-        }
+        await UserProfile.updateOne(
+          owner,
+          { $set: { reminderTime } },
+          { upsert: true },
+        );
 
-        userProfile.reminderTime = reminderTime;
-        await userProfile.save();
-
-        interaction.editReply({
-          content: `Reminder set for ${reminderTime}.`,
-          flags: MessageFlags.Ephemeral,
-        });
+        interaction.editReply(`Reminder set for ${reminderTime}.`);
       } else if (subcommand === "disable") {
-        if (!userProfile || !userProfile.reminderTime) {
-          interaction.editReply({
-            content: "You don't have a daily reminder set.",
-          });
+        const cleared = await UserProfile.findOneAndUpdate(
+          { ...owner, reminderTime: { $ne: null } },
+          { $set: { reminderTime: null } },
+        );
+        if (!cleared) {
+          interaction.editReply("You don't have a daily reminder set.");
           return;
         }
-
-        userProfile.reminderTime = null;
-        await userProfile.save();
 
         interaction.editReply({
           content: "Your daily reminder has been disabled.",
