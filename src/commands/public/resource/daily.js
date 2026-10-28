@@ -25,7 +25,7 @@ module.exports = {
 
   run: async ({ interaction }) => {
     if (!interaction.inGuild()) {
-      interaction.reply({
+      await interaction.reply({
         content: "This command can only be executed inside a server",
         flags: MessageFlags.Ephemeral,
       });
@@ -87,7 +87,9 @@ module.exports = {
       );
     } catch (error) {
       logger.error(`Error handling /daily: ${error}`);
-      interaction.editReply("Something went wrong. Please try again later.");
+      await interaction.editReply(
+        "Something went wrong. Please try again later.",
+      );
     }
   },
 };

@@ -350,6 +350,7 @@ module.exports = {
             content: "Unexpected error. Try again.",
             flags: MessageFlags.Ephemeral,
           })
+          // the interaction is already answered or expired
           .catch(() => {});
       }
     });

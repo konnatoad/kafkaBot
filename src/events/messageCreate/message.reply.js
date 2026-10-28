@@ -1,13 +1,11 @@
 const logger = require("../../extra/logger");
 
 const REPLY_CHANCE = 0.4;
+// a server where the bot never auto-replies
+const QUIET_GUILD = "853479679914409994";
 
 module.exports = async (message) => {
-  if (
-    message.author.bot ||
-    message.guild.id === "853479679914409994"
-    // message.guild.id === "721847737339084865"
-  )
+  if (message.author.bot || !message.guild || message.guild.id === QUIET_GUILD)
     return;
 
   const me = message.guild.members.me;

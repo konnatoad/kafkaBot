@@ -6,7 +6,7 @@ const MIN_BET = 10;
 module.exports = {
   run: async ({ interaction }) => {
     if (!interaction.inGuild()) {
-      interaction.reply({
+      await interaction.reply({
         content: "you can only run this command inside a server.",
         flags: MessageFlags.Ephemeral,
       });

@@ -64,6 +64,7 @@ module.exports = {
           content: "Failed to get random quote.",
           flags: MessageFlags.Ephemeral,
         })
+        // the interaction is already answered or expired
         .catch(() => {});
     }
   },

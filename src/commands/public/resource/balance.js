@@ -5,7 +5,7 @@ const logger = require("../../../extra/logger");
 module.exports = {
   run: async ({ interaction }) => {
     if (!interaction.inGuild()) {
-      interaction.reply({
+      await interaction.reply({
         content: "This command can only be executed inside a server.",
         flags: MessageFlags.Ephemeral,
       });
@@ -24,13 +24,13 @@ module.exports = {
       });
 
       if (!userProfile) {
-        interaction.editReply({
+        await interaction.editReply({
           content: `This user doesn't have a record in my database.`,
         });
         return;
       }
 
-      interaction.editReply(
+      await interaction.editReply(
         targetUserId === interaction.user.id
           ? {
               content: `You have ${userProfile.balance} rice grains.`,

@@ -25,7 +25,7 @@ module.exports = {
 
   run: async ({ interaction }) => {
     if (!interaction.inGuild()) {
-      interaction.reply({
+      await interaction.reply({
         content: "This command can only be executed inside a server.",
         flags: MessageFlags.Ephemeral,
       });
@@ -46,7 +46,7 @@ module.exports = {
         const typed = interaction.options.getString("time").trim();
         const match = typed.match(/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/);
         if (!match) {
-          interaction.editReply("Invalid time format. Please use HH:MM.");
+          await interaction.editReply("Invalid time format. Please use HH:MM.");
           return;
         }
         // saved as "08:30" because that's what the reminder check compares to
@@ -58,24 +58,27 @@ module.exports = {
           { upsert: true },
         );
 
-        interaction.editReply(`Reminder set for ${reminderTime}.`);
+        await interaction.editReply(`Reminder set for ${reminderTime}.`);
       } else if (subcommand === "disable") {
         const cleared = await UserProfile.findOneAndUpdate(
           { ...owner, reminderTime: { $ne: null } },
           { $set: { reminderTime: null } },
         );
         if (!cleared) {
-          interaction.editReply("You don't have a daily reminder set.");
+          await interaction.editReply("You don't have a daily reminder set.");
           return;
         }
 
-        interaction.editReply({
+        await interaction.editReply({
           content: "Your daily reminder has been disabled.",
         });
       }
     } catch (error) {
-      logger.error(error);
-      interaction.editReply({
+      logger.error(
+        `/remind ${subcommand} failed for ${interaction.user.id}:`,
+        error,
+      );
+      await interaction.editReply({
         content:
           "An error occurred while managing your reminder. Please try again later.",
       });

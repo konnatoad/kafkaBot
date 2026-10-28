@@ -138,7 +138,12 @@ module.exports = (client) => {
         await TriviaStats.deleteMany({
           guildId: cfg.guildId,
           questionId: today,
-        }).catch(() => {});
+        }).catch((err) =>
+          // without this, people who answered on this date before can't answer again
+          logger.warn(
+            `trivia-scheduler: couldn't clear old answers for guild ${cfg.guildId}: ${err}`,
+          ),
+        );
 
         // Disable button on old message
         if (cfg.lastMessageId) {
@@ -155,6 +160,7 @@ module.exports = (client) => {
             );
             await oldMessage
               .edit({ components: [disabledButton] })
+              // the old question was deleted or I lost access to it; nothing to fix
               .catch(() => {});
           }
         }

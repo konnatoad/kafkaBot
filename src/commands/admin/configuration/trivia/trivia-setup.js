@@ -202,6 +202,7 @@ module.exports = {
       .slice(0, 25)
       .map((tz) => ({ name: tz, value: tz }));
 
+    // Discord drops suggestions that come after the user kept typing; that's fine
     await interaction.respond(matches).catch(() => {});
   },
 };
