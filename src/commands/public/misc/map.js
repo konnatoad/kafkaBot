@@ -7,18 +7,10 @@ const {
   ActionRowBuilder,
   MessageFlags,
 } = require("discord.js");
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
+const ro = require("rosu-pp-js");
 const logger = require("../../../extra/logger");
+const { beatmapText } = require("../../../utils/osuBeatmaps");
 
-async function rosu() {
-  const mod = await import("rosu-pp-js");
-  if (typeof mod.default === "function") await mod.default();
-  return mod;
-}
-
-const MAP_DIR = path.join(__dirname, "../../../extra/maps/");
 const MOD_OPTIONS = [
   { label: "NM (No Mod)", value: "NM" },
   { label: "HD (Hidden)", value: "HD" },
@@ -30,10 +22,6 @@ const MOD_OPTIONS = [
   { label: "SO (SpunOut)", value: "SO" },
   { label: "FL (Flashlight)", value: "FL" },
 ];
-
-function ensureMapDir() {
-  if (!fs.existsSync(MAP_DIR)) fs.mkdirSync(MAP_DIR, { recursive: true });
-}
 
 function parseBeatmapId(input) {
   if (!input) return null;
@@ -81,43 +69,6 @@ function normalizeMods(selected) {
   const combined = list.join("");
   const display = set.has("NM") || !combined ? "NM" : list.join("");
   return { ok: true, combined, display };
-}
-
-async function downloadBeatmapIfNeeded(beatmapId) {
-  ensureMapDir();
-  const beatmapPath = path.join(MAP_DIR, `${beatmapId}.osu`);
-  if (fs.existsSync(beatmapPath) && fs.statSync(beatmapPath).size > 0)
-    return beatmapPath;
-  const url = `https://osu.ppy.sh/osu/${beatmapId}`;
-  try {
-    const res = await axios.get(url, {
-      responseType: "arraybuffer",
-      headers: { "User-Agent": "KafkaBot/1.0" },
-      validateStatus: (s) => s >= 200 && s < 400,
-      maxRedirects: 5,
-    });
-    fs.writeFileSync(beatmapPath, res.data);
-    if (!fs.existsSync(beatmapPath) || fs.statSync(beatmapPath).size === 0) {
-      try {
-        fs.unlinkSync(beatmapPath);
-      } catch {}
-      throw new Error("Downloaded file is empty");
-    }
-    return beatmapPath;
-  } catch (e) {
-    logger.error(`Failed to download .osu for ${beatmapId}:`, e?.message || e);
-    return null;
-  }
-}
-
-function readOsuText(beatmapPath) {
-  try {
-    const txt = fs.readFileSync(beatmapPath, "utf8");
-    return txt.replace(/^\uFEFF/, "").trim();
-  } catch (e) {
-    logger.error("Failed to read .osu:", beatmapPath, e?.message || e);
-    return "";
-  }
 }
 
 function extractMeta(osuText) {
@@ -175,86 +126,59 @@ function estimateCountsFromAcc(total, acc, misses) {
   return { n300, n100, n50, misses: miss };
 }
 
-async function calcPP(osuText, modStr, accList, extras) {
-  const ro = await rosu();
+function calcPP(osuText, modStr, accList, extras) {
   const map = new ro.Beatmap(osuText);
-  const diffInit = {};
-  if (modStr) diffInit.mods = modStr;
-  if (typeof extras?.lazer === "boolean") diffInit.lazer = extras.lazer;
-  const diffAttrs = new ro.Difficulty(diffInit).calculate(map);
-  const total = totalObjectsOf(map);
-  const table = {};
-  let info;
-  const countsProvided =
-    Number.isFinite(extras?.n100) ||
-    Number.isFinite(extras?.n50) ||
-    Number.isFinite(extras?.misses);
-  const singleAcc =
-    !countsProvided && Array.isArray(accList) && accList.length === 1;
-  if (countsProvided && Number.isFinite(total)) {
-    const miss = Math.max(0, Number(extras?.misses || 0));
-    const n100 = Math.max(0, Number(extras?.n100 || 0));
-    const n50 = Math.max(0, Number(extras?.n50 || 0));
-    let n300 = Math.max(0, total - miss - n100 - n50);
-    const acc = accFromCounts(n300, n100, n50, miss);
-    const p = {};
-    if (modStr) p.mods = modStr;
-    if (typeof extras?.lazer === "boolean") p.lazer = extras.lazer;
-    if (Number.isFinite(extras?.combo)) p.combo = extras.combo;
-    p.n300 = n300;
-    p.n100 = n100;
-    p.n50 = n50;
-    p.misses = miss;
-    const perf = new ro.Performance(p).calculate(diffAttrs);
-    table[Number(acc.toFixed(2))] = Math.round(perf.pp);
-    info = {
-      n300,
-      n100,
-      n50,
-      misses: miss,
-      combo: extras?.combo,
-      estimated: false,
-      acc: Number(acc.toFixed(2)),
-    };
-  } else if (singleAcc && Number.isFinite(total)) {
-    const a = accList[0];
-    const miss = Math.max(0, Number(extras?.misses || 0));
-    const est = estimateCountsFromAcc(total, a, miss);
-    const p = {};
-    if (modStr) p.mods = modStr;
-    if (typeof extras?.lazer === "boolean") p.lazer = extras.lazer;
-    if (Number.isFinite(extras?.combo)) p.combo = extras.combo;
-    p.n300 = est.n300;
-    p.n100 = est.n100;
-    p.n50 = est.n50;
-    p.misses = est.misses;
-    const perf = new ro.Performance(p).calculate(diffAttrs);
-    table[Number(a.toFixed(2))] = Math.round(perf.pp);
-    info = {
-      n300: est.n300,
-      n100: est.n100,
-      n50: est.n50,
-      misses: est.misses,
-      combo: extras?.combo,
-      estimated: true,
-      acc: Number(a.toFixed(2)),
-    };
-  } else {
-    for (const acc of accList) {
-      const p = {
-        accuracy: acc,
-        hitresultPriority: ro.HitResultPriority.Fastest,
+  try {
+    const base = {};
+    if (modStr) base.mods = modStr;
+    if (typeof extras?.lazer === "boolean") base.lazer = extras.lazer;
+    const diffAttrs = new ro.Difficulty(base).calculate(map);
+    const ppFor = (input) =>
+      Math.round(new ro.Performance(input).calculate(diffAttrs).pp);
+    const withCombo = Number.isFinite(extras?.combo)
+      ? { ...base, combo: extras.combo }
+      : base;
+
+    const total = totalObjectsOf(map);
+    const countsProvided =
+      Number.isFinite(extras?.n100) ||
+      Number.isFinite(extras?.n50) ||
+      Number.isFinite(extras?.misses);
+    const table = {};
+    let info;
+
+    if (countsProvided && Number.isFinite(total)) {
+      const misses = Math.max(0, Number(extras.misses || 0));
+      const n100 = Math.max(0, Number(extras.n100 || 0));
+      const n50 = Math.max(0, Number(extras.n50 || 0));
+      const n300 = Math.max(0, total - misses - n100 - n50);
+      const acc = Number(accFromCounts(n300, n100, n50, misses).toFixed(2));
+      table[acc] = ppFor({ ...withCombo, n300, n100, n50, misses });
+      info = {
+        n300,
+        n100,
+        n50,
+        misses,
+        combo: extras.combo,
+        estimated: false,
+        acc,
       };
-      if (modStr) p.mods = modStr;
-      if (typeof extras?.lazer === "boolean") p.lazer = extras.lazer;
-      const perf = new ro.Performance(p).calculate(diffAttrs);
-      table[acc] = Math.round(perf.pp);
+    } else if (accList.length === 1 && Number.isFinite(total)) {
+      const acc = Number(accList[0].toFixed(2));
+      const counts = estimateCountsFromAcc(total, accList[0], extras?.misses);
+      table[acc] = ppFor({ ...withCombo, ...counts });
+      info = { ...counts, combo: extras?.combo, estimated: true, acc };
+    } else {
+      for (const acc of accList) table[acc] = ppFor({ ...base, accuracy: acc });
+      info = { estimated: false };
     }
-    info = { estimated: false };
+
+    const stars = typeof diffAttrs.stars === "number" ? diffAttrs.stars : null;
+    return { stars, table, info };
+  } finally {
+    // wasm memory: not freed by the garbage collector
+    map.free();
   }
-  const stars = typeof diffAttrs.stars === "number" ? diffAttrs.stars : null;
-  map.free?.();
-  return { stars, table, info };
 }
 
 function makeEmbed(meta, modsLabel, stars, table, info) {
@@ -296,9 +220,22 @@ function makeEmbed(meta, modsLabel, stars, table, info) {
     .addFields({ name: `PP (${modsLabel})`, value: lines.join("\n") });
 }
 
+function promptText(beatmapId, accList, extras, mods) {
+  return [
+    `Beatmap ID: \`${beatmapId}\``,
+    `Accuracies: \`${accList.join(", ")}\``,
+    mods && `Selected mods: \`${mods.join(", ")}\``,
+    Number.isFinite(extras.combo) && `Combo: \`${extras.combo}\``,
+    Number.isFinite(extras.misses) && `Misses: \`${extras.misses}\``,
+    Number.isFinite(extras.n100) && `100s: \`${extras.n100}\``,
+    Number.isFinite(extras.n50) && `50s: \`${extras.n50}\``,
+    `Ruleset: \`${extras.lazer ? "lazer" : "stable"}\``,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 module.exports = {
-  deleted: false,
-  devOnly: false,
   testOnly: true,
   data: new SlashCommandBuilder()
     .setName("map")
@@ -363,15 +300,7 @@ module.exports = {
     };
 
     const prompt = await interaction.editReply({
-      content: `Beatmap ID: \`${beatmapId}\`\nAccuracies: \`${accList.join(
-        ", ",
-      )}\`${
-        Number.isFinite(extras.combo) ? `\nCombo: \`${extras.combo}\`` : ""
-      }${
-        Number.isFinite(extras.misses) ? `\nMisses: \`${extras.misses}\`` : ""
-      }${Number.isFinite(extras.n100) ? `\n100s: \`${extras.n100}\`` : ""}${
-        Number.isFinite(extras.n50) ? `\n50s: \`${extras.n50}\`` : ""
-      }\nRuleset: \`${extras.lazer ? "lazer" : "stable"}\``,
+      content: promptText(beatmapId, accList, extras),
       components: [row1, row2],
     });
 
@@ -401,21 +330,7 @@ module.exports = {
               flags: MessageFlags.Ephemeral,
             });
           return i.update({
-            content: `Beatmap ID: \`${beatmapId}\`\nAccuracies: \`${accList.join(
-              ", ",
-            )}\`\nSelected mods: \`${currentMods.join(", ")}\`${
-              Number.isFinite(extras.combo)
-                ? `\nCombo: \`${extras.combo}\``
-                : ""
-            }${
-              Number.isFinite(extras.misses)
-                ? `\nMisses: \`${extras.misses}\``
-                : ""
-            }${
-              Number.isFinite(extras.n100) ? `\n100s: \`${extras.n100}\`` : ""
-            }${
-              Number.isFinite(extras.n50) ? `\n50s: \`${extras.n50}\`` : ""
-            }\nRuleset: \`${extras.lazer ? "lazer" : "stable"}\``,
+            content: promptText(beatmapId, accList, extras, currentMods),
             components: [row1, row2],
           });
         }
@@ -427,36 +342,17 @@ module.exports = {
               flags: MessageFlags.Ephemeral,
             });
           await i.deferUpdate();
-          let beatmapPath;
-          try {
-            beatmapPath = await downloadBeatmapIfNeeded(beatmapId);
-            if (!beatmapPath) {
-              collector.stop("error");
-              return interaction.editReply({
-                content: "Failed to download the .osu file for that beatmap.",
-                components: [],
-              });
-            }
-          } catch (err) {
-            collector.stop("error");
-            return interaction.editReply({
-              content: `Failed to download .osu: ${String(
-                err?.message || err,
-              )}`,
-              components: [],
-            });
-          }
-          const osuText = readOsuText(beatmapPath);
+          const osuText = await beatmapText(beatmapId);
           if (!osuText) {
             collector.stop("error");
             return interaction.editReply({
-              content: "Could not read the downloaded .osu file.",
+              content: "Failed to download the .osu file for that beatmap.",
               components: [],
             });
           }
           const meta = extractMeta(osuText);
           try {
-            const { stars, table, info } = await calcPP(
+            const { stars, table, info } = calcPP(
               osuText,
               norm.combined,
               accList,

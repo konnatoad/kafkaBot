@@ -8,31 +8,11 @@ const {
   MessageFlags,
   ComponentType,
 } = require("discord.js");
-const https = require("https");
 const TriviaConfig = require("../../../../schemas/TriviaConfig");
 const logger = require("../../../../extra/logger");
-
-function fetchCategories() {
-  return new Promise((resolve, reject) => {
-    https
-      .get("https://opentdb.com/api_category.php", (res) => {
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => {
-          try {
-            resolve(JSON.parse(data).trivia_categories || []);
-          } catch {
-            reject(new Error("Failed to parse category response"));
-          }
-        });
-      })
-      .on("error", reject);
-  });
-}
+const { fetchCategories } = require("../../../../utils/trivia");
 
 module.exports = {
-  testOnly: false,
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("trivia-setup")
     .setDescription("Configure the daily trivia system for this server.")
