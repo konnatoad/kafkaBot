@@ -4,7 +4,7 @@ const {
   EmbedBuilder,
   MessageFlags,
 } = require("discord.js");
-const warningSchema = require("../../../schemas/warnschema");
+const { clearWarnings } = require("../../../utils/warnings");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,39 +19,22 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
   run: async ({ interaction }) => {
-    const { options, guildId } = interaction;
+    const target = interaction.options.getUser("user");
+    const cleared = await clearWarnings(interaction.guildId, target.id);
 
-    const target = options.getUser("user");
-    const userTag = `${target.username}`;
-
-    const embed = new EmbedBuilder();
-
-    let data = await warningSchema.findOne({
-      GuildID: guildId,
-      UserID: target.id,
-      UserNAME: userTag,
-    });
-
-    if (data) {
-      await warningSchema.findOneAndDelete({
-        GuildID: guildId,
-        UserID: target.id,
-        UserNAME: userTag,
-      });
-
-      embed
-        .setColor("Blurple")
-        .setDescription(
-          `:white_check_mark:   **${target}'s** warnings have been cleared`,
-        )
-        .setTimestamp();
-
-      interaction.reply({ embeds: [embed] });
-    } else {
-      interaction.reply({
+    if (!cleared) {
+      return interaction.reply({
         content: `**${target}** has no warnings to be cleared`,
         flags: MessageFlags.Ephemeral,
       });
     }
+
+    const embed = new EmbedBuilder()
+      .setColor("Blurple")
+      .setDescription(
+        `:white_check_mark: **${target}'s** ${cleared} warning(s) have been cleared`,
+      )
+      .setTimestamp();
+    await interaction.reply({ embeds: [embed] });
   },
 };

@@ -1,6 +1,6 @@
 const { AutoModerationActionType } = require("discord.js");
 const AutoModConfig = require("../../schemas/AutoModConfig");
-const { addWarning } = require("../../utils/addWarning");
+const { addWarning } = require("../../utils/warnings");
 const logger = require("../../extra/logger");
 
 module.exports = async (execution) => {
