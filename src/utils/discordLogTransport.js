@@ -20,7 +20,10 @@ class DiscordLogTransport extends Transport {
 
   log(info, callback) {
     const level = String(info.level).replace(ANSI, "");
-    const stack = info.stack && !String(info.message).includes(info.stack) ? `\n${info.stack}` : "";
+    const stack =
+      info.stack && !String(info.message).includes(info.stack)
+        ? `\n${info.stack}`
+        : "";
     const line = `${info.timestamp ?? new Date().toISOString()} [${level}]: ${String(info.message).replace(ANSI, "")}${stack}`;
     this.queue.push(line);
     if (level === "error") this.pendingPing = true;
@@ -31,7 +34,10 @@ class DiscordLogTransport extends Transport {
     if (this.sending || !this.queue.length) return;
     this.sending = true;
     try {
-      const ping = this.pendingPing && this.pingUserId && Date.now() - this.lastPing > PING_COOLDOWN_MS;
+      const ping =
+        this.pendingPing &&
+        this.pingUserId &&
+        Date.now() - this.lastPing > PING_COOLDOWN_MS;
       this.pendingPing = false;
       if (ping) this.lastPing = Date.now();
 
@@ -39,7 +45,8 @@ class DiscordLogTransport extends Transport {
       const chunks = [];
       let current = "";
       for (let line of lines) {
-        if (line.length > MAX_LEN) line = `${line.slice(0, MAX_LEN - 15)}…[truncated]`;
+        if (line.length > MAX_LEN)
+          line = `${line.slice(0, MAX_LEN - 15)}…[truncated]`;
         if (current.length + line.length + 1 > MAX_LEN) {
           chunks.push(current);
           current = "";
@@ -50,7 +57,9 @@ class DiscordLogTransport extends Transport {
 
       for (const [i, chunk] of chunks.entries()) {
         const mention = ping && i === 0 ? `<@${this.pingUserId}>\n` : "";
-        await this.post(`${mention}\`\`\`\n${chunk.replace(/```/g, "ʼʼʼ")}\n\`\`\``);
+        await this.post(
+          `${mention}\`\`\`\n${chunk.replace(/```/g, "ʼʼʼ")}\n\`\`\``,
+        );
       }
     } catch {
       // Never let log shipping crash the bot; the console transport still has everything

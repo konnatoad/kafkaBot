@@ -10,10 +10,12 @@ const uploadsPlaylistCache = new Map();
 const failureTracker = new Map();
 
 async function getUploadsPlaylistId(ytChannelId) {
-  if (uploadsPlaylistCache.has(ytChannelId)) return uploadsPlaylistCache.get(ytChannelId);
+  if (uploadsPlaylistCache.has(ytChannelId))
+    return uploadsPlaylistCache.get(ytChannelId);
   const url = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${ytChannelId}&key=${YOUTUBE_API_KEY}`;
   const res = await axios.get(url);
-  const playlistId = res.data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+  const playlistId =
+    res.data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
   if (playlistId) uploadsPlaylistCache.set(ytChannelId, playlistId);
   return playlistId ?? null;
 }
@@ -32,13 +34,15 @@ async function fetchLatestVideo(ytChannelId) {
     link: `https://www.youtube.com/watch?v=${snippet.resourceId.videoId}`,
     pubDate: snippet.publishedAt,
     channelTitle: snippet.channelTitle,
-    channelLink: `https://www.youtube.com/channel/${ytChannelId}`
+    channelLink: `https://www.youtube.com/channel/${ytChannelId}`,
   };
 }
 
 module.exports = (client) => {
   if (!YOUTUBE_API_KEY) {
-    logger.warn("check-youtube: YOUTUBE_API_KEY is not set, YouTube notifications are disabled.");
+    logger.warn(
+      "check-youtube: YOUTUBE_API_KEY is not set, YouTube notifications are disabled.",
+    );
     return;
   }
 
@@ -63,12 +67,20 @@ module.exports = (client) => {
           try {
             latestVideo = await fetchLatestVideo(ytChannelId);
           } catch (e) {
-            const detail = e.response?.data?.error?.message ?? e.message ?? String(e);
-            const reason = e.response?.data?.error?.errors?.[0]?.reason ?? "unknown";
+            const detail =
+              e.response?.data?.error?.message ?? e.message ?? String(e);
+            const reason =
+              e.response?.data?.error?.errors?.[0]?.reason ?? "unknown";
             const status = e.response?.status ?? "no-status";
             const now = new Date();
 
-            const tracker = failureTracker.get(ytChannelId) ?? { count: 0, firstFailAt: now, lastFailAt: null, lastRecoveredAt: null, wasFailingLastCycle: false };
+            const tracker = failureTracker.get(ytChannelId) ?? {
+              count: 0,
+              firstFailAt: now,
+              lastFailAt: null,
+              lastRecoveredAt: null,
+              wasFailingLastCycle: false,
+            };
             tracker.count++;
             tracker.lastFailAt = now;
             tracker.wasFailingLastCycle = true;
@@ -77,20 +89,29 @@ module.exports = (client) => {
 
             logger.warn(
               `check-youtube: failed to fetch latest video for channel ${ytChannelId}: ${detail} (reason: ${reason}, status: ${status}) ` +
-              `[failure #${tracker.count}, first failed at ${tracker.firstFailAt.toISOString()}, UTC hour: ${now.getUTCHours()}:${String(now.getUTCMinutes()).padStart(2, "0")}]`
+                `[failure #${tracker.count}, first failed at ${tracker.firstFailAt.toISOString()}, UTC hour: ${now.getUTCHours()}:${String(now.getUTCMinutes()).padStart(2, "0")}]`,
             );
 
             // Retry after 3 seconds to see if it's a momentary blip
-            await new Promise(res => setTimeout(res, 3000));
+            await new Promise((res) => setTimeout(res, 3000));
             try {
               latestVideo = await fetchLatestVideo(ytChannelId);
-              logger.info(`check-youtube: channel ${ytChannelId} recovered on immediate retry after ${Date.now() - now.getTime()}ms`);
+              logger.info(
+                `check-youtube: channel ${ytChannelId} recovered on immediate retry after ${Date.now() - now.getTime()}ms`,
+              );
               failureTracker.delete(ytChannelId);
             } catch (retryErr) {
-              const retryDetail = retryErr.response?.data?.error?.message ?? retryErr.message ?? String(retryErr);
-              const retryReason = retryErr.response?.data?.error?.errors?.[0]?.reason ?? "unknown";
+              const retryDetail =
+                retryErr.response?.data?.error?.message ??
+                retryErr.message ??
+                String(retryErr);
+              const retryReason =
+                retryErr.response?.data?.error?.errors?.[0]?.reason ??
+                "unknown";
               const retryStatus = retryErr.response?.status ?? "no-status";
-              logger.warn(`check-youtube: retry also failed for channel ${ytChannelId}: ${retryDetail} (reason: ${retryReason}, status: ${retryStatus}) — not a momentary blip`);
+              logger.warn(
+                `check-youtube: retry also failed for channel ${ytChannelId}: ${retryDetail} (reason: ${retryReason}, status: ${retryStatus}) — not a momentary blip`,
+              );
               latestVideo = null;
             }
           }
@@ -99,7 +120,9 @@ module.exports = (client) => {
           if (latestVideo !== null) {
             const tracker = failureTracker.get(ytChannelId);
             if (tracker?.wasFailingLastCycle) {
-              logger.info(`check-youtube: channel ${ytChannelId} recovered after ${tracker.count} failure(s). First failed at ${tracker.firstFailAt.toISOString()}, recovered at ${new Date().toISOString()}`);
+              logger.info(
+                `check-youtube: channel ${ytChannelId} recovered after ${tracker.count} failure(s). First failed at ${tracker.firstFailAt.toISOString()}, recovered at ${new Date().toISOString()}`,
+              );
               failureTracker.delete(ytChannelId);
             }
           }
@@ -124,7 +147,9 @@ module.exports = (client) => {
               client.guilds.cache.get(guildId) ||
               (await client.guilds.fetch(guildId).catch(() => null));
             if (!targetGuild) {
-              await NotificationConfig.findOneAndDelete({ _id: notificationConfig._id });
+              await NotificationConfig.findOneAndDelete({
+                _id: notificationConfig._id,
+              });
               continue;
             }
             guildCache.set(guildId, targetGuild);
@@ -135,9 +160,13 @@ module.exports = (client) => {
           if (!targetChannel) {
             targetChannel =
               targetGuild.channels.cache.get(notificationChannelId) ||
-              (await targetGuild.channels.fetch(notificationChannelId).catch(() => null));
+              (await targetGuild.channels
+                .fetch(notificationChannelId)
+                .catch(() => null));
             if (!targetChannel) {
-              await NotificationConfig.findOneAndDelete({ _id: notificationConfig._id });
+              await NotificationConfig.findOneAndDelete({
+                _id: notificationConfig._id,
+              });
               continue;
             }
             channelCache.set(channelCacheKey, targetChannel);
@@ -145,7 +174,7 @@ module.exports = (client) => {
 
           notificationConfig.lastCheckedVid = {
             id: latestVideo.id,
-            pubDate: latestVideo.pubDate
+            pubDate: latestVideo.pubDate,
           };
 
           try {

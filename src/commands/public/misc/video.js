@@ -16,7 +16,7 @@ function buildPool(user) {
   const eggs = easterEggs.map((url) =>
     url
       ? `${user} you have found an easter egg!\n${url}`
-      : `${user} you have found an easter egg!`
+      : `${user} you have found an easter egg!`,
   );
   return [...videos, ...eggs];
 }
@@ -31,7 +31,10 @@ module.exports = {
   testOnly: false,
 
   run: async ({ interaction }) => {
-    if (shuffledOptions.length === 0 || currentIndex >= shuffledOptions.length) {
+    if (
+      shuffledOptions.length === 0 ||
+      currentIndex >= shuffledOptions.length
+    ) {
       shuffledOptions = shuffleArray(buildPool(interaction.user));
       currentIndex = 0;
     }

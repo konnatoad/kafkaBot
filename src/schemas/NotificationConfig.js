@@ -38,7 +38,7 @@ const notificationConfigSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("NotificationConfig", notificationConfigSchema);

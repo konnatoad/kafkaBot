@@ -24,7 +24,7 @@ module.exports = {
     }
     const channel = interaction.guild.channels.cache.get(
       // Getting the welcome channel from the server's channels
-      existingSetup.channelId
+      existingSetup.channelId,
     );
     if (!channel) {
       return await interaction.reply({

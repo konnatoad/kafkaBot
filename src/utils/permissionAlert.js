@@ -17,12 +17,21 @@ async function alertMissingPermissions(guild, channel, missing, feature) {
   try {
     await PermissionAlert.updateOne(
       { guildId: guild.id, key, lastSentAt: { $lt: cutoff } },
-      { $set: { lastSentAt: new Date(), lastResult: "pending", lastDetail: null } },
+      {
+        $set: {
+          lastSentAt: new Date(),
+          lastResult: "pending",
+          lastDetail: null,
+        },
+      },
       { upsert: true },
     );
   } catch (err) {
     if (err.code !== 11000) throw err;
-    const prev = await PermissionAlert.findOne({ guildId: guild.id, key }).lean();
+    const prev = await PermissionAlert.findOne({
+      guildId: guild.id,
+      key,
+    }).lean();
     report(
       "info",
       `skipped for ${where}, last attempt ${prev?.lastSentAt?.toISOString()} (result: ${prev?.lastResult})`,
@@ -44,11 +53,14 @@ async function alertMissingPermissions(guild, channel, missing, feature) {
   try {
     await owner.send(
       `Hi! I couldn't post the **${feature}** message in **#${channel.name}** on **${guild.name}** ` +
-      `because I'm missing these permissions there: **${missing.map(readable).join(", ")}**.\n` +
-      `Please give my role these permissions in that channel (Edit channel -> Permissions), ` +
-      `or choose a different channel with the setup command.`,
+        `because I'm missing these permissions there: **${missing.map(readable).join(", ")}**.\n` +
+        `Please give my role these permissions in that channel (Edit channel -> Permissions), ` +
+        `or choose a different channel with the setup command.`,
     );
-    report("info", `DMed owner ${ownerLabel} for ${where}, missing ${missing.join(", ")}`);
+    report(
+      "info",
+      `DMed owner ${ownerLabel} for ${where}, missing ${missing.join(", ")}`,
+    );
     await record("sent");
     return "sent";
   } catch (err) {
@@ -63,4 +75,3 @@ async function alertMissingPermissions(guild, channel, missing, feature) {
   }
 }
 module.exports = { alertMissingPermissions };
-

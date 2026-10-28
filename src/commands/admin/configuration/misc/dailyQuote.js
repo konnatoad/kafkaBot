@@ -2,7 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   MessageFlags,
-  EmbedBuilder
+  EmbedBuilder,
 } = require("discord.js");
 const Quote = require("../../../../schemas/quoteSchema");
 const DailyQuote = require("../../../../schemas/dailyQuoteSchema");
@@ -33,16 +33,14 @@ const sendDailyQuote = async (client) => {
         .fetch(guild.channelId)
         .catch(() => null);
       if (!channel) {
-        logger.error(
-          `Channel not found for guild ${guild.guildId}. Skipping.`
-        );
+        logger.error(`Channel not found for guild ${guild.guildId}. Skipping.`);
         continue;
       }
 
       const permissions = channel.permissionsFor(client.user);
       if (!permissions || !permissions.has("SendMessages")) {
         logger.error(
-          `Missing permissions to send messages in channel ${channel.id}.`
+          `Missing permissions to send messages in channel ${channel.id}.`,
         );
         continue;
       }
@@ -58,13 +56,13 @@ const sendDailyQuote = async (client) => {
 
       // Filter out recently used quotes
       let availableQuotes = quotes.filter(
-        (quote) => !recentQuotes.includes(quote._id.toString())
+        (quote) => !recentQuotes.includes(quote._id.toString()),
       );
 
       // If all quotes are used, reset buffer
       if (availableQuotes.length === 0) {
         logger.info(
-          `All quotes used in guild ${guild.guildId}, resetting buffer.`
+          `All quotes used in guild ${guild.guildId}, resetting buffer.`,
         );
         recentQuotes = [];
         availableQuotes = quotes;
@@ -92,14 +90,14 @@ const sendDailyQuote = async (client) => {
       await DailyQuote.findOneAndUpdate(
         { guildId: guild.guildId },
         { recentQuotes },
-        { returnDocument: "after" }
+        { returnDocument: "after" },
       );
 
       // Increment quote count
       const updatedGuild = await DailyQuote.findOneAndUpdate(
         { guildId: guild.guildId },
         { $inc: { quoteCount: 1 } },
-        { returnDocument: "after" }
+        { returnDocument: "after" },
       );
 
       const quoteNumber = updatedGuild.quoteCount;
@@ -111,17 +109,17 @@ const sendDailyQuote = async (client) => {
         .setColor("Blurple")
         .addFields(
           { name: "Author", value: randomQuote.author, inline: true },
-          { name: "Date", value: formattedDate, inline: true }
+          { name: "Date", value: formattedDate, inline: true },
         );
 
       await channel.send({ embeds: [embed] });
       logger.info(
-        `Quote sent to channel ${channel.id} in guild ${guild.guildId}.`
+        `Quote sent to channel ${channel.id} in guild ${guild.guildId}.`,
       );
     } catch (error) {
       logger.error(
         `An error occurred while sending a quote to guild ${guild.guildId}:`,
-        error
+        error,
       );
     }
   }
@@ -161,13 +159,13 @@ module.exports = {
           option
             .setName("channel")
             .setDescription("Channel to send quotes to")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName("disable")
-        .setDescription("Disable daily quotes for this server")
+        .setDescription("Disable daily quotes for this server"),
     ),
 
   async run({ interaction, client }) {
@@ -182,13 +180,13 @@ module.exports = {
           { guildId: interaction.guildId },
           {
             channelId: channel.id,
-            $setOnInsert: { quoteCount: 0, recentQuotes: [] }
+            $setOnInsert: { quoteCount: 0, recentQuotes: [] },
           },
-          { upsert: true }
+          { upsert: true },
         );
 
         await interaction.editReply({
-          content: `Daily quotes enabled! Quotes will be sent to ${channel}.`
+          content: `Daily quotes enabled! Quotes will be sent to ${channel}.`,
         });
       } else if (subcommand === "disable") {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -196,7 +194,7 @@ module.exports = {
         await DailyQuote.findOneAndDelete({ guildId: interaction.guildId });
 
         await interaction.editReply({
-          content: "Daily quotes have been disabled."
+          content: "Daily quotes have been disabled.",
         });
       }
     } catch (error) {
@@ -204,16 +202,16 @@ module.exports = {
 
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({
-          content: "An error occurred while processing the command."
+          content: "An error occurred while processing the command.",
         });
       } else {
         await interaction.reply({
           content: "An error occurred while processing the command.",
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
   },
 
-  scheduleDailyQuote
+  scheduleDailyQuote,
 };

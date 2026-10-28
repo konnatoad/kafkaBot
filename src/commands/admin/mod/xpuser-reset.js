@@ -13,7 +13,7 @@ module.exports = {
       option
         .setName("user")
         .setDescription("The member you want to clear the xp of")
-        .setRequired(true)
+        .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 

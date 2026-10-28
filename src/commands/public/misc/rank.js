@@ -15,7 +15,7 @@ module.exports = {
       option
         .setName("user")
         .setDescription("The member you want to check the rank of")
-        .setRequired(false)
+        .setRequired(false),
     ),
 
   run: async ({ interaction }) => {

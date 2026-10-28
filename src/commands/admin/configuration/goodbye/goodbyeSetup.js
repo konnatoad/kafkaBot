@@ -17,7 +17,7 @@ module.exports = {
       option
         .setName("channel")
         .setDescription("The channel where the goodbye message will be sent")
-        .setRequired(true)
+        .setRequired(true),
     ),
 
   run: async ({ interaction }) => {
@@ -41,7 +41,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor("Random")
         .setDescription(
-          `Goodbye setup completed. Goodbye messages will be sent to <#${channelId}>.`
+          `Goodbye setup completed. Goodbye messages will be sent to <#${channelId}>.`,
         )
         .setTimestamp();
 

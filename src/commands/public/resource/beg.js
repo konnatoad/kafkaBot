@@ -15,7 +15,7 @@ module.exports = {
     if (!interaction.inGuild()) {
       await interaction.reply({
         content: "You can only run this command in a server!",
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -28,7 +28,7 @@ module.exports = {
 
       let cooldown = await Cooldown.findOne({
         userId,
-        commandName
+        commandName,
       });
 
       //COOLDOWN
@@ -38,61 +38,61 @@ module.exports = {
         const cdoptions = [
           `Now now, let's not be too eager. \n*${prettyMs(
             cooldown.endsAt - Date.now(),
-            { secondsDecimalDigits: 0 }
+            { secondsDecimalDigits: 0 },
           )}*`,
           `You're not ready yet. \n*${prettyMs(cooldown.endsAt - Date.now(), {
-            secondsDecimalDigits: 0
+            secondsDecimalDigits: 0,
           })}*`,
           `Maybe you should rethink about that one for a bit longer. \n*${prettyMs(
             cooldown.endsAt - Date.now(),
-            { secondsDecimalDigits: 0 }
+            { secondsDecimalDigits: 0 },
           )}*`,
           `Hold on a minute! \n*${prettyMs(cooldown.endsAt - Date.now(), {
-            secondsDecimalDigits: 0
+            secondsDecimalDigits: 0,
           })}*`,
           `Being so over eager isn't good! Calm yourself! \n*${prettyMs(
             cooldown.endsAt - Date.now(),
-            { secondsDecimalDigits: 0 }
+            { secondsDecimalDigits: 0 },
           )}*`,
           `This is a perfect time to rethink your life decisions and what made you to behave this way. \n*${prettyMs(
             cooldown.endsAt - Date.now(),
-            { secondsDecimalDigits: 0 }
+            { secondsDecimalDigits: 0 },
           )}*`,
           `You should cool off for a little while! \n*${prettyMs(
             cooldown.endsAt - Date.now(),
-            { secondsDecimalDigits: 0 }
+            { secondsDecimalDigits: 0 },
           )}*`,
           `Try again a while later! \n*${prettyMs(
             cooldown.endsAt - Date.now(),
-            { secondsDecimalDigits: 0 }
+            { secondsDecimalDigits: 0 },
           )}*`,
           `Oh you're so eager! Still, you should wait a while. \n*${prettyMs(
             cooldown.endsAt - Date.now(),
-            { secondsDecimalDigits: 0 }
+            { secondsDecimalDigits: 0 },
           )}*`,
           `At least let me breathe for a minute first! \n*${prettyMs(
             cooldown.endsAt - Date.now(),
-            { secondsDecimalDigits: 0 }
+            { secondsDecimalDigits: 0 },
           )}*`,
           `Hold on, I'm busy! \n*${prettyMs(cooldown.endsAt - Date.now(), {
-            secondsDecimalDigits: 0
+            secondsDecimalDigits: 0,
           })}*`,
           `Ugh. Not now! \n*${prettyMs(cooldown.endsAt - Date.now(), {
-            secondsDecimalDigits: 0
+            secondsDecimalDigits: 0,
           })}*`,
           `Already? \n*${prettyMs(cooldown.endsAt - Date.now(), {
-            secondsDecimalDigits: 0
+            secondsDecimalDigits: 0,
           })}*`,
           `I get that you want me but you have to wait a while! \n*${prettyMs(
             cooldown.endsAt - Date.now(),
-            { secondsDecimalDigits: 0 }
-          )}*`
+            { secondsDecimalDigits: 0 },
+          )}*`,
         ];
         const randomcooldown =
           cdoptions[Math.floor(Math.random() * cdoptions.length)];
 
         await interaction.editReply({
-          content: `${randomcooldown}`
+          content: `${randomcooldown}`,
         });
         return;
       }
@@ -100,18 +100,18 @@ module.exports = {
       if (!cooldown) {
         cooldown = new Cooldown({
           userId,
-          commandName
+          commandName,
         });
       }
 
       const profileExists = await UserProfile.exists({
         userId,
-        Guild: interaction.guild.id
+        Guild: interaction.guild.id,
       });
 
       if (!profileExists) {
         await interaction.editReply({
-          content: `You don't have user setup in my database, please run /daily.`
+          content: `You don't have user setup in my database, please run /daily.`,
         });
         return;
       }
@@ -171,12 +171,12 @@ module.exports = {
           "Meow for me!",
           "Fatherless behaviour.",
           "Reconsider.",
-          "You're not even worth my time."
+          "You're not even worth my time.",
         ];
         const randomloss =
           lossoptions[Math.floor(Math.random() * lossoptions.length)];
         await interaction.editReply({
-          content: `${randomloss}`
+          content: `${randomloss}`,
         });
 
         cooldown.endsAt = Date.now() + 180000;
@@ -203,7 +203,7 @@ module.exports = {
         `Oh, you learned a new trick? Good puppy! \n*+${amount} rice grains.*`,
         `Fine, but I'm going to tell everyone you did that! \n*+${amount} rice grains.*`,
         `You know what? I'm feeling generous today! \n*+${amount} rice grains.*`,
-        `You caught me in a good mood! \n*+${amount} rice grains.*`
+        `You caught me in a good mood! \n*+${amount} rice grains.*`,
       ];
       const randomwin =
         winnerchicken[Math.floor(Math.random() * winnerchicken.length)];
@@ -212,12 +212,12 @@ module.exports = {
         cooldown.save(),
         UserProfile.updateOne(
           { userId, Guild: interaction.guild.id },
-          { $inc: { balance: amount } }
+          { $inc: { balance: amount } },
         ),
       ]);
 
       await interaction.editReply({
-        content: `${randomwin}`
+        content: `${randomwin}`,
       });
     } catch (error) {
       logger.error(`error handling /beg: ${error}`);
@@ -226,5 +226,5 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("beg")
-    .setDescription("Beg for a chance to get some extra currency.")
+    .setDescription("Beg for a chance to get some extra currency."),
 };

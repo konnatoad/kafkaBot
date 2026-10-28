@@ -5,7 +5,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
-  MessageFlags
+  MessageFlags,
 } = require("discord.js");
 const axios = require("axios");
 const fs = require("fs");
@@ -28,7 +28,7 @@ const MOD_OPTIONS = [
   { label: "EZ (Easy)", value: "EZ" },
   { label: "NF (NoFail)", value: "NF" },
   { label: "SO (SpunOut)", value: "SO" },
-  { label: "FL (Flashlight)", value: "FL" }
+  { label: "FL (Flashlight)", value: "FL" },
 ];
 
 function ensureMapDir() {
@@ -94,7 +94,7 @@ async function downloadBeatmapIfNeeded(beatmapId) {
       responseType: "arraybuffer",
       headers: { "User-Agent": "KafkaBot/1.0" },
       validateStatus: (s) => s >= 200 && s < 400,
-      maxRedirects: 5
+      maxRedirects: 5,
     });
     fs.writeFileSync(beatmapPath, res.data);
     if (!fs.existsSync(beatmapPath) || fs.statSync(beatmapPath).size === 0) {
@@ -214,7 +214,7 @@ async function calcPP(osuText, modStr, accList, extras) {
       misses: miss,
       combo: extras?.combo,
       estimated: false,
-      acc: Number(acc.toFixed(2))
+      acc: Number(acc.toFixed(2)),
     };
   } else if (singleAcc && Number.isFinite(total)) {
     const a = accList[0];
@@ -237,13 +237,13 @@ async function calcPP(osuText, modStr, accList, extras) {
       misses: est.misses,
       combo: extras?.combo,
       estimated: true,
-      acc: Number(a.toFixed(2))
+      acc: Number(a.toFixed(2)),
     };
   } else {
     for (const acc of accList) {
       const p = {
         accuracy: acc,
-        hitresultPriority: ro.HitResultPriority.Fastest
+        hitresultPriority: ro.HitResultPriority.Fastest,
       };
       if (modStr) p.mods = modStr;
       if (typeof extras?.lazer === "boolean") p.lazer = extras.lazer;
@@ -286,7 +286,7 @@ function makeEmbed(meta, modsLabel, stars, table, info) {
     stars ? `**${stars.toFixed(2)}★**` : null,
     stats.join(" "),
     extra.length ? extra.join(" • ") : null,
-    meta.mapper ? `by **${meta.mapper}**` : null
+    meta.mapper ? `by **${meta.mapper}**` : null,
   ]
     .filter(Boolean)
     .join(" | ");
@@ -307,27 +307,27 @@ module.exports = {
       opt
         .setName("map")
         .setDescription("Beatmap link or beatmap ID")
-        .setRequired(true)
+        .setRequired(true),
     )
     .addStringOption((opt) =>
       opt
         .setName("acc")
-        .setDescription("Comma-separated accuracies or single accuracy")
+        .setDescription("Comma-separated accuracies or single accuracy"),
     )
     .addIntegerOption((opt) =>
-      opt.setName("combo").setDescription("Score combo")
+      opt.setName("combo").setDescription("Score combo"),
     )
     .addIntegerOption((opt) =>
-      opt.setName("misses").setDescription("Miss count")
+      opt.setName("misses").setDescription("Miss count"),
     )
     .addIntegerOption((opt) =>
-      opt.setName("n100").setDescription("Number of 100s")
+      opt.setName("n100").setDescription("Number of 100s"),
     )
     .addIntegerOption((opt) =>
-      opt.setName("n50").setDescription("Number of 50s")
+      opt.setName("n50").setDescription("Number of 50s"),
     )
     .addBooleanOption((opt) =>
-      opt.setName("lazer").setDescription("Use lazer ruleset (default: off)")
+      opt.setName("lazer").setDescription("Use lazer ruleset (default: off)"),
     ),
   run: async ({ interaction }) => {
     const bmInput = interaction.options.getString("map", true);
@@ -337,7 +337,7 @@ module.exports = {
     if (!beatmapId)
       return interaction.reply({
         content: "Could not parse a beatmap ID from that input.",
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     await interaction.deferReply();
 
@@ -359,12 +359,12 @@ module.exports = {
       misses: interaction.options.getInteger("misses") ?? undefined,
       n100: interaction.options.getInteger("n100") ?? undefined,
       n50: interaction.options.getInteger("n50") ?? undefined,
-      lazer: interaction.options.getBoolean("lazer") ?? false
+      lazer: interaction.options.getBoolean("lazer") ?? false,
     };
 
     const prompt = await interaction.editReply({
       content: `Beatmap ID: \`${beatmapId}\`\nAccuracies: \`${accList.join(
-        ", "
+        ", ",
       )}\`${
         Number.isFinite(extras.combo) ? `\nCombo: \`${extras.combo}\`` : ""
       }${
@@ -372,7 +372,7 @@ module.exports = {
       }${Number.isFinite(extras.n100) ? `\n100s: \`${extras.n100}\`` : ""}${
         Number.isFinite(extras.n50) ? `\n50s: \`${extras.n50}\`` : ""
       }\nRuleset: \`${extras.lazer ? "lazer" : "stable"}\``,
-      components: [row1, row2]
+      components: [row1, row2],
     });
 
     let currentMods = ["NM"];
@@ -386,7 +386,7 @@ module.exports = {
     };
     const collector = prompt.createMessageComponentCollector({
       filter,
-      time: 120000
+      time: 120000,
     });
 
     collector.on("collect", async (i) => {
@@ -398,11 +398,11 @@ module.exports = {
           if (!norm.ok)
             return i.reply({
               content: norm.reason,
-              flags: MessageFlags.Ephemeral
+              flags: MessageFlags.Ephemeral,
             });
           return i.update({
             content: `Beatmap ID: \`${beatmapId}\`\nAccuracies: \`${accList.join(
-              ", "
+              ", ",
             )}\`\nSelected mods: \`${currentMods.join(", ")}\`${
               Number.isFinite(extras.combo)
                 ? `\nCombo: \`${extras.combo}\``
@@ -416,7 +416,7 @@ module.exports = {
             }${
               Number.isFinite(extras.n50) ? `\n50s: \`${extras.n50}\`` : ""
             }\nRuleset: \`${extras.lazer ? "lazer" : "stable"}\``,
-            components: [row1, row2]
+            components: [row1, row2],
           });
         }
         if (kind === "calc") {
@@ -424,7 +424,7 @@ module.exports = {
           if (!norm.ok)
             return i.reply({
               content: norm.reason,
-              flags: MessageFlags.Ephemeral
+              flags: MessageFlags.Ephemeral,
             });
           await i.deferUpdate();
           let beatmapPath;
@@ -434,16 +434,16 @@ module.exports = {
               collector.stop("error");
               return interaction.editReply({
                 content: "Failed to download the .osu file for that beatmap.",
-                components: []
+                components: [],
               });
             }
           } catch (err) {
             collector.stop("error");
             return interaction.editReply({
               content: `Failed to download .osu: ${String(
-                err?.message || err
+                err?.message || err,
               )}`,
-              components: []
+              components: [],
             });
           }
           const osuText = readOsuText(beatmapPath);
@@ -451,7 +451,7 @@ module.exports = {
             collector.stop("error");
             return interaction.editReply({
               content: "Could not read the downloaded .osu file.",
-              components: []
+              components: [],
             });
           }
           const meta = extractMeta(osuText);
@@ -460,20 +460,20 @@ module.exports = {
               osuText,
               norm.combined,
               accList,
-              extras
+              extras,
             );
             const embed = makeEmbed(meta, norm.display, stars, table, info);
             collector.stop("done");
             return interaction.editReply({
               content: null,
               embeds: [embed],
-              components: []
+              components: [],
             });
           } catch (err) {
             collector.stop("error");
             return interaction.editReply({
               content: `PP calculation failed: ${String(err?.message || err)}`,
-              components: []
+              components: [],
             });
           }
         }
@@ -482,7 +482,7 @@ module.exports = {
         try {
           await i.reply({
             content: "Unexpected error. Try again.",
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           });
         } catch (e) {
           logger.error(e);
@@ -499,12 +499,12 @@ module.exports = {
         await interaction.editReply({
           components: [
             new ActionRowBuilder().addComponents(disabledSelect),
-            new ActionRowBuilder().addComponents(disabledBtn)
-          ]
+            new ActionRowBuilder().addComponents(disabledBtn),
+          ],
         });
       } catch (err) {
         logger.error(err);
       }
     });
-  }
+  },
 };

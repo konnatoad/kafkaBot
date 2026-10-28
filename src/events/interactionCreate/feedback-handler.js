@@ -8,7 +8,7 @@ module.exports = async (interaction, client) => {
   if (interaction.customId === "feedbackSubmit") {
     const feature = interaction.fields.getTextInputValue("feature");
     const feedbackDescription = interaction.fields.getTextInputValue(
-      "feedbackDescription"
+      "feedbackDescription",
     );
 
     const member = interaction.member;
@@ -36,7 +36,7 @@ module.exports = async (interaction, client) => {
           value: `\`${server.name} (${server.id})\``,
         },
         { name: "Feature/Topic", value: `> ${feature}` },
-        { name: "Feedback", value: `> ${feedbackDescription}` }
+        { name: "Feedback", value: `> ${feedbackDescription}` },
       )
       .setFooter({
         text: "Feedback System",
@@ -45,7 +45,10 @@ module.exports = async (interaction, client) => {
       .setTimestamp();
 
     await feedbackChannel.send({ embeds: [feedbackEmbed] }).catch((err) => {
-      logger.error("feedback-handler: failed to send to feedback channel:", err);
+      logger.error(
+        "feedback-handler: failed to send to feedback channel:",
+        err,
+      );
     });
 
     await interaction.reply({

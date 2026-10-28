@@ -5,7 +5,7 @@
 Only the latest stable version of kafkaBot is supported with security updates.
 
 | Version | Supported |
-|---------|-----------|
+| ------- | --------- |
 | latest  | ✅        |
 | older   | ❌        |
 
@@ -15,7 +15,7 @@ If you discover a security vulnerability in kafkaBot, please report it responsib
 
 ### Contact
 
-- **Preferred**: Open an issue on [GitHub Issues](https://github.com/konnatoad/kafkaBot/issues) **with the `security` label**. *Do not include sensitive details publicly.*
+- **Preferred**: Open an issue on [GitHub Issues](https://github.com/konnatoad/kafkaBot/issues) **with the `security` label**. _Do not include sensitive details publicly._
 
 Please include:
 

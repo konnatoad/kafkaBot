@@ -28,7 +28,7 @@ const getRandomQuote = async (interaction, user) => {
     if (count === 0) {
       return handleError(
         interaction,
-        "No quotes found for the specified user."
+        "No quotes found for the specified user.",
       );
     }
 
@@ -47,7 +47,7 @@ const getRandomQuote = async (interaction, user) => {
     const randomWeight =
       Math.random() * cumulativeWeights[cumulativeWeights.length - 1];
     const selectedQuoteIndex = cumulativeWeights.findIndex(
-      (cumulativeWeight) => cumulativeWeight >= randomWeight
+      (cumulativeWeight) => cumulativeWeight >= randomWeight,
     );
     const selectedQuote = quotes[selectedQuoteIndex];
 
@@ -58,7 +58,7 @@ const getRandomQuote = async (interaction, user) => {
       (match, userID) => {
         const user = interaction.guild.members.cache.get(userID);
         return user ? `@${user.displayName}` : match;
-      }
+      },
     );
 
     const formattedDate = selectedQuote.date.toLocaleDateString("fi-FI");
@@ -77,7 +77,7 @@ const data = new SlashCommandBuilder()
     option
       .setName("user")
       .setDescription("Filter quotes by user")
-      .setRequired(false)
+      .setRequired(false),
   );
 
 module.exports = {

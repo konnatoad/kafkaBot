@@ -3,7 +3,7 @@ const {
   ChannelType,
   EmbedBuilder,
   PermissionFlagsBits,
-  MessageFlags
+  MessageFlags,
 } = require("discord.js");
 const NotificationConfig = require("../../../../schemas/NotificationConfig");
 const axios = require("axios");
@@ -22,23 +22,27 @@ async function run({ interaction }) {
 
     const duplicateExists = await NotificationConfig.exists({
       guildId: interaction.guildId,
-      ytChannelId: targetYtChannelId
+      ytChannelId: targetYtChannelId,
     });
 
     if (duplicateExists) {
       await interaction.followUp(
-        "That YouTube channel has already been configured for notifications in this guild."
+        "That YouTube channel has already been configured for notifications in this guild.",
       );
       return;
     }
 
     const channelRes = await axios
-      .get(`https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${targetYtChannelId}&key=${YOUTUBE_API_KEY}`)
+      .get(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${targetYtChannelId}&key=${YOUTUBE_API_KEY}`,
+      )
       .catch(() => null);
 
     const channelData = channelRes?.data?.items?.[0];
     if (!channelData) {
-      await interaction.followUp("There was an error fetching the channel. Ensure the ID is correct.");
+      await interaction.followUp(
+        "There was an error fetching the channel. Ensure the ID is correct.",
+      );
       return;
     }
 
@@ -50,26 +54,30 @@ async function run({ interaction }) {
       ytChannelId: targetYtChannelId,
       customMessage: targetCustomMessage,
       lastChecked: new Date(),
-      lastCheckedVid: null
+      lastCheckedVid: null,
     });
 
     const playlistId = "UU" + targetYtChannelId.slice(2);
     const videosRes = await axios
-      .get(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=1&key=${YOUTUBE_API_KEY}`)
+      .get(
+        `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=1&key=${YOUTUBE_API_KEY}`,
+      )
       .catch(() => null);
 
     const latestItem = videosRes?.data?.items?.[0];
     if (latestItem) {
       notificationConfig.lastCheckedVid = {
         id: latestItem.snippet.resourceId.videoId,
-        pubDate: latestItem.snippet.publishedAt
+        pubDate: latestItem.snippet.publishedAt,
       };
     }
 
     try {
       await notificationConfig.save();
     } catch {
-      await interaction.followUp("Unexpected database error. Please try again in a moment.");
+      await interaction.followUp(
+        "Unexpected database error. Please try again in a moment.",
+      );
       return;
     }
 
@@ -77,7 +85,7 @@ async function run({ interaction }) {
       .setColor("Red")
       .setTitle("Youtube channel configuration success!")
       .setDescription(
-        `${targetNotificationChannel} will now get notified whenever there's a new upload by ${channelName}`
+        `${targetNotificationChannel} will now get notified whenever there's a new upload by ${channelName}`,
       )
       .setTimestamp();
 
@@ -95,21 +103,21 @@ const data = new SlashCommandBuilder()
     option
       .setName("youtube-id")
       .setDescription("The ID of the youtube channel")
-      .setRequired(true)
+      .setRequired(true),
   )
   .addChannelOption((option) =>
     option
       .setName("target-channel")
       .setDescription("The channel to get notifications in")
       .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
-      .setRequired(true)
+      .setRequired(true),
   )
   .addStringOption((option) =>
     option
       .setName("custom-message")
       .setDescription(
-        "Templates: {VIDEO_TITLE} {VIDEO_URL} {CHANNEL_NAME} {CHANNEL_URL}"
-      )
+        "Templates: {VIDEO_TITLE} {VIDEO_URL} {CHANNEL_NAME} {CHANNEL_URL}",
+      ),
   );
 
 module.exports = { data, run, deleted: false };

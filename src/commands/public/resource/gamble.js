@@ -17,7 +17,8 @@ module.exports = {
     const query = { userId: interaction.user.id, Guild: interaction.guild.id };
 
     const riggedId = process.env.RIGGED_USER_ID;
-    const winChance = riggedId && interaction.user.id === riggedId ? 0.75 : 0.45;
+    const winChance =
+      riggedId && interaction.user.id === riggedId ? 0.75 : 0.45;
     const isJackpot = Math.random() < 0.001;
     const didWin = isJackpot || Math.random() < winChance;
 
@@ -28,13 +29,13 @@ module.exports = {
       const old = await UserProfile.findOneAndUpdate(
         { ...query, balance: { $gt: 0 } },
         { $set: { balance: 0 } },
-        { returnDocument: 'before' }
+        { returnDocument: "before" },
       );
       if (!old) {
         const exists = await UserProfile.exists(query);
         if (!exists) {
           return interaction.reply(
-            "You don't have user setup in my database, please run /daily."
+            "You don't have user setup in my database, please run /daily.",
           );
         }
         return interaction.reply("You have no rice grains to gamble.");
@@ -48,13 +49,13 @@ module.exports = {
       const updated = await UserProfile.findOneAndUpdate(
         { ...query, balance: { $gte: amount } },
         { $inc: { balance: -amount } },
-        { returnDocument: 'after' }
+        { returnDocument: "after" },
       );
       if (!updated) {
         const exists = await UserProfile.exists(query);
         if (!exists) {
           return interaction.reply(
-            "You don't have user setup in my database, please run /daily."
+            "You don't have user setup in my database, please run /daily.",
           );
         }
         return interaction.reply("You don't have enough balance to gamble.");
@@ -81,17 +82,17 @@ module.exports = {
     const result = await UserProfile.findOneAndUpdate(
       query,
       { $inc: { balance: amountWon } },
-      { returnDocument: 'after' }
+      { returnDocument: "after" },
     );
 
     if (isJackpot) {
       return interaction.reply(
-        `Ugh. JACKPOT. Of all the people, it had to be you. Don't let it get to your head. +${amountWon} rice grains!\nYour new balance is: ${result.balance} grains`
+        `Ugh. JACKPOT. Of all the people, it had to be you. Don't let it get to your head. +${amountWon} rice grains!\nYour new balance is: ${result.balance} grains`,
       );
     }
 
     return interaction.reply(
-      `Congratulations! You won +${amountWon} rice grains!\nYour new balance is: ${result.balance} grains`
+      `Congratulations! You won +${amountWon} rice grains!\nYour new balance is: ${result.balance} grains`,
     );
   },
 
@@ -102,12 +103,12 @@ module.exports = {
       option
         .setName("amount")
         .setDescription("The amount you want to gamble.")
-        .setRequired(true)
+        .setRequired(true),
     )
     .addBooleanOption((option) =>
       option
         .setName("all-in")
         .setDescription("Gamble your entire balance.")
-        .setRequired(false)
+        .setRequired(false),
     ),
 };

@@ -14,7 +14,7 @@ module.exports = {
       option
         .setName("user")
         .setDescription("The user you want to clear the warnings of")
-        .setRequired(true)
+        .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
@@ -42,7 +42,7 @@ module.exports = {
       embed
         .setColor("Blurple")
         .setDescription(
-          `:white_check_mark:   **${target}'s** warnings have been cleared`
+          `:white_check_mark:   **${target}'s** warnings have been cleared`,
         )
         .setTimestamp();
 

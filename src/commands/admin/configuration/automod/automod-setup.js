@@ -23,40 +23,48 @@ module.exports = {
         .setName("log-channel")
         .setDescription("where blocked messages get logged")
         .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
-        .setRequired(true)
+        .setRequired(true),
     )
     .addBooleanOption((option) =>
-      option.setName("spam").setDescription("block obvious spam (default on)")
+      option.setName("spam").setDescription("block obvious spam (default on)"),
     )
     .addBooleanOption((option) =>
       option
         .setName("profanity")
-        .setDescription("use discord's profanity list (default on)")
+        .setDescription("use discord's profanity list (default on)"),
     )
     .addBooleanOption((option) =>
-      option.setName("slurs").setDescription("use discord's slur list (default on)")
+      option
+        .setName("slurs")
+        .setDescription("use discord's slur list (default on)"),
     )
     .addBooleanOption((option) =>
       option
         .setName("sexual-content")
-        .setDescription("use discord's sexual content list (default off)")
+        .setDescription("use discord's sexual content list (default off)"),
     )
     .addIntegerOption((option) =>
       option
         .setName("mention-limit")
-        .setDescription("block messages with more mentions than this (off by default)")
+        .setDescription(
+          "block messages with more mentions than this (off by default)",
+        )
         .setMinValue(1)
-        .setMaxValue(50)
+        .setMaxValue(50),
     )
     .addStringOption((option) =>
       option
         .setName("custom-words")
-        .setDescription("comma separated words to block on top of discord's lists")
+        .setDescription(
+          "comma separated words to block on top of discord's lists",
+        ),
     )
     .addBooleanOption((option) =>
       option
         .setName("auto-warn")
-        .setDescription("give a /warn whenever automod blocks someone (default off)")
+        .setDescription(
+          "give a /warn whenever automod blocks someone (default off)",
+        ),
     ),
 
   run: async ({ interaction }) => {
@@ -75,42 +83,55 @@ module.exports = {
       const existing = await AutoModConfig.findOne({ guildId: guild.id });
       if (existing) {
         return interaction.editReply(
-          "automod is already set up here. run `/automod-disable` first if you want to reconfigure it."
+          "automod is already set up here. run `/automod-disable` first if you want to reconfigure it.",
         );
       }
 
       if (!guild.members.me.permissions.has(PermissionFlagsBits.ManageGuild)) {
         return interaction.editReply(
-          "i need the **Manage Server** permission to set up automod. give me that and try again."
+          "i need the **Manage Server** permission to set up automod. give me that and try again.",
         );
       }
 
       const logChannel = interaction.options.getChannel("log-channel");
       if (!logChannel.permissionsFor(guild.members.me)?.has("SendMessages")) {
         return interaction.editReply(
-          `i can't send messages in <#${logChannel.id}>, pick a channel i actually have access to.`
+          `i can't send messages in <#${logChannel.id}>, pick a channel i actually have access to.`,
         );
       }
 
       const wantSpam = interaction.options.getBoolean("spam") ?? true;
       const wantProfanity = interaction.options.getBoolean("profanity") ?? true;
       const wantSlurs = interaction.options.getBoolean("slurs") ?? true;
-      const wantSexual = interaction.options.getBoolean("sexual-content") ?? false;
+      const wantSexual =
+        interaction.options.getBoolean("sexual-content") ?? false;
       const mentionLimit = interaction.options.getInteger("mention-limit");
       const customWordsRaw = interaction.options.getString("custom-words");
       const autoWarn = interaction.options.getBoolean("auto-warn") ?? false;
 
       const presets = [];
-      if (wantProfanity) presets.push(AutoModerationRuleKeywordPresetType.Profanity);
-      if (wantSexual) presets.push(AutoModerationRuleKeywordPresetType.SexualContent);
+      if (wantProfanity)
+        presets.push(AutoModerationRuleKeywordPresetType.Profanity);
+      if (wantSexual)
+        presets.push(AutoModerationRuleKeywordPresetType.SexualContent);
       if (wantSlurs) presets.push(AutoModerationRuleKeywordPresetType.Slurs);
 
       const customWords = customWordsRaw
-        ? customWordsRaw.split(",").map((w) => w.trim()).filter(Boolean)
+        ? customWordsRaw
+            .split(",")
+            .map((w) => w.trim())
+            .filter(Boolean)
         : [];
 
-      if (!wantSpam && presets.length === 0 && !mentionLimit && customWords.length === 0) {
-        return interaction.editReply("that turns off literally everything, nothing to set up");
+      if (
+        !wantSpam &&
+        presets.length === 0 &&
+        !mentionLimit &&
+        customWords.length === 0
+      ) {
+        return interaction.editReply(
+          "that turns off literally everything, nothing to set up",
+        );
       }
 
       const actions = [
@@ -129,15 +150,18 @@ module.exports = {
       // count against discord's per-type cap, so check what's already there first
       // instead of just throwing when create() hits the cap
       const existingRules = await guild.autoModerationRules.fetch();
-      const hasType = (type) => existingRules.some((rule) => rule.triggerType === type);
+      const hasType = (type) =>
+        existingRules.some((rule) => rule.triggerType === type);
       const keywordRuleCount = existingRules.filter(
-        (rule) => rule.triggerType === AutoModerationRuleTriggerType.Keyword
+        (rule) => rule.triggerType === AutoModerationRuleTriggerType.Keyword,
       ).size;
 
       try {
         if (wantSpam) {
           if (hasType(AutoModerationRuleTriggerType.Spam)) {
-            enabledSummary.push("spam (already set up on this server, skipped)");
+            enabledSummary.push(
+              "spam (already set up on this server, skipped)",
+            );
           } else {
             const rule = await guild.autoModerationRules.create({
               name: "kafkaBot - spam",
@@ -154,7 +178,9 @@ module.exports = {
 
         if (presets.length > 0) {
           if (hasType(AutoModerationRuleTriggerType.KeywordPreset)) {
-            enabledSummary.push("keyword presets (already set up on this server, skipped)");
+            enabledSummary.push(
+              "keyword presets (already set up on this server, skipped)",
+            );
           } else {
             const rule = await guild.autoModerationRules.create({
               name: "kafkaBot - keyword presets",
@@ -173,14 +199,16 @@ module.exports = {
                 wantSlurs && "slurs",
               ]
                 .filter(Boolean)
-                .join(", ")})`
+                .join(", ")})`,
             );
           }
         }
 
         if (mentionLimit) {
           if (hasType(AutoModerationRuleTriggerType.MentionSpam)) {
-            enabledSummary.push("mention spam (already set up on this server, skipped)");
+            enabledSummary.push(
+              "mention spam (already set up on this server, skipped)",
+            );
           } else {
             const rule = await guild.autoModerationRules.create({
               name: "kafkaBot - mention spam",
@@ -201,7 +229,9 @@ module.exports = {
 
         if (customWords.length > 0) {
           if (keywordRuleCount >= 6) {
-            enabledSummary.push("custom words (skipped, this server already has the max keyword rules)");
+            enabledSummary.push(
+              "custom words (skipped, this server already has the max keyword rules)",
+            );
           } else {
             const rule = await guild.autoModerationRules.create({
               name: "kafkaBot - custom words",
@@ -236,7 +266,7 @@ module.exports = {
         .setDescription(enabledSummary.map((s) => `- ${s}`).join("\n"))
         .addFields(
           { name: "log channel", value: `<#${logChannel.id}>` },
-          { name: "auto-warn", value: autoWarn ? "on" : "off" }
+          { name: "auto-warn", value: autoWarn ? "on" : "off" },
         )
         .setTimestamp();
 
@@ -244,7 +274,7 @@ module.exports = {
     } catch (error) {
       logger.error(`automod-setup error: ${error}`);
       return interaction.editReply(
-        "something broke setting up automod, check my permissions and try again"
+        "something broke setting up automod, check my permissions and try again",
       );
     }
   },

@@ -30,7 +30,9 @@ async function fetchTwitchData(userLogin) {
           if (!parsed.data) logger.error("Twitch API error:", parsed);
           resolve(parsed);
         } catch {
-          reject(new Error(`Failed to parse Twitch response: ${data.slice(0, 200)}`));
+          reject(
+            new Error(`Failed to parse Twitch response: ${data.slice(0, 200)}`),
+          );
         }
       });
     });
@@ -43,13 +45,20 @@ async function fetchTwitchData(userLogin) {
   });
 }
 
-async function sendNotification(notificationConfig, userLogin, client, guildCache, channelCache) {
+async function sendNotification(
+  notificationConfig,
+  userLogin,
+  client,
+  guildCache,
+  channelCache,
+) {
   const { guildId, notificationChannelId } = notificationConfig;
 
   let targetGuild = guildCache.get(guildId);
   if (!targetGuild) {
     targetGuild =
-      client.guilds.cache.get(guildId) || (await client.guilds.fetch(guildId).catch(() => null));
+      client.guilds.cache.get(guildId) ||
+      (await client.guilds.fetch(guildId).catch(() => null));
     if (!targetGuild) {
       logger.error(`Guild ${guildId} not found for ${userLogin}`);
       return;
@@ -62,9 +71,13 @@ async function sendNotification(notificationConfig, userLogin, client, guildCach
   if (!targetChannel) {
     targetChannel =
       targetGuild.channels.cache.get(notificationChannelId) ||
-      (await targetGuild.channels.fetch(notificationChannelId).catch(() => null));
+      (await targetGuild.channels
+        .fetch(notificationChannelId)
+        .catch(() => null));
     if (!targetChannel) {
-      logger.error(`Notification channel ${notificationChannelId} not found for ${userLogin}`);
+      logger.error(
+        `Notification channel ${notificationChannelId} not found for ${userLogin}`,
+      );
       return;
     }
     channelCache.set(channelCacheKey, targetChannel);
@@ -79,7 +92,10 @@ async function sendNotification(notificationConfig, userLogin, client, guildCach
   notificationConfig.lastNotificationSentAt = new Date();
   notificationConfig.isLivePreviously = true;
 
-  await Promise.all([targetChannel.send(customMessage), notificationConfig.save()]);
+  await Promise.all([
+    targetChannel.send(customMessage),
+    notificationConfig.save(),
+  ]);
 }
 
 let interval;
@@ -97,7 +113,8 @@ module.exports = (client) => {
 
         const responseData = await fetchTwitchData(userLogin);
 
-        const isLive = responseData && responseData.data && responseData.data.length > 0;
+        const isLive =
+          responseData && responseData.data && responseData.data.length > 0;
 
         await NotificationConfig.findByIdAndUpdate(notificationConfig._id, {
           isLive,
@@ -105,7 +122,13 @@ module.exports = (client) => {
 
         try {
           if (isLive && !notificationConfig.isLivePreviously) {
-            await sendNotification(notificationConfig, userLogin, client, guildCache, channelCache);
+            await sendNotification(
+              notificationConfig,
+              userLogin,
+              client,
+              guildCache,
+              channelCache,
+            );
           } else if (!isLive && notificationConfig.isLivePreviously) {
             notificationConfig.isLivePreviously = false;
             await notificationConfig.save();

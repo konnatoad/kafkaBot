@@ -2,7 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   ChannelType,
-  MessageFlags
+  MessageFlags,
 } = require("discord.js");
 const NotificationConfig = require("../../../../schemas/NotificationConfig");
 const logger = require("../../../../extra/logger");
@@ -17,12 +17,12 @@ async function run({ interaction }) {
 
     const targetChannel = await NotificationConfig.findOne({
       ytChannelId: targetYtChannelId,
-      notificationChannelId: targetNotificationChannel.id
+      notificationChannelId: targetNotificationChannel.id,
     });
 
     if (!targetChannel) {
       interaction.followUp(
-        "That youtube channel has not been configured for notifications."
+        "That youtube channel has not been configured for notifications.",
       );
       return;
     }
@@ -33,7 +33,7 @@ async function run({ interaction }) {
       })
       .catch((e) => {
         interaction.followUp(
-          "There was a database error. Please try again later."
+          "There was a database error. Please try again later.",
         );
       });
   } catch (error) {
@@ -49,14 +49,14 @@ const data = new SlashCommandBuilder()
     option
       .setName("youtube-id")
       .setDescription("The ID of the target youtube channel.")
-      .setRequired(true)
+      .setRequired(true),
   )
   .addChannelOption((option) =>
     option
       .setName("target-channel")
       .setDescription("The channel to turn off notifications for.")
       .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
-      .setRequired(true)
+      .setRequired(true),
   );
 
 module.exports = { data, run, deleted: false };

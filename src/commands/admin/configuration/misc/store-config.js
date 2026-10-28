@@ -19,14 +19,14 @@ module.exports = {
           option
             .setName("role")
             .setDescription("The role to add to the rice store")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addIntegerOption((option) =>
           option
             .setName("cost")
             .setDescription("The cost of the role in rice grains")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -36,8 +36,8 @@ module.exports = {
           option
             .setName("role")
             .setDescription("The role to remove from the rice store")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     ),
   run: async ({ interaction }) => {
     const subcommand = interaction.options.getSubcommand();

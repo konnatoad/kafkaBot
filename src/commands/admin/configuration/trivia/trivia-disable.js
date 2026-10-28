@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
 const TriviaConfig = require("../../../../schemas/TriviaConfig");
 const TriviaStats = require("../../../../schemas/TriviaStats");
 const logger = require("../../../../extra/logger");
@@ -41,7 +45,8 @@ module.exports = {
       await TriviaStats.deleteMany({ guildId: interaction.guildId });
 
       return interaction.reply({
-        content: "✅ Daily trivia has been disabled and all answer history has been cleared. Run `/trivia-setup` to re-enable it.",
+        content:
+          "✅ Daily trivia has been disabled and all answer history has been cleared. Run `/trivia-setup` to re-enable it.",
         flags: MessageFlags.Ephemeral,
       });
     } catch (err) {

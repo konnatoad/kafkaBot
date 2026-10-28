@@ -19,16 +19,16 @@ module.exports = {
           option
             .setName("emojis")
             .setDescription("The emojis you want to auto react with")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addChannelOption((option) =>
           option
             .setName("channel")
             .setDescription(
-              "The channel you want your auto reactor system to be in"
+              "The channel you want your auto reactor system to be in",
             )
-            .setRequired(false)
-        )
+            .setRequired(false),
+        ),
     )
     .addSubcommand((command) =>
       command
@@ -38,15 +38,15 @@ module.exports = {
           option
             .setName("channel")
             .setDescription("The channel to remove from the auto reactor")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     )
     .addSubcommand((command) =>
       command
         .setName("remove-all")
         .setDescription(
-          "Remove all of your auto reactor channels in the entire server"
-        )
+          "Remove all of your auto reactor channels in the entire server",
+        ),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
@@ -78,7 +78,7 @@ module.exports = {
           const embed = new EmbedBuilder()
             .setColor("Blurple")
             .setDescription(
-              `The auto reactor system has been enabled for ${channel}`
+              `The auto reactor system has been enabled for ${channel}`,
             );
 
           await interaction.reply({
@@ -103,7 +103,7 @@ module.exports = {
           const embed = new EmbedBuilder()
             .setColor("Blurple")
             .setDescription(
-              `The auto reactor system has been disabled for ${channel}`
+              `The auto reactor system has been disabled for ${channel}`,
             );
 
           await interaction.reply({
@@ -128,7 +128,7 @@ module.exports = {
           const embed = new EmbedBuilder()
             .setColor("Blurple")
             .setDescription(
-              `The auto reactor system has been disabled for the entire server`
+              `The auto reactor system has been disabled for the entire server`,
             );
 
           await interaction.reply({

@@ -27,7 +27,7 @@ module.exports = {
       .setCustomId("feature")
       .setRequired(true)
       .setPlaceholder(
-        "What feature or aspect of the bot are you giving feedback on?"
+        "What feature or aspect of the bot are you giving feedback on?",
       )
       .setLabel("Feature or Topic")
       .setStyle(TextInputStyle.Short);

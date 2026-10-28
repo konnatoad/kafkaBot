@@ -14,16 +14,16 @@ module.exports = {
       option
         .setName("message")
         .setDescription(
-          "Variables {SERVER_MEMBER}, {SERVER_NAME}, {USER_MENTION}, {USER_NAME}"
+          "Variables {SERVER_MEMBER}, {SERVER_NAME}, {USER_MENTION}, {USER_NAME}",
         )
-        .setRequired(true)
+        .setRequired(true),
     )
     // Add a boolean option for using an embed for the welcome message
     .addBooleanOption((option) =>
       option
         .setName("use_embed")
         .setDescription("Use an embed for the welcome message")
-        .setRequired(false)
+        .setRequired(false),
     ),
   run: async ({ interaction }) => {
     // Get the welcome message and use embed option from the interaction

@@ -63,7 +63,7 @@ module.exports = {
       new ActionRowBuilder().addComponents(description),
       new ActionRowBuilder().addComponents(steps),
       new ActionRowBuilder().addComponents(expected),
-      new ActionRowBuilder().addComponents(severity)
+      new ActionRowBuilder().addComponents(severity),
     );
     await interaction.showModal(modal);
   },

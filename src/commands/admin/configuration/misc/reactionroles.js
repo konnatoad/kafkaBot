@@ -19,20 +19,20 @@ module.exports = {
           option
             .setName("message-id")
             .setDescription("The message to react to")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addStringOption((option) =>
           option
             .setName("emoji")
             .setDescription("The emoji to react with")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addRoleOption((option) =>
           option
             .setName("role")
             .setDescription("The role you want to give")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((command) =>
@@ -43,14 +43,14 @@ module.exports = {
           option
             .setName("message-id")
             .setDescription("The message to react to")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addStringOption((option) =>
           option
             .setName("emoji")
             .setDescription("The emoji to react with")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     ),
 
   run: async ({ interaction }) => {

@@ -2,7 +2,7 @@ const logger = require("../../../extra/logger");
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  EmbedBuilder
+  EmbedBuilder,
 } = require("discord.js");
 
 module.exports = {
@@ -15,11 +15,11 @@ module.exports = {
       option
         .setName("target-user")
         .setDescription("user you want to kick")
-        .setRequired(true)
+        .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
     .addStringOption((option) =>
-      option.setName("reason").setDescription("reason for the kick")
+      option.setName("reason").setDescription("reason for the kick"),
     ),
   /**
    *
@@ -59,7 +59,7 @@ module.exports = {
 
     if (targetUserRolePosition >= botRolePosition) {
       await interaction.editReply(
-        "i can't kick a member that has the same or higher role than me"
+        "i can't kick a member that has the same or higher role than me",
       );
       return;
     }
@@ -71,20 +71,22 @@ module.exports = {
         .setDescription(`User ${targetUser} was kicked.`)
         .addFields({
           name: "Reason:",
-          value: `${reason}`
+          value: `${reason}`,
         })
         .setTimestamp()
         .setFooter({
           text: "Kick",
-          iconURL: "https://vou.s-ul.eu/ts9RQjxl"
+          iconURL: "https://vou.s-ul.eu/ts9RQjxl",
         });
       await targetUser.kick({ reason });
       await interaction.editReply({
-        embeds: [banEmbed]
+        embeds: [banEmbed],
       });
     } catch (error) {
       logger.error(`there was an error kicking ${error}`);
-      await interaction.editReply(`failed to kick ${targetUser}: ${error.message}`);
+      await interaction.editReply(
+        `failed to kick ${targetUser}: ${error.message}`,
+      );
     }
-  }
+  },
 };

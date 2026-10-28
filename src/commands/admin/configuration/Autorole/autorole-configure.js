@@ -29,7 +29,7 @@ module.exports = {
       if (autoRole) {
         if (autoRole.roleId === targetRoleId) {
           interaction.editReply(
-            "Auto role has already been configured for that role. To disable run `/autorole-disable`"
+            "Auto role has already been configured for that role. To disable run `/autorole-disable`",
           );
           return;
         }
@@ -44,7 +44,7 @@ module.exports = {
 
       await autoRole.save();
       interaction.editReply(
-        "Autorole has now been configured. To disable run `/autorole-disable`"
+        "Autorole has now been configured. To disable run `/autorole-disable`",
       );
     } catch (error) {
       logger.error(error);
@@ -58,7 +58,7 @@ module.exports = {
       option
         .setName("role")
         .setDescription("The role you want users to get on join.")
-        .setRequired(true)
+        .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 };

@@ -16,7 +16,7 @@ module.exports = {
     if (!interaction.inGuild()) {
       interaction.reply({
         content: "This command can only be executed inside a server",
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -28,7 +28,7 @@ module.exports = {
 
       let userProfile = await UserProfile.findOne({
         userId: interaction.member.id,
-        Guild: interaction.guild.id
+        Guild: interaction.guild.id,
       });
 
       const now = new Date();
@@ -44,7 +44,7 @@ module.exports = {
         `Hey don't get too greedy!\nCome back in **${prettyMs(remaining, { unitCount: 2 })}**.`,
         `You know, they're called dailies for a reason. That means you can only get them once per day.\nTry again in **${prettyMs(remaining, { unitCount: 2 })}**.`,
         `Did you forget, you already claimed that today. \nCome back in **${prettyMs(remaining, { unitCount: 2 })}**.`,
-        `You can't just collect dailies whenever you want. That's not how it works \nCome back in **${prettyMs(remaining, { unitCount: 2 })}**.`
+        `You can't just collect dailies whenever you want. That's not how it works \nCome back in **${prettyMs(remaining, { unitCount: 2 })}**.`,
       ];
       const dailycooldown = dailies[Math.floor(Math.random() * dailies.length)];
 
@@ -54,7 +54,7 @@ module.exports = {
 
         if (lastDailyDate === currentDate) {
           interaction.editReply({
-            content: `${dailycooldown}`
+            content: `${dailycooldown}`,
           });
           return;
         }
@@ -69,7 +69,7 @@ module.exports = {
         if (
           lastCollectedDate &&
           lastCollectedDate.toLocaleDateString("fi-FI") ===
-          previousDay.toLocaleDateString("fi-FI")
+            previousDay.toLocaleDateString("fi-FI")
         ) {
           userProfile.dailyStreak = (userProfile.dailyStreak || 0) + 1;
         } else {
@@ -80,7 +80,7 @@ module.exports = {
           userId: interaction.member.id,
           Guild: interaction.guild.id,
           balance: 0,
-          dailyStreak: 0 // Initialize streak if it's a new profile
+          dailyStreak: 0, // Initialize streak if it's a new profile
         });
       }
 
@@ -97,11 +97,14 @@ module.exports = {
       await userProfile.save();
 
       interaction.editReply({
-        content: `${dailyAmount} was added to your balance.\nNew balance: ${userProfile.balance} rice grains\nStreak: ${userProfile.dailyStreak} days`
+        content: `${dailyAmount} was added to your balance.\nNew balance: ${userProfile.balance} rice grains\nStreak: ${userProfile.dailyStreak} days`,
       });
     } catch (error) {
       logger.error(`Error handling /daily: ${error}`);
-      interaction.editReply({ content: 'Something went wrong. Please try again later.', flags: MessageFlags.Ephemeral });
+      interaction.editReply({
+        content: "Something went wrong. Please try again later.",
+        flags: MessageFlags.Ephemeral,
+      });
     }
-  }
+  },
 };

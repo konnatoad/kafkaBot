@@ -22,8 +22,15 @@ module.exports = async (member) => {
     : ["ViewChannel", "SendMessages"];
   const missing = channel.permissionsFor(me)?.missing(needed) ?? needed;
   if (missing.length) {
-    await alertMissingPermissions(member.guild, channel, missing, "welcome").catch((err) =>
-      logger.error(`welcome: permission alert crashed for guild ${guildId}: ${err}`),
+    await alertMissingPermissions(
+      member.guild,
+      channel,
+      missing,
+      "welcome",
+    ).catch((err) =>
+      logger.error(
+        `welcome: permission alert crashed for guild ${guildId}: ${err}`,
+      ),
     );
     return;
   }

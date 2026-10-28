@@ -19,14 +19,14 @@ module.exports = {
 
       if (!(await AutoRole.exists({ guildId: interaction.guild.id }))) {
         interaction.editReply(
-          "Auto role has not been configured for this server. Use `/autorole-configure` to set it up."
+          "Auto role has not been configured for this server. Use `/autorole-configure` to set it up.",
         );
         return;
       }
 
       await AutoRole.findOneAndDelete({ guildId: interaction.guild.id });
       interaction.editReply(
-        "Auto role has been disabled for this server. Use `/autorole-configure` to set it up again."
+        "Auto role has been disabled for this server. Use `/autorole-configure` to set it up again.",
       );
     } catch (error) {
       logger.error(error);

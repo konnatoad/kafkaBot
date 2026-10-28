@@ -12,7 +12,7 @@ module.exports = {
       option
         .setName("role")
         .setDescription("The role you want to buy")
-        .setRequired(true)
+        .setRequired(true),
     ),
   run: async ({ interaction }) => {
     const roleToBuyId = interaction.options.getRole("role").id;
@@ -28,12 +28,12 @@ module.exports = {
     const updatedProfile = await UserProfile.findOneAndUpdate(
       { userId, Guild: guildId, balance: { $gte: storeItem.cost } },
       { $inc: { balance: -storeItem.cost } },
-      { returnDocument: 'after' }
+      { returnDocument: "after" },
     );
 
     if (!updatedProfile) {
       return interaction.reply(
-        "You do not have enough rice grains to buy this role."
+        "You do not have enough rice grains to buy this role.",
       );
     }
 
@@ -42,23 +42,23 @@ module.exports = {
       await member.roles.add(roleToBuyId);
       const roleToAdd = interaction.guild.roles.cache.get(roleToBuyId);
       return interaction.reply(
-        `Congratulations! You have successfully purchased the ${roleToAdd.toString()} role.`
+        `Congratulations! You have successfully purchased the ${roleToAdd.toString()} role.`,
       );
     } catch (error) {
       // Refund the deducted balance since the role could not be granted
       await UserProfile.findOneAndUpdate(
         { userId, Guild: guildId },
-        { $inc: { balance: storeItem.cost } }
+        { $inc: { balance: storeItem.cost } },
       );
 
       if (error.message.includes("Missing Permissions")) {
         return interaction.reply(
-          "I don't have permission to give you that role. Please contact a server administrator."
+          "I don't have permission to give you that role. Please contact a server administrator.",
         );
       }
 
       logger.error("Error adding role to user:", error.message);
       return interaction.reply("An error occurred while giving you the role.");
     }
-  }
+  },
 };

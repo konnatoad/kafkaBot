@@ -17,7 +17,7 @@ module.exports = {
       option
         .setName("channel")
         .setDescription("The channel where the welcome message will be sent")
-        .setRequired(true)
+        .setRequired(true),
     ),
 
   run: async ({ interaction }) => {
@@ -49,7 +49,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor("Random")
         .setDescription(
-          `Welcome setup completed. Welcome messages will be sent to <#${channel.id}>.`
+          `Welcome setup completed. Welcome messages will be sent to <#${channel.id}>.`,
         )
         .setTimestamp();
 

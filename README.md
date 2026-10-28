@@ -12,15 +12,15 @@ A multi-purpose Discord bot with YouTube/Twitch notifications, a leveling system
 
 ## Stack
 
-| | |
-|---|---|
-| Runtime | Node.js v22+ |
-| Framework | Discord.js v14 + [djs-commander](https://github.com/konnatoad/djs-commander) |
-| Database | MongoDB (Mongoose) |
-| Images | canvacord, sharp, @napi-rs/canvas |
-| Logging | winston (optional Discord webhook transport) |
-| Scheduling | node-cron |
-| Process manager | PM2 |
+|                 |                                                                              |
+| --------------- | ---------------------------------------------------------------------------- |
+| Runtime         | Node.js v22+                                                                 |
+| Framework       | Discord.js v14 + [djs-commander](https://github.com/konnatoad/djs-commander) |
+| Database        | MongoDB (Mongoose)                                                           |
+| Images          | canvacord, sharp, @napi-rs/canvas                                            |
+| Logging         | winston (optional Discord webhook transport)                                 |
+| Scheduling      | node-cron                                                                    |
+| Process manager | PM2                                                                          |
 
 ---
 
@@ -50,112 +50,112 @@ A multi-purpose Discord bot with YouTube/Twitch notifications, a leveling system
 
 **Economy**
 
-| Command | Description |
-|---|---|
-| `/balance [target-user]` | Check rice grain balance |
-| `/daily` | Collect daily grains (streak bonuses) |
-| `/remind set <time>` / `/remind disable` | Daily reminder for your dailies |
-| `/beg` | Beg for a chance at extra grains |
-| `/rep <user>` | Give 25 grains to another user once per day |
-| `/give <user> <amount>` | Transfer grains to another user |
-| `/gamble <amount> [all-in]` | Gamble rice grains |
-| `/gacha` | Rice gachapon (5 grain cost, rare golden drops) |
-| `/store` | View roles available in the store |
-| `/buy-role <role>` | Buy a role from the store |
-| `/ricetop` | Server economy leaderboard |
+| Command                                  | Description                                     |
+| ---------------------------------------- | ----------------------------------------------- |
+| `/balance [target-user]`                 | Check rice grain balance                        |
+| `/daily`                                 | Collect daily grains (streak bonuses)           |
+| `/remind set <time>` / `/remind disable` | Daily reminder for your dailies                 |
+| `/beg`                                   | Beg for a chance at extra grains                |
+| `/rep <user>`                            | Give 25 grains to another user once per day     |
+| `/give <user> <amount>`                  | Transfer grains to another user                 |
+| `/gamble <amount> [all-in]`              | Gamble rice grains                              |
+| `/gacha`                                 | Rice gachapon (5 grain cost, rare golden drops) |
+| `/store`                                 | View roles available in the store               |
+| `/buy-role <role>`                       | Buy a role from the store                       |
+| `/ricetop`                               | Server economy leaderboard                      |
 
 **Leveling**
 
-| Command | Description |
-|---|---|
-| `/rank [user]` | View an XP rank card |
+| Command           | Description           |
+| ----------------- | --------------------- |
+| `/rank [user]`    | View an XP rank card  |
 | `/xp-leaderboard` | Server XP leaderboard |
 
 **Game stats**
 
-| Command | Description |
-|---|---|
-| `/stats valorant <player> [region] [platform]` | Valorant MMR and rank |
-| `/stats tft <player> [region]` | TFT ranked stats and match history |
-| `/stats osu <player> <type>` | osu! top plays or recent plays |
+| Command                                        | Description                        |
+| ---------------------------------------------- | ---------------------------------- |
+| `/stats valorant <player> [region] [platform]` | Valorant MMR and rank              |
+| `/stats tft <player> [region]`                 | TFT ranked stats and match history |
+| `/stats osu <player> <type>`                   | osu! top plays or recent plays     |
 
 **Misc**
 
-| Command | Description |
-|---|---|
-| `/confess` | Send an anonymous confession |
-| `/randomquote [user]` | Get a random saved quote |
-| `/kafka` | Random Kafka picture (NSFW channels only) |
-| `/help` | Paginated command list |
-| `/feedback` | Send feedback to the bot developer |
-| `/bug-report` | Submit a bug report |
+| Command               | Description                               |
+| --------------------- | ----------------------------------------- |
+| `/confess`            | Send an anonymous confession              |
+| `/randomquote [user]` | Get a random saved quote                  |
+| `/kafka`              | Random Kafka picture (NSFW channels only) |
+| `/help`               | Paginated command list                    |
+| `/feedback`           | Send feedback to the bot developer        |
+| `/bug-report`         | Submit a bug report                       |
 
 ### Admin
 
 **Welcome / Goodbye**
 
-| Command | Description |
-|---|---|
-| `/welcome-setup <channel>` | Enable welcome messages |
-| `/welcome-message [message] [use_embed]` | Set custom welcome message |
-| `/welcome-test` | Send a test welcome message |
-| `/welcome-disable` | Disable welcome messages |
-| `/goodbye-setup <channel>` | Enable goodbye messages |
-| `/goodbye-message [message] [use_embed]` | Set custom goodbye message |
-| `/goodbye-test` | Send a test goodbye message |
-| `/goodbye-disable` | Disable goodbye messages |
+| Command                                  | Description                 |
+| ---------------------------------------- | --------------------------- |
+| `/welcome-setup <channel>`               | Enable welcome messages     |
+| `/welcome-message [message] [use_embed]` | Set custom welcome message  |
+| `/welcome-test`                          | Send a test welcome message |
+| `/welcome-disable`                       | Disable welcome messages    |
+| `/goodbye-setup <channel>`               | Enable goodbye messages     |
+| `/goodbye-message [message] [use_embed]` | Set custom goodbye message  |
+| `/goodbye-test`                          | Send a test goodbye message |
+| `/goodbye-disable`                       | Disable goodbye messages    |
 
 Available placeholders: `{USER_MENTION}` `{USER_NAME}` `{SERVER_NAME}` `{SERVER_MEMBER}`
 
 **Notifications**
 
-| Command | Description |
-|---|---|
+| Command                                                              | Description                         |
+| -------------------------------------------------------------------- | ----------------------------------- |
 | `/notification-setup <youtube-id> <target-channel> [custom-message]` | Enable YouTube upload notifications |
-| `/notification-remove <youtube-id> <target-channel>` | Remove YouTube notifications |
-| `/twitchnotify setup <twitch_url> <channel> [custom-message]` | Enable Twitch live notifications |
-| `/twitchnotify remove <twitch_url>` | Remove Twitch live notifications |
+| `/notification-remove <youtube-id> <target-channel>`                 | Remove YouTube notifications        |
+| `/twitchnotify setup <twitch_url> <channel> [custom-message]`        | Enable Twitch live notifications    |
+| `/twitchnotify remove <twitch_url>`                                  | Remove Twitch live notifications    |
 
 **Trivia & Quotes**
 
-| Command | Description |
-|---|---|
+| Command                                                  | Description                      |
+| -------------------------------------------------------- | -------------------------------- |
 | `/trivia-setup <channel> <time> <timezone> [difficulty]` | Schedule a daily trivia question |
-| `/trivia-disable` | Disable daily trivia |
-| `/quote add <messageid>` | Save a message as a quote |
-| `/quote remove <quoteid>` | Remove a quote |
-| `/quote list [user]` | List saved quotes |
-| `/dailyquote enable <channel>` / `/dailyquote disable` | Post a daily quote |
+| `/trivia-disable`                                        | Disable daily trivia             |
+| `/quote add <messageid>`                                 | Save a message as a quote        |
+| `/quote remove <quoteid>`                                | Remove a quote                   |
+| `/quote list [user]`                                     | List saved quotes                |
+| `/dailyquote enable <channel>` / `/dailyquote disable`   | Post a daily quote               |
 
 **Roles & Configuration**
 
-| Command | Description |
-|---|---|
-| `/autorole-configure <role>` | Auto-assign a role on member join |
-| `/autorole-disable` | Disable auto-role |
-| `/reaction-roles add` / `remove` | Manage reaction roles |
-| `/reactor setup` / `disable` / `remove-all` | Manage auto-reactions per channel |
-| `/confession-setup <channel>` | Enable confessions |
-| `/confessions-disable` | Disable confessions |
-| `/store-setup add <role> <cost>` / `remove <role>` | Configure roles in the store |
-| `/delete-message-log setup` / `disable` | Message deletion logging |
-| `/message-update-log setup` / `disable` | Message edit logging |
-| `/add7tv <link> [name]` | Add a 7TV emote to the server |
+| Command                                            | Description                       |
+| -------------------------------------------------- | --------------------------------- |
+| `/autorole-configure <role>`                       | Auto-assign a role on member join |
+| `/autorole-disable`                                | Disable auto-role                 |
+| `/reaction-roles add` / `remove`                   | Manage reaction roles             |
+| `/reactor setup` / `disable` / `remove-all`        | Manage auto-reactions per channel |
+| `/confession-setup <channel>`                      | Enable confessions                |
+| `/confessions-disable`                             | Disable confessions               |
+| `/store-setup add <role> <cost>` / `remove <role>` | Configure roles in the store      |
+| `/delete-message-log setup` / `disable`            | Message deletion logging          |
+| `/message-update-log setup` / `disable`            | Message edit logging              |
+| `/add7tv <link> [name]`                            | Add a 7TV emote to the server     |
 
 **Moderation**
 
-| Command | Description |
-|---|---|
-| `/automod-setup <log-channel> [spam] [profanity] [slurs] [sexual-content] [mention-limit] [custom-words]` | Turn on AutoMod |
-| `/automod-disable` | Turn off AutoMod |
-| `/ban <target-user> [reason]` | Ban a member |
-| `/kick <target-user> [reason]` | Kick a member |
-| `/tempban <user> [weeks] [days] [hours] [minutes] [reason]` | Temporary ban |
-| `/warn <user> <reason>` | Warn a member |
-| `/warnings <user>` | View warning history |
-| `/clearwarn <user>` | Clear all warnings for a user |
-| `/xp-reset` | Reset XP for the entire server |
-| `/xpuser-reset <user>` | Reset XP for a specific user |
+| Command                                                                                                   | Description                    |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `/automod-setup <log-channel> [spam] [profanity] [slurs] [sexual-content] [mention-limit] [custom-words]` | Turn on AutoMod                |
+| `/automod-disable`                                                                                        | Turn off AutoMod               |
+| `/ban <target-user> [reason]`                                                                             | Ban a member                   |
+| `/kick <target-user> [reason]`                                                                            | Kick a member                  |
+| `/tempban <user> [weeks] [days] [hours] [minutes] [reason]`                                               | Temporary ban                  |
+| `/warn <user> <reason>`                                                                                   | Warn a member                  |
+| `/warnings <user>`                                                                                        | View warning history           |
+| `/clearwarn <user>`                                                                                       | Clear all warnings for a user  |
+| `/xp-reset`                                                                                               | Reset XP for the entire server |
+| `/xpuser-reset <user>`                                                                                    | Reset XP for a specific user   |
 
 ---
 
@@ -260,12 +260,12 @@ pm2 start ecosystem.config.js
 
 ### Scripts
 
-| Script | Description |
-|---|---|
-| `npm start` | Run the bot |
-| `npm run dev` | Run with nodemon |
-| `npm run lint` / `lint:fix` | ESLint |
-| `npm run format` / `format:check` | Prettier |
+| Script                            | Description      |
+| --------------------------------- | ---------------- |
+| `npm start`                       | Run the bot      |
+| `npm run dev`                     | Run with nodemon |
+| `npm run lint` / `lint:fix`       | ESLint           |
+| `npm run format` / `format:check` | Prettier         |
 
 ### First-time configuration
 

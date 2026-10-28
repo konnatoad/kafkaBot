@@ -17,7 +17,9 @@ module.exports = async (interaction, client) => {
     const description = interaction.fields.getTextInputValue("description");
     const steps = interaction.fields.getTextInputValue("steps");
     const expected = interaction.fields.getTextInputValue("expected");
-    const severity = interaction.fields.getTextInputValue("severity").toLowerCase();
+    const severity = interaction.fields
+      .getTextInputValue("severity")
+      .toLowerCase();
 
     const id = interaction.user.id;
     const member = interaction.member;
@@ -39,12 +41,17 @@ module.exports = async (interaction, client) => {
       const githubOwner = process.env.GITHUB_OWNER;
       const githubRepo = process.env.GITHUB_REPO;
       const githubNamePattern = /^[A-Za-z0-9_.-]+$/;
-      if (!githubOwner || !githubRepo || !githubNamePattern.test(githubOwner) || !githubNamePattern.test(githubRepo)) {
+      if (
+        !githubOwner ||
+        !githubRepo ||
+        !githubNamePattern.test(githubOwner) ||
+        !githubNamePattern.test(githubRepo)
+      ) {
         logger.error("bugreport: invalid GitHub repository configuration.");
       } else {
         const githubIssueUrl = new URL(
           `/repos/${encodeURIComponent(githubOwner)}/${encodeURIComponent(githubRepo)}/issues`,
-          "https://api.github.com"
+          "https://api.github.com",
         ).toString();
 
         await axios
@@ -56,14 +63,17 @@ module.exports = async (interaction, client) => {
                 Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
                 Accept: "application/vnd.github+json",
               },
-            }
+            },
           )
           .then((res) => {
             issueUrl = res.data.html_url;
             issueNumber = res.data.number;
           })
           .catch((err) => {
-            logger.error("bugreport: failed to create GitHub issue:", err.response?.data ?? err);
+            logger.error(
+              "bugreport: failed to create GitHub issue:",
+              err.response?.data ?? err,
+            );
           });
       }
     }
@@ -71,14 +81,23 @@ module.exports = async (interaction, client) => {
     const embed = new EmbedBuilder()
       .setColor("Blurple")
       .setTitle(`New bug report!${issueNumber ? ` (#${issueNumber})` : ""}`)
-      .addFields({ name: "Reporting member", value: `\`${member.user.username} (${id})\`` })
-      .addFields({ name: "Reporting guild", value: `\`${server.name} (${server.id})\`` })
+      .addFields({
+        name: "Reporting member",
+        value: `\`${member.user.username} (${id})\``,
+      })
+      .addFields({
+        name: "Reporting guild",
+        value: `\`${server.name} (${server.id})\``,
+      })
       .addFields({ name: "Problematic feature", value: `> ${feature}` })
       .addFields({ name: "Description", value: `> ${description}` })
       .addFields({ name: "Steps to reproduce", value: `> ${steps}` })
       .addFields({ name: "Expected vs actual", value: `> ${expected}` })
       .addFields({ name: "Severity", value: `> ${severity}` })
-      .setFooter({ text: "Bug report system", iconURL: "https://vou.s-ul.eu/ts9RQjxl" })
+      .setFooter({
+        text: "Bug report system",
+        iconURL: "https://vou.s-ul.eu/ts9RQjxl",
+      })
       .setTimestamp();
 
     const buttons = new ActionRowBuilder().addComponents(
@@ -93,16 +112,19 @@ module.exports = async (interaction, client) => {
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel("View on GitHub")
-          .setURL(issueUrl)
+          .setURL(issueUrl),
       );
     }
 
-    await channel.send({ embeds: [embed], components: [buttons] }).catch((err) => {
-      logger.error("bugreport: failed to send to bug channel:", err);
-    });
+    await channel
+      .send({ embeds: [embed], components: [buttons] })
+      .catch((err) => {
+        logger.error("bugreport: failed to send to bug channel:", err);
+      });
 
     await interaction.reply({
-      content: "Your report has been recorded. My developer will look into this issue, and reach out with any further questions.",
+      content:
+        "Your report has been recorded. My developer will look into this issue, and reach out with any further questions.",
       flags: MessageFlags.Ephemeral,
     });
   }

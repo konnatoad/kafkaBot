@@ -15,13 +15,13 @@ module.exports = {
           option
             .setName("time")
             .setDescription("Time to remind you to do dailies.")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName("disable")
-        .setDescription("Disable your daily reminder.")
+        .setDescription("Disable your daily reminder."),
     ),
 
   run: async ({ interaction }) => {

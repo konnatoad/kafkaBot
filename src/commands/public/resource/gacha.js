@@ -1,9 +1,6 @@
 /** @format */
 
-const {
-  SlashCommandBuilder,
-  MessageFlags
-} = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
 const Cooldown = require("../../../schemas/Cooldown");
 const logger = require("../../../extra/logger");
@@ -14,14 +11,13 @@ function getRandomNumber(x, y) {
   return randomNumber + x;
 }
 
-
 module.exports = {
   deleted: false,
   run: async ({ interaction }) => {
     if (!interaction.inGuild()) {
       await interaction.reply({
         content: "You can only run this command in a server!",
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -34,7 +30,7 @@ module.exports = {
         "a jumeok-bap <:jumeokbap:1240424388260663308>",
         "an arancini <:arancini:1240412387425910794>",
         "a cifantuan <:cifantuan:1240420347912654858>",
-        "a zongzi <:zongzi:1240412100849832007>"
+        "a zongzi <:zongzi:1240412100849832007>",
       ];
 
       const riceballer = [
@@ -44,7 +40,7 @@ module.exports = {
         "jumeok-bap <:jumeokbap:1240424388260663308>",
         "arancini <:arancini:1240412387425910794>",
         "cifantuan <:cifantuan:1240420347912654858>",
-        "zongzi <:zongzi:1240412100849832007>"
+        "zongzi <:zongzi:1240412100849832007>",
       ];
 
       const goldballers = [
@@ -54,7 +50,7 @@ module.exports = {
         "jumeok-bap <:gold_jumeokbap:1242493357926776872>",
         "arancini <:gold_arancini:1242493771371778139>",
         "cifantuan <:gold_cifantuan:1242493645530206372>",
-        "zongzi <:gold_zongzi:1242493857577566260>"
+        "zongzi <:gold_zongzi:1242493857577566260>",
       ];
 
       const randomrice =
@@ -73,17 +69,17 @@ module.exports = {
 
       let cooldown = await Cooldown.findOne({
         userId,
-        commandName
+        commandName,
       });
 
       let userProfile = await UserProfile.findOne({
         userId,
-        Guild: interaction.guild.id
+        Guild: interaction.guild.id,
       }).select("userId balance");
 
       if (!userProfile) {
         interaction.editReply(
-          `You don't have user setup in my database, please run /daily`
+          `You don't have user setup in my database, please run /daily`,
         );
         return;
       }
@@ -99,8 +95,8 @@ module.exports = {
         await interaction.editReply({
           content: `*You can try again in ${prettyMs(
             cooldown.endsAt - Date.now(),
-            { secondsDecimalDigits: 0 }
-          )}*`
+            { secondsDecimalDigits: 0 },
+          )}*`,
         });
         return;
       }
@@ -108,7 +104,7 @@ module.exports = {
       if (!cooldown) {
         cooldown = new Cooldown({
           userId,
-          commandName
+          commandName,
         });
       }
 
@@ -121,7 +117,7 @@ module.exports = {
         await Promise.all([cooldown.save(), userProfile.save()]);
 
         await interaction.editReply({
-          content: `Wow! You got a rare golden ${singsong}!\n*+1000 rice grains.*`
+          content: `Wow! You got a rare golden ${singsong}!\n*+1000 rice grains.*`,
         });
         return;
       }
@@ -133,7 +129,7 @@ module.exports = {
         await Promise.all([cooldown.save(), userProfile.save()]);
 
         await interaction.editReply({
-          content: `You got ${randomrice}. \nHuh? A jammed ${ricegnat} came loose!\n*+30 rice grains.*`
+          content: `You got ${randomrice}. \nHuh? A jammed ${ricegnat} came loose!\n*+30 rice grains.*`,
         });
         return;
       }
@@ -145,7 +141,8 @@ module.exports = {
         await Promise.all([cooldown.save(), userProfile.save()]);
 
         await interaction.editReply({
-          content: "Oh no! The vending machine jammed and you lost your grains."
+          content:
+            "Oh no! The vending machine jammed and you lost your grains.",
         });
         return;
       } else {
@@ -155,7 +152,7 @@ module.exports = {
         await Promise.all([cooldown.save(), userProfile.save()]);
 
         await interaction.editReply({
-          content: `You got ${randomrice}!\n*+15 rice grains.*`
+          content: `You got ${randomrice}!\n*+15 rice grains.*`,
         });
         return;
       }
@@ -166,5 +163,5 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("gacha")
-    .setDescription("Rice gachapon | Cost: 5 rice grains.")
+    .setDescription("Rice gachapon | Cost: 5 rice grains."),
 };

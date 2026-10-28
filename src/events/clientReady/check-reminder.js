@@ -7,7 +7,9 @@ module.exports = (client) => {
 
   async function checkReminders() {
     try {
-      const userProfiles = await UserProfile.find({ reminderTime: { $ne: null } });
+      const userProfiles = await UserProfile.find({
+        reminderTime: { $ne: null },
+      });
 
       for (const userProfile of userProfiles) {
         const { userId, Guild, reminderTime } = userProfile;
@@ -17,7 +19,7 @@ module.exports = (client) => {
           const currentTime = new Date().toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
-            hour12: false
+            hour12: false,
           }); // Get current time in HH:MM format (24-hour)
 
           // Check if the current time matches the reminder time
@@ -41,7 +43,7 @@ module.exports = (client) => {
 
             const targetChannel = await targetMember
               .send(
-                `Hey <@${userId}>, it's time for your daily reminder to collect your dailies!` //sabi saa tehä uudet ja kovat messaget
+                `Hey <@${userId}>, it's time for your daily reminder to collect your dailies!`, //sabi saa tehä uudet ja kovat messaget
               )
               .catch(() => null);
 
@@ -51,7 +53,7 @@ module.exports = (client) => {
             }
 
             logger.info(
-              `Reminder sent to ${targetMember.user.tag} in ${targetGuild.name}`
+              `Reminder sent to ${targetMember.user.tag} in ${targetGuild.name}`,
             );
           }
         }

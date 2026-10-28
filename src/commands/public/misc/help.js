@@ -89,7 +89,7 @@ module.exports = {
           currentGroup = currentGroup === "admin" ? "public" : "admin";
           currentPage[currentGroup] = 0;
           row.components[2].setLabel(
-            `Show ${currentGroup === "admin" ? "Public" : "Admin"} Commands`
+            `Show ${currentGroup === "admin" ? "Public" : "Admin"} Commands`,
           );
 
           await buttonInteraction.update({
@@ -108,7 +108,10 @@ module.exports = {
           });
         } catch (error) {
           if (error.code !== 50027) {
-            logger.error("Error clearing help components on collector end:", error);
+            logger.error(
+              "Error clearing help components on collector end:",
+              error,
+            );
           }
         }
       });
@@ -212,9 +215,9 @@ function createButtonRow(currentGroup, uniqueId) {
     new ButtonBuilder()
       .setCustomId(`toggle_group_button_${uniqueId}`)
       .setLabel(
-        `Show ${currentGroup === "admin" ? "Public" : "Admin"} Commands`
+        `Show ${currentGroup === "admin" ? "Public" : "Admin"} Commands`,
       )
-      .setStyle(ButtonStyle.Secondary)
+      .setStyle(ButtonStyle.Secondary),
   );
 }
 

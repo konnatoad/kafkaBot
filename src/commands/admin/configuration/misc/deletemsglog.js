@@ -22,14 +22,14 @@ module.exports = {
             .setName("channel")
             .setDescription("Channel to log deleted messages in to")
             .addChannelTypes(ChannelType.GuildText)
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((command) =>
       command
         .setName("disable")
-        .setDescription("disable the delete message log system")
+        .setDescription("disable the delete message log system"),
     ),
   run: async ({ interaction }) => {
     const { options } = interaction;
@@ -59,7 +59,7 @@ module.exports = {
           });
 
           await sendMessage(
-            `message logging system has been setup to channel ${channel}`
+            `message logging system has been setup to channel ${channel}`,
           );
         }
         break;

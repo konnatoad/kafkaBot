@@ -2,7 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   ChannelType,
-  MessageFlags
+  MessageFlags,
 } = require("discord.js");
 
 const ConfessionConfig = require("../../../../schemas/ConfessionConfig");
@@ -19,7 +19,7 @@ module.exports = {
         .setName("channel")
         .setDescription("Channel to publish confessions to")
         .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
-        .setRequired(true)
+        .setRequired(true),
     ),
 
   run: async ({ interaction }) => {
@@ -27,12 +27,12 @@ module.exports = {
       if (!interaction.inGuild()) {
         return interaction.reply({
           content: "Run this inside a server.",
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
 
       const existing = await ConfessionConfig.findOne({
-        guildId: interaction.guildId
+        guildId: interaction.guildId,
       });
       if (existing) {
         const current = await interaction.guild.channels
@@ -45,7 +45,7 @@ module.exports = {
               current ? ` in ${current}` : ""
             }.\n` +
             "Use `/confession-disable` first if you want to change the channel.",
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -53,27 +53,27 @@ module.exports = {
 
       await ConfessionConfig.create({
         guildId: interaction.guildId,
-        channelId: channel.id
+        channelId: channel.id,
       });
 
       return interaction.reply({
         content: `Confessions will be posted in ${channel}.`,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     } catch (err) {
       if (err?.code === 11000) {
         return interaction.reply({
           content:
             "Confessions were just set up by someone else. Use `/confession-disable` if you need to change it.",
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
 
       logger.error("confession-setup error:", err);
       return interaction.reply({
         content: "Failed to save the confessions channel.",
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
-  }
+  },
 };

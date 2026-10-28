@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require("discord.js");
 const Notification = require("../../../../schemas/twitchNotificationSchema");
 const https = require("https");
 const logger = require("../../../../extra/logger");
@@ -27,7 +31,9 @@ const twitchNotificationCommand = new SlashCommandBuilder()
       .addStringOption((option) =>
         option
           .setName("custom-message")
-          .setDescription("Use {URL} for Twitch channel URL and {USERNAME} for username.")
+          .setDescription(
+            "Use {URL} for Twitch channel URL and {USERNAME} for username.",
+          )
           .setRequired(false),
       ),
   )
@@ -84,7 +90,8 @@ async function setupTwitchNotification(interaction) {
 
   if (!userData || !userData.id) {
     await interaction.followUp({
-      content: "Failed to fetch Twitch user data. Please check the Twitch URL and try again.",
+      content:
+        "Failed to fetch Twitch user data. Please check the Twitch URL and try again.",
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -141,7 +148,8 @@ async function removeTwitchNotification(interaction) {
 
   if (!userData || !userData.id) {
     await interaction.followUp({
-      content: "Failed to fetch Twitch user data. Please check the Twitch URL and try again.",
+      content:
+        "Failed to fetch Twitch user data. Please check the Twitch URL and try again.",
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -169,7 +177,8 @@ async function removeTwitchNotification(interaction) {
   } catch (error) {
     logger.error("Error removing Twitch notification setup:", error);
     await interaction.followUp({
-      content: "Failed to remove Twitch notification setup. Please try again later.",
+      content:
+        "Failed to remove Twitch notification setup. Please try again later.",
       flags: MessageFlags.Ephemeral,
     });
   }

@@ -36,7 +36,7 @@ module.exports = async (message) => {
     try {
       await sent.edit(`Pong! Latency: ${roundTrip}ms | API: ${wsPing}ms`);
     } catch (err) {
-      logger.error(`Failed to edit ping reply in ${message.channelId};`, error)
+      logger.error(`Failed to edit ping reply in ${message.channelId};`, error);
     }
     return;
   }

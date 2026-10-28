@@ -16,13 +16,13 @@ module.exports = async (message) => {
       await message.react(emoji);
     } catch (err) {
       const owner = await message.guild.members.cache.get(
-        message.guild.ownerId
+        message.guild.ownerId,
       );
 
       const embed = new EmbedBuilder()
         .setColor("Blurple")
         .setDescription(
-          `Hello there, it looks like I have found an error with the reactor system for your server - **${message.channel}** - and I thought I would bring it to your attention: \`${err}\``
+          `Hello there, it looks like I have found an error with the reactor system for your server - **${message.channel}** - and I thought I would bring it to your attention: \`${err}\``,
         );
 
       await owner.send({ embeds: [embed] });

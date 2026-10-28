@@ -15,7 +15,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("kafka")
     .setDescription(
-      "Sends random kafka picture. Has to be used in NSWF channel!"
+      "Sends random kafka picture. Has to be used in NSWF channel!",
     )
     .setNSFW(true),
 

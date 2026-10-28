@@ -2,7 +2,7 @@ const {
   Client,
   SlashCommandBuilder,
   PermissionFlagsBits,
-  MessageFlags
+  MessageFlags,
 } = require("discord.js");
 const sharp = require("sharp");
 const logger = require("../../../extra/logger");
@@ -24,7 +24,7 @@ module.exports = {
 
       if (!match) {
         return interaction.editReply(
-          "That doesn’t look like a valid 7TV emote link."
+          "That doesn’t look like a valid 7TV emote link.",
         );
       }
 
@@ -56,14 +56,14 @@ module.exports = {
 
         if (finalBuf.length > 256_000) {
           return interaction.editReply(
-            "Still too chunky after resizing (>256 kB)."
+            "Still too chunky after resizing (>256 kB).",
           );
         }
       }
 
       if (finalBuf.length > 256_000) {
         return interaction.editReply(
-          "Still too chunky after resizing (>256 kB)."
+          "Still too chunky after resizing (>256 kB).",
         );
       }
 
@@ -73,7 +73,7 @@ module.exports = {
 
       const emoji = await interaction.guild.emojis.create({
         attachment: finalBuf,
-        name
+        name,
       });
 
       interaction.editReply(`Added ${emoji.toString()}  \`:${emoji.name}:\``);
@@ -90,10 +90,10 @@ module.exports = {
       option
         .setName("link")
         .setDescription("Full 7TV emote URL")
-        .setRequired(true)
+        .setRequired(true),
     )
     .addStringOption((option) =>
-      option.setName("name").setDescription("Custom emoji name (optional)")
+      option.setName("name").setDescription("Custom emoji name (optional)"),
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 };

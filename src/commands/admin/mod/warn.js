@@ -14,13 +14,13 @@ module.exports = {
       option
         .setName("user")
         .setDescription("The user you want to warn")
-        .setRequired(true)
+        .setRequired(true),
     )
     .addStringOption((option) =>
       option
         .setName("reason")
         .setDescription("Reason for the warning")
-        .setRequired(false)
+        .setRequired(false),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
@@ -44,14 +44,14 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor("Blurple")
       .setDescription(
-        `:exclamation:      You have been **warned** in ${interaction.guild.name} | ${reason}`
+        `:exclamation:      You have been **warned** in ${interaction.guild.name} | ${reason}`,
       )
       .setTimestamp();
 
     const embed2 = new EmbedBuilder()
       .setColor("Blurple")
       .setDescription(
-        `:exclamation:      **${target}** has been ** warned** | ${reason}`
+        `:exclamation:      **${target}** has been ** warned** | ${reason}`,
       )
       .setTimestamp();
 

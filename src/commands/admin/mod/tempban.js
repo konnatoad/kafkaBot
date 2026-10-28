@@ -12,22 +12,22 @@ const slashCommand = new SlashCommandBuilder()
   .setDescription("Temporarily ban a user")
   .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
   .addUserOption((option) =>
-    option.setName("user").setDescription("The user to ban").setRequired(true)
+    option.setName("user").setDescription("The user to ban").setRequired(true),
   )
   .addIntegerOption((option) =>
-    option.setName("weeks").setDescription("The number of weeks")
+    option.setName("weeks").setDescription("The number of weeks"),
   )
   .addIntegerOption((option) =>
-    option.setName("days").setDescription("The number of days")
+    option.setName("days").setDescription("The number of days"),
   )
   .addIntegerOption((option) =>
-    option.setName("hours").setDescription("The number of hours")
+    option.setName("hours").setDescription("The number of hours"),
   )
   .addIntegerOption((option) =>
-    option.setName("minutes").setDescription("The number of minutes")
+    option.setName("minutes").setDescription("The number of minutes"),
   )
   .addStringOption((option) =>
-    option.setName("reason").setDescription("The reason for the ban")
+    option.setName("reason").setDescription("The reason for the ban"),
   );
 
 module.exports = {
@@ -36,10 +36,10 @@ module.exports = {
     const user = interaction.options.getUser("user");
     const durationOptions = ["weeks", "days", "hours", "minutes"];
     const providedDurations = durationOptions.filter(
-      (option) => interaction.options.getInteger(option) !== null
+      (option) => interaction.options.getInteger(option) !== null,
     );
     const durationValues = providedDurations.map((option) =>
-      interaction.options.getInteger(option)
+      interaction.options.getInteger(option),
     );
     const reason =
       interaction.options.getString("reason") || "No reason provided";
@@ -88,12 +88,12 @@ module.exports = {
       .setColor("#ff0000")
       .setTitle("You Have Been Temporarily Banned")
       .setDescription(
-        `You have been temporarily banned from **${interaction.guild.name}**.`
+        `You have been temporarily banned from **${interaction.guild.name}**.`,
       )
       .addFields(
         { name: "Duration", value: `\`${formattedDuration}\`` },
         { name: "Reason", value: `\`${reason}\`` },
-        { name: "Server", value: `\`${interaction.guild.name}\`` }
+        { name: "Server", value: `\`${interaction.guild.name}\`` },
       )
       .setTimestamp();
 
@@ -127,12 +127,12 @@ module.exports = {
       .setColor("#ff0000")
       .setTitle("User Temporarily Banned")
       .setDescription(
-        `**${user.tag}** has been temporarily banned from the server.`
+        `**${user.tag}** has been temporarily banned from the server.`,
       )
       .addFields(
         { name: "Duration", value: `\`${formattedDuration}\`` },
         { name: "Reason", value: `\`${reason}\`` },
-        { name: "User ID", value: `\`${user.id}\`` }
+        { name: "User ID", value: `\`${user.id}\`` },
       )
       .setFooter({
         text: `Banned by ${interaction.user.tag}`,

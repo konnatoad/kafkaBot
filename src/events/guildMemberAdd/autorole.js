@@ -19,7 +19,7 @@ module.exports = async (member) => {
     await member.roles.add(autoRole.roleId);
   } catch (error) {
     logger.error(
-      `error giving role automatically in guild "${guild?.name}" (${guild?.id}), role ${autoRole?.roleId}, member ${member.user?.tag}: ${error}`
+      `error giving role automatically in guild "${guild?.name}" (${guild?.id}), role ${autoRole?.roleId}, member ${member.user?.tag}: ${error}`,
     );
   }
 };

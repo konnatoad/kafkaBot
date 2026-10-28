@@ -19,7 +19,7 @@ module.exports = async (newMessage, message, member) => {
 
   var sendChannel = await message.guild.channels.fetch(data.Channel);
   var attachments = await message.attachments.map(
-    (attachment) => attachment.url
+    (attachment) => attachment.url,
   );
   var member = message.author;
   var deleteTime = `<t:${Math.floor(Date.now() / 1000)}:R>`;
@@ -28,7 +28,7 @@ module.exports = async (newMessage, message, member) => {
     .setColor("Blurple")
     .setTitle(`Message edited!`)
     .setDescription(
-      `This message was edited ${deleteTime} and is being logged for moderative purposes.`
+      `This message was edited ${deleteTime} and is being logged for moderative purposes.`,
     )
     .addFields({
       name: "Old message",

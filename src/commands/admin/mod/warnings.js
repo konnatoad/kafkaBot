@@ -13,7 +13,7 @@ module.exports = {
       option
         .setName("user")
         .setDescription("The user you want to check the warnings of")
-        .setRequired(true)
+        .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
@@ -43,8 +43,8 @@ module.exports = {
                   **Warning**: ${i + 1}
                   **Warning Moderator**: ${w.ExecuterTag}
                   **Warn Reason**: ${w.Reason}
-            `
-          ).join(`-`)}`
+            `,
+          ).join(`-`)}`,
         )
         .setTimestamp()
         .setFooter({
@@ -57,7 +57,7 @@ module.exports = {
       noWarns
         .setColor("Blurple")
         .setDescription(
-          `:white_check_mark:     **${target}** has **0** warnings!`
+          `:white_check_mark:     **${target}** has **0** warnings!`,
         )
         .setTimestamp();
 

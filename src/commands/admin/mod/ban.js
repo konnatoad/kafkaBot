@@ -2,7 +2,7 @@ const logger = require("../../../extra/logger");
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  EmbedBuilder
+  EmbedBuilder,
 } = require("discord.js");
 
 module.exports = {
@@ -15,11 +15,11 @@ module.exports = {
       option
         .setName("target-user")
         .setDescription("user you want to ban")
-        .setRequired(true)
+        .setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
     .addStringOption((option) =>
-      option.setName("reason").setDescription("reason for the ban")
+      option.setName("reason").setDescription("reason for the ban"),
     ),
   /**
    *
@@ -59,7 +59,7 @@ module.exports = {
 
     if (targetUserRolePosition >= botRolePosition) {
       await interaction.editReply(
-        "i can't ban a member that has the same or higher role than me"
+        "i can't ban a member that has the same or higher role than me",
       );
       return;
     }
@@ -71,20 +71,22 @@ module.exports = {
         .setDescription(`User ${targetUser} was banned.`)
         .addFields({
           name: "Reason:",
-          value: `${reason}`
+          value: `${reason}`,
         })
         .setTimestamp()
         .setFooter({
           text: "Perm ban",
-          iconURL: "https://vou.s-ul.eu/ts9RQjxl"
+          iconURL: "https://vou.s-ul.eu/ts9RQjxl",
         });
       await targetUser.ban({ reason });
       await interaction.editReply({
-        embeds: [banEmbed]
+        embeds: [banEmbed],
       });
     } catch (error) {
       logger.error(`there was an error banning ${error}`);
-      await interaction.editReply(`failed to ban ${targetUser}: ${error.message}`);
+      await interaction.editReply(
+        `failed to ban ${targetUser}: ${error.message}`,
+      );
     }
-  }
+  },
 };
