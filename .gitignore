@@ -5,12 +5,10 @@ config.json
 static
 kafkaavi.jpg
 1761220886563279135_1.jpg
-src/validations
 logs
 test.js
-osuAuth.js
-src/extra
-src/commands/dev-commands/*
+# beatmaps downloaded by /map and /stats osu
+src/extra/maps
 
 # local-only dev commands
 src/commands/dev-commands/
