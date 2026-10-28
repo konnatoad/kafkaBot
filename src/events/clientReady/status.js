@@ -5,9 +5,9 @@ module.exports = (client) => {
     status: "online",
     activities: [
       {
-        type: ActivityType.Watching,
-        name: "/help",
-        state: "/beg",
+        type: ActivityType.Custom,
+        name: "Custom Status", // discord ignores it for custom statuses but requires it
+        state: "💜 be good and wait for v2 · /help",
       },
     ],
   });
