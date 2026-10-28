@@ -55,7 +55,7 @@ const OPTIONAL_ENV = [
   "BUG",
   "FEEDBACK",
   "TWITCH_CLIENT_ID",
-  "TWITCH_ACCESS_TOKEN",
+  "TWITCH_CLIENT_SECRET",
   "YOUTUBE_API_KEY",
 ];
 const missingOpt = OPTIONAL_ENV.filter((key) => !process.env[key]);

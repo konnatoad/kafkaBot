@@ -8,36 +8,24 @@ const NotificationConfig = require("../../../../schemas/NotificationConfig");
 const logger = require("../../../../extra/logger");
 
 async function run({ interaction }) {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   try {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-
-    const targetYtChannelId = interaction.options.getString("youtube-id");
-    const targetNotificationChannel =
-      interaction.options.getChannel("target-channel");
-
-    const targetChannel = await NotificationConfig.findOne({
-      ytChannelId: targetYtChannelId,
-      notificationChannelId: targetNotificationChannel.id,
+    const removed = await NotificationConfig.findOneAndDelete({
+      guildId: interaction.guildId,
+      ytChannelId: interaction.options.getString("youtube-id").trim(),
+      notificationChannelId:
+        interaction.options.getChannel("target-channel").id,
     });
-
-    if (!targetChannel) {
-      interaction.followUp(
-        "That youtube channel has not been configured for notifications.",
-      );
-      return;
-    }
-
-    NotificationConfig.findOneAndDelete({ _id: targetChannel._id })
-      .then(() => {
-        interaction.followUp("Turned off notifications for that channel!");
-      })
-      .catch(() => {
-        interaction.followUp(
-          "There was a database error. Please try again later.",
-        );
-      });
+    return interaction.editReply(
+      removed
+        ? "Turned off notifications for that channel!"
+        : "That youtube channel has not been configured for notifications.",
+    );
   } catch (error) {
-    logger.error(`error in ${__filename}:\n`, error);
+    logger.error("notification-remove failed:", error);
+    return interaction.editReply(
+      "There was a database error. Please try again later.",
+    );
   }
 }
 
@@ -59,4 +47,4 @@ const data = new SlashCommandBuilder()
       .setRequired(true),
   );
 
-module.exports = { data, run, deleted: false };
+module.exports = { data, run };
