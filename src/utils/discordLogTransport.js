@@ -5,11 +5,41 @@ const MAX_LEN = 1900; // Discord caps content at 2000 chars, leave room for code
 const FLUSH_MS = 2000;
 const PING_COOLDOWN_MS = 60_000;
 
+const WEBHOOK_HOSTS = [
+  "discord.com",
+  "discordapp.com",
+  "ptb.discord.com",
+  "canary.discord.com",
+];
+const WEBHOOK_PATH = /^\/api(\/v\d+)?\/webhooks\/\d+\/[\w-]+$/;
+
+// Log lines carry error stacks, so they only ever go to a real Discord webhook:
+// a typo or a URL pasted from elsewhere in .env would otherwise ship them there.
+// The request goes to a fixed https://discord.com with only the checked path.
+function webhookEndpoint(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    parsed = null;
+  }
+  if (
+    parsed?.protocol !== "https:" ||
+    !WEBHOOK_HOSTS.includes(parsed.hostname) ||
+    !WEBHOOK_PATH.test(parsed.pathname)
+  ) {
+    throw new Error(
+      "LOG_WEBHOOK_URL has to look like https://discord.com/api/webhooks/<id>/<token>",
+    );
+  }
+  return `https://discord.com${parsed.pathname}`;
+}
+
 // Batches log lines into code blocks and posts them to a Discord webhook; errors ping PING_USER_ID
 class DiscordLogTransport extends Transport {
   constructor({ webhookUrl, pingUserId, ...opts }) {
     super(opts);
-    this.webhookUrl = webhookUrl;
+    this.webhookUrl = webhookEndpoint(webhookUrl);
     this.pingUserId = pingUserId;
     this.queue = [];
     this.pendingPing = false;

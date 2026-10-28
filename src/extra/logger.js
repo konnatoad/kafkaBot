@@ -35,12 +35,17 @@ const logger = createLogger({
 
 // Ship logs to the Discord #logs channel; errors ping LOG_PING_USER_ID
 if (process.env.LOG_WEBHOOK_URL) {
-  logger.add(
-    new DiscordLogTransport({
-      webhookUrl: process.env.LOG_WEBHOOK_URL,
-      pingUserId: process.env.LOG_PING_USER_ID,
-    }),
-  );
+  try {
+    logger.add(
+      new DiscordLogTransport({
+        webhookUrl: process.env.LOG_WEBHOOK_URL,
+        pingUserId: process.env.LOG_PING_USER_ID,
+      }),
+    );
+  } catch (err) {
+    // a bad URL turns off Discord shipping; the bot and console logging carry on
+    logger.warn(`Not sending logs to Discord: ${err.message}`);
+  }
 }
 
 module.exports = logger;
