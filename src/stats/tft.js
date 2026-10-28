@@ -116,10 +116,19 @@ async function run(interaction) {
     const summoner = await riotGet(
       route.platform,
       `/tft/summoner/v1/summoners/by-puuid/${puuid}`,
-    );
+    ).catch((error) => {
+      if (error.response?.status === 404) return null;
+      throw error;
+    });
+    if (!summoner) {
+      return interaction.editReply(
+        `${name}#${tag} hasn't played TFT in ${region.toUpperCase()}. Check the region.`,
+      );
+    }
+    // Riot dropped the summoner id from summoner lookups, so leagues go by puuid too
     const leagues = await riotGet(
       route.platform,
-      `/tft/league/v1/entries/by-summoner/${summoner.id}`,
+      `/tft/league/v1/by-puuid/${puuid}`,
     );
     const ranked = leagues.find((entry) => entry.queueType === "RANKED_TFT");
 
