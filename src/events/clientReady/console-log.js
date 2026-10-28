@@ -1,5 +1,4 @@
 const logger = require("../../extra/logger");
-const { MessageFlags } = require("discord.js");
 
 module.exports = (client) => {
   logger.info(`${client.user.tag} is now online!`);

@@ -1,4 +1,3 @@
-const { Client, Events } = require("discord.js");
 const reactions = require("../../schemas/reactions");
 const logger = require("../../extra/logger");
 

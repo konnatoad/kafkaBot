@@ -1,50 +1,49 @@
-const { Events, EmbedBuilder, AuditLogEvent, Message } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const log = require("../../schemas/messageupdate");
 
-module.exports = async (newMessage, message, member) => {
+module.exports = async (oldMessage, newMessage) => {
   if (
-    !message.guild ||
-    !message.author ||
-    message.author.bot ||
-    !newMessage ||
-    message.channelId === "895273892120252437" ||
-    newMessage.content === message.content
+    !newMessage.guild ||
+    !newMessage.author ||
+    newMessage.author.bot ||
+    newMessage.channelId === "895273892120252437" ||
+    oldMessage.content === newMessage.content
   )
     return;
 
-  var data = await log.findOne({
-    Guild: message.guild.id,
+  const data = await log.findOne({
+    Guild: newMessage.guild.id,
   });
   if (!data) return;
 
-  var sendChannel = await message.guild.channels.fetch(data.Channel);
-  var attachments = await message.attachments.map(
+  const sendChannel = await newMessage.guild.channels.fetch(data.Channel);
+  const attachments = newMessage.attachments.map(
     (attachment) => attachment.url,
   );
-  var member = message.author;
-  var deleteTime = `<t:${Math.floor(Date.now() / 1000)}:R>`;
+  const author = newMessage.author;
+  const editTime = `<t:${Math.floor(Date.now() / 1000)}:R>`;
 
   const embed = new EmbedBuilder()
     .setColor("Blurple")
     .setTitle(`Message edited!`)
     .setDescription(
-      `This message was edited ${deleteTime} and is being logged for moderative purposes.`,
+      `This message was edited ${editTime} and is being logged for moderative purposes.`,
     )
     .addFields({
       name: "Old message",
-      value: `> ${newMessage || "no message content"}`,
+      value: `> ${oldMessage.content || "no message content"}`,
     })
     .addFields({
       name: "New message",
-      value: `> ${message.content || "no message content"}`,
+      value: `> ${newMessage.content || "no message content"}`,
     })
     .addFields({
       name: "Message Author",
-      value: `> \`${member.username} (${member.id})\``,
+      value: `> \`${author.username} (${author.id})\``,
     })
     .addFields({
       name: "Message Channel",
-      value: `> ${message.channel} (${message.channel.id})`,
+      value: `> ${newMessage.channel} (${newMessage.channel.id})`,
     })
     .setFooter({
       text: "Message update log",

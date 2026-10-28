@@ -75,7 +75,7 @@ async function setupTwitchNotification(interaction) {
   const notificationChannel = interaction.options.getChannel("channel");
 
   // Extract Twitch username from the URL
-  const twitchChannelMatch = twitchUrl.match(/\/([^\/]+)\/?$/);
+  const twitchChannelMatch = twitchUrl.match(/\/([^/]+)\/?$/);
   if (!twitchChannelMatch) {
     await interaction.followUp({
       content: "Invalid Twitch URL. Please provide a valid Twitch channel URL.",

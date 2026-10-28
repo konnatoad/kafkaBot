@@ -32,7 +32,7 @@ function isCorrect(userAnswer, correctAnswer) {
   return results.length > 0 && results[0].score <= 0.2;
 }
 
-module.exports = async (interaction, client) => {
+module.exports = async (interaction) => {
   if (interaction?.type !== InteractionType.ModalSubmit) return;
   if (!interaction.customId?.startsWith("trivia_modal_")) return;
 

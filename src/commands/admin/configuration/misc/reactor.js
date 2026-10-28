@@ -113,7 +113,7 @@ module.exports = {
         }
 
         break;
-      case "remove-all":
+      case "remove-all": {
         const removedata = await reactor.findOne({
           Guild: interaction.guild.id,
         });
@@ -136,6 +136,7 @@ module.exports = {
             flags: MessageFlags.Ephemeral,
           });
         }
+      }
     }
   },
 };

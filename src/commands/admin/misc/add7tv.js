@@ -1,5 +1,4 @@
 const {
-  Client,
   SlashCommandBuilder,
   PermissionFlagsBits,
   MessageFlags,
@@ -8,12 +7,7 @@ const sharp = require("sharp");
 const logger = require("../../../extra/logger");
 
 module.exports = {
-  /**
-   *
-   * @param {Client} client
-   * @param {import('discord.js').ChatInputCommandInteraction} interaction
-   */
-  run: async ({ client, interaction }) => {
+  run: async ({ interaction }) => {
     try {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 

@@ -31,7 +31,7 @@ async function run({ interaction }) {
       .then(() => {
         interaction.followUp("Turned off notifications for that channel!");
       })
-      .catch((e) => {
+      .catch(() => {
         interaction.followUp(
           "There was a database error. Please try again later.",
         );

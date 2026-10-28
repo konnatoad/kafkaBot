@@ -1,4 +1,4 @@
-const { EmbedBuilder, MessageFlags, InteractionType } = require("discord.js");
+const { EmbedBuilder, MessageFlags } = require("discord.js");
 const ConfessionConfig = require("../../schemas/ConfessionConfig.js");
 const logger = require("../../extra/logger");
 

@@ -22,7 +22,7 @@ module.exports = {
 
     const target = interaction.options.getUser("user");
 
-    const data = await levelSchema.deleteMany({
+    await levelSchema.deleteMany({
       Guild: guildId,
       User: target.id,
     });

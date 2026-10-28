@@ -1,6 +1,5 @@
 const {
   SlashCommandBuilder,
-  Client,
   PermissionFlagsBits,
   MessageFlags,
 } = require("discord.js");
@@ -8,12 +7,7 @@ const AutoRole = require("../../../../schemas/AutoRole");
 const logger = require("../../../../extra/logger");
 
 module.exports = {
-  /**
-   *
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
-  run: async ({ client, interaction }) => {
+  run: async ({ interaction }) => {
     if (!interaction.inGuild()) {
       interaction.reply("You can only run this command inside a server.");
       return;

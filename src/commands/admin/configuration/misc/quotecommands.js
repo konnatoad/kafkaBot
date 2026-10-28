@@ -92,7 +92,6 @@ const replaceMentions = async (content, guild) => {
       }
     } else if (match[3] && match[4]) {
       // Emoji mention
-      const animated = match[3] === "a";
       const emojiId = match[4];
       const emoji =
         guild.emojis.cache.get(emojiId) ||

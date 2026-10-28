@@ -18,7 +18,7 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
   run: async ({ interaction }) => {
-    const { options, guildId, user } = interaction;
+    const { options, guildId } = interaction;
 
     const target = options.getUser("user");
 

@@ -1,6 +1,6 @@
+const { stripVTControlCharacters } = require("node:util");
 const Transport = require("winston-transport");
 
-const ANSI = /\x1b\[[0-9;]*m/g;
 const MAX_LEN = 1900; // Discord caps content at 2000 chars, leave room for code fences + ping
 const FLUSH_MS = 2000;
 const PING_COOLDOWN_MS = 60_000;
@@ -19,12 +19,12 @@ class DiscordLogTransport extends Transport {
   }
 
   log(info, callback) {
-    const level = String(info.level).replace(ANSI, "");
+    const level = stripVTControlCharacters(String(info.level));
     const stack =
       info.stack && !String(info.message).includes(info.stack)
         ? `\n${info.stack}`
         : "";
-    const line = `${info.timestamp ?? new Date().toISOString()} [${level}]: ${String(info.message).replace(ANSI, "")}${stack}`;
+    const line = `${info.timestamp ?? new Date().toISOString()} [${level}]: ${stripVTControlCharacters(String(info.message))}${stack}`;
     this.queue.push(line);
     if (level === "error") this.pendingPing = true;
     callback();

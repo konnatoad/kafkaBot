@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const levelSchema = require("../../../schemas/level");
-const level = require("../../../schemas/level");
 
 module.exports = {
   data: new SlashCommandBuilder()

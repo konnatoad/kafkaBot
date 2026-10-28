@@ -1,4 +1,4 @@
-const { Events, EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const log = require("../../schemas/deletemsglog");
 
 module.exports = async (message) => {

@@ -184,7 +184,7 @@ async function calcPP(osuText, modStr, accList, extras) {
   const diffAttrs = new ro.Difficulty(diffInit).calculate(map);
   const total = totalObjectsOf(map);
   const table = {};
-  let info = {};
+  let info;
   const countsProvided =
     Number.isFinite(extras?.n100) ||
     Number.isFinite(extras?.n50) ||

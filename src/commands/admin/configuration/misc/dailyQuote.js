@@ -168,7 +168,7 @@ module.exports = {
         .setDescription("Disable daily quotes for this server"),
     ),
 
-  async run({ interaction, client }) {
+  async run({ interaction }) {
     try {
       const subcommand = interaction.options.getSubcommand();
 

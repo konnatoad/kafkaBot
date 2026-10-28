@@ -9,12 +9,6 @@ const handleError = async (interaction, message) => {
 
 const recentlyUsedQuotesBuffer = new Set();
 
-const getBufferSize = (totalQuotes) => {
-  const targetProbability = 0.0005;
-  let bufferSize = Math.max(1, Math.ceil(targetProbability * totalQuotes));
-  return bufferSize;
-};
-
 const getRandomQuote = async (interaction, user) => {
   try {
     let query = { guildId: interaction.guildId };
@@ -31,8 +25,6 @@ const getRandomQuote = async (interaction, user) => {
         "No quotes found for the specified user.",
       );
     }
-
-    const bufferSize = getBufferSize(count);
 
     const weights = quotes.map((quote) => {
       return recentlyUsedQuotesBuffer.has(quote._id.toString()) ? 1 : 10;
