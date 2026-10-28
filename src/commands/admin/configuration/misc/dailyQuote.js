@@ -125,28 +125,7 @@ const sendDailyQuote = async (client) => {
   }
 };
 
-const scheduleDailyQuote = async (client) => {
-  const now = new Date();
-  const nextRun = new Date();
-  nextRun.setUTCHours(6, 0, 0, 0);
-
-  if (now >= nextRun) {
-    nextRun.setUTCDate(nextRun.getUTCDate() + 1);
-  }
-
-  const delay = nextRun.getTime() - now.getTime();
-
-  setTimeout(async function run() {
-    logger.info("Running daily quote schedule...");
-    await sendDailyQuote(client);
-    setTimeout(run, 24 * 60 * 60 * 1000); // Schedule the next run in 24 hours
-  }, delay);
-
-  logger.info(`Daily quote scheduled to run at ${nextRun.toISOString()}`);
-};
-
 module.exports = {
-  deleted: false,
   data: new SlashCommandBuilder()
     .setName("dailyquote")
     .setDescription("Manage the daily quote feature")
@@ -213,5 +192,5 @@ module.exports = {
     }
   },
 
-  scheduleDailyQuote,
+  sendDailyQuote,
 };
