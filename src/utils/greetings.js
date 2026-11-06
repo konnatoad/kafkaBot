@@ -1,5 +1,6 @@
 // Welcome and goodbye messages work the same way, so both their events and their
-// four commands each (setup, message, test, disable) are built from here.
+// commands (/welcome and /goodbye, each with setup, message, test, disable) are built
+// from here.
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
@@ -97,190 +98,181 @@ async function greet(kind, member) {
 
 const ephemeral = (content) => ({ content, flags: MessageFlags.Ephemeral });
 
-function setupCommand(kind) {
-  const { model, label } = KINDS[kind];
-  return {
-    data: new SlashCommandBuilder()
-      .setName(`${kind}-setup`)
-      .setDescription(`Setup the ${kind} message for your server`)
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-      .addChannelOption((option) =>
-        option
-          .setName("channel")
-          .setDescription(`The channel where the ${kind} message will be sent`)
-          .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
-          .setRequired(true),
-      ),
+/** `/welcome` or `/goodbye`, with setup, message, test and disable subcommands. */
+function greetingCommand(kind) {
+  const { model, label, messageField } = KINDS[kind];
 
-    run: async ({ interaction }) => {
-      const channel = interaction.options.getChannel("channel", true);
-      try {
-        const missing = channel
-          .permissionsFor(interaction.guild.members.me)
-          ?.missing(["ViewChannel", "SendMessages"]);
-        if (missing?.length) {
-          return interaction.reply(
-            ephemeral(
-              `I can't post in ${channel}: I'm missing **${missing.map(readable).join(", ")}** there.`,
-            ),
-          );
-        }
+  const data = new SlashCommandBuilder()
+    .setName(kind)
+    .setDescription(`Set up the ${kind} message for your server`)
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("setup")
+        .setDescription(`Choose the channel ${kind} messages are sent to`)
+        .addChannelOption((option) =>
+          option
+            .setName("channel")
+            .setDescription(
+              `The channel where the ${kind} message will be sent`,
+            )
+            .addChannelTypes(
+              ChannelType.GuildText,
+              ChannelType.GuildAnnouncement,
+            )
+            .setRequired(true),
+        ),
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("message")
+        .setDescription(
+          kind === "welcome"
+            ? "Set the welcome message for new members"
+            : "Set the goodbye message for members who leave",
+        )
+        .addStringOption((option) =>
+          option
+            .setName("message")
+            .setDescription(`Variables ${PLACEHOLDERS}`)
+            .setRequired(true),
+        )
+        .addBooleanOption((option) =>
+          option
+            .setName("use_embed")
+            .setDescription(`Use an embed for the ${kind} message`)
+            .setRequired(false),
+        ),
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("test")
+        .setDescription(`Test the ${kind} message for the server.`),
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("disable")
+        .setDescription(`Disable the ${kind} message feature`),
+    );
 
-        if (await model.exists({ guildId: interaction.guildId })) {
-          return interaction.reply(
-            ephemeral(
-              `The ${kind} message is already set up. Use \`/${kind}-disable\` first to move it.`,
-            ),
-          );
-        }
-        await model.create({
-          guildId: interaction.guildId,
-          channelId: channel.id,
-        });
-
-        const embed = new EmbedBuilder()
-          .setColor("Random")
-          .setDescription(
-            `${label} setup completed. ${label} messages will be sent to ${channel}.`,
-          )
-          .setTimestamp();
-        return interaction.reply({ embeds: [embed] });
-      } catch (error) {
-        logger.error(
-          `${kind}-setup failed in guild ${interaction.guildId}:`,
-          error,
-        );
+  const setup = async ({ interaction }) => {
+    const channel = interaction.options.getChannel("channel", true);
+    try {
+      const missing = channel
+        .permissionsFor(interaction.guild.members.me)
+        ?.missing(["ViewChannel", "SendMessages"]);
+      if (missing?.length) {
         return interaction.reply(
-          ephemeral(`Couldn't save the ${kind} setup, try again.`),
+          ephemeral(
+            `I can't post in ${channel}: I'm missing **${missing.map(readable).join(", ")}** there.`,
+          ),
         );
       }
-    },
+
+      if (await model.exists({ guildId: interaction.guildId })) {
+        return interaction.reply(
+          ephemeral(
+            `The ${kind} message is already set up. Use \`/${kind} disable\` first to move it.`,
+          ),
+        );
+      }
+      await model.create({
+        guildId: interaction.guildId,
+        channelId: channel.id,
+      });
+
+      const embed = new EmbedBuilder()
+        .setColor("Random")
+        .setDescription(
+          `${label} setup completed. ${label} messages will be sent to ${channel}.`,
+        )
+        .setTimestamp();
+      return interaction.reply({ embeds: [embed] });
+    } catch (error) {
+      logger.error(
+        `${kind} setup failed in guild ${interaction.guildId}:`,
+        error,
+      );
+      return interaction.reply(
+        ephemeral(`Couldn't save the ${kind} setup, try again.`),
+      );
+    }
   };
-}
 
-function messageCommand(kind) {
-  const { model, messageField } = KINDS[kind];
-  return {
-    data: new SlashCommandBuilder()
-      .setName(`${kind}-message`)
-      .setDescription(
-        kind === "welcome"
-          ? "Set the welcome message for new members"
-          : "Set the goodbye message for members who leave",
-      )
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-      .addStringOption((option) =>
-        option
-          .setName("message")
-          .setDescription(`Variables ${PLACEHOLDERS}`)
-          .setRequired(true),
-      )
-      .addBooleanOption((option) =>
-        option
-          .setName("use_embed")
-          .setDescription(`Use an embed for the ${kind} message`)
-          .setRequired(false),
+  const message = async ({ interaction }) => {
+    const updated = await model.findOneAndUpdate(
+      { guildId: interaction.guildId },
+      {
+        [messageField]: interaction.options.getString("message"),
+        useEmbed: interaction.options.getBoolean("use_embed") ?? false,
+      },
+    );
+    return interaction.reply(
+      ephemeral(
+        updated
+          ? `Custom ${kind} message set successfully.`
+          : `Please setup the ${kind} system first using \`/${kind} setup\`.`,
       ),
+    );
+  };
 
-    run: async ({ interaction }) => {
-      const updated = await model.findOneAndUpdate(
-        { guildId: interaction.guildId },
-        {
-          [messageField]: interaction.options.getString("message"),
-          useEmbed: interaction.options.getBoolean("use_embed") ?? false,
-        },
+  // sends exactly what a real join or leave would, with you as the member
+  const test = async ({ interaction }) => {
+    const setup = await model.findOne({ guildId: interaction.guildId });
+    if (!setup) {
+      return interaction.reply(
+        ephemeral(`No ${kind} setup found for this server.`),
+      );
+    }
+    const channel = interaction.guild.channels.cache.get(setup.channelId);
+    if (!channel) {
+      return interaction.reply(
+        ephemeral(`The configured ${kind} channel does not exist.`),
+      );
+    }
+
+    const needed = neededPermissions(setup);
+    const missing =
+      channel.permissionsFor(interaction.guild.members.me)?.missing(needed) ??
+      needed;
+    if (missing.length) {
+      return interaction.reply(
+        ephemeral(
+          `I'm missing permissions in ${channel}. I need: ${missing.map(readable).join(", ")}.`,
+        ),
+      );
+    }
+
+    try {
+      await channel.send(greetingMessage(kind, setup, interaction.member));
+    } catch (error) {
+      logger.error(
+        `${kind} test failed to send in guild "${interaction.guild.name}" (${interaction.guildId}), channel ${channel.id}: ${error}`,
       );
       return interaction.reply(
         ephemeral(
-          updated
-            ? `Custom ${kind} message set successfully.`
-            : `Please setup the ${kind} system first using \`/${kind}-setup\`.`,
+          "Couldn't send the test message. Check my permissions in that channel.",
         ),
       );
-    },
+    }
+    return interaction.reply(
+      ephemeral(`${label} message sent successfully! ${channel}`),
+    );
   };
-}
 
-function testCommand(kind) {
-  const { model, label } = KINDS[kind];
-  return {
-    data: new SlashCommandBuilder()
-      .setName(`${kind}-test`)
-      .setDescription(`Test the ${kind} message for the server.`)
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-
-    // sends exactly what a real join or leave would, with you as the member
-    run: async ({ interaction }) => {
-      const setup = await model.findOne({ guildId: interaction.guildId });
-      if (!setup) {
-        return interaction.reply(
-          ephemeral(`No ${kind} setup found for this server.`),
-        );
-      }
-      const channel = interaction.guild.channels.cache.get(setup.channelId);
-      if (!channel) {
-        return interaction.reply(
-          ephemeral(`The configured ${kind} channel does not exist.`),
-        );
-      }
-
-      const needed = neededPermissions(setup);
-      const missing =
-        channel.permissionsFor(interaction.guild.members.me)?.missing(needed) ??
-        needed;
-      if (missing.length) {
-        return interaction.reply(
-          ephemeral(
-            `I'm missing permissions in ${channel}. I need: ${missing.map(readable).join(", ")}.`,
-          ),
-        );
-      }
-
-      try {
-        await channel.send(greetingMessage(kind, setup, interaction.member));
-      } catch (error) {
-        logger.error(
-          `${kind}-test failed to send in guild "${interaction.guild.name}" (${interaction.guildId}), channel ${channel.id}: ${error}`,
-        );
-        return interaction.reply(
-          ephemeral(
-            "Couldn't send the test message. Check my permissions in that channel.",
-          ),
-        );
-      }
+  const disable = async ({ interaction }) => {
+    const deleted = await model.findOneAndDelete({
+      guildId: interaction.guildId,
+    });
+    if (!deleted) {
       return interaction.reply(
-        ephemeral(`${label} message sent successfully! ${channel}`),
+        ephemeral(`No ${kind} setup found for this server.`),
       );
-    },
+    }
+    return interaction.reply(`The ${kind} message has been disabled.`);
   };
+
+  return { data, subcommands: { setup, message, test, disable } };
 }
 
-function disableCommand(kind) {
-  const { model } = KINDS[kind];
-  return {
-    data: new SlashCommandBuilder()
-      .setName(`${kind}-disable`)
-      .setDescription(`Disable the ${kind} message feature`)
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-
-    run: async ({ interaction }) => {
-      const deleted = await model.findOneAndDelete({
-        guildId: interaction.guildId,
-      });
-      if (!deleted) {
-        return interaction.reply(
-          ephemeral(`No ${kind} setup found for this server.`),
-        );
-      }
-      return interaction.reply(`The ${kind} message has been disabled.`);
-    },
-  };
-}
-
-module.exports = {
-  greet,
-  setupCommand,
-  messageCommand,
-  testCommand,
-  disableCommand,
-};
+module.exports = { greet, greetingCommand };

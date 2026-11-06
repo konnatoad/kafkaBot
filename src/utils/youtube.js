@@ -1,4 +1,4 @@
-// YouTube Data API calls shared by /notification-setup and the upload check.
+// YouTube Data API calls shared by /notify youtube and the upload check.
 const axios = require("axios");
 
 const API = "https://www.googleapis.com/youtube/v3";
