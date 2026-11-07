@@ -13,15 +13,15 @@ const OPEN_FOR = 5 * 60 * 1000;
 function buttons(index, total) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId("changelog_older")
-      .setLabel("Older")
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(index >= total - 1),
-    new ButtonBuilder()
       .setCustomId("changelog_newer")
       .setLabel("Newer")
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(index <= 0),
+    new ButtonBuilder()
+      .setCustomId("changelog_older")
+      .setLabel("Older")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(index >= total - 1),
   );
 }
 
