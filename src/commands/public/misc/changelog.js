@@ -49,7 +49,7 @@ module.exports = {
       logger.error("/changelog: couldn't load the changelog:", error);
       return interaction.editReply("couldn't load the changelog right now, try again later");
     }
-    const wanted = interaction.getString("version");
+    const wanted = interaction.options.getString("version");
     let index = 0;
     if (wanted) {
       index = versions.findIndex((entry) => plainVersion(entry.version) === plainVersion(wanted));
