@@ -25,10 +25,20 @@ function buttons(index, total) {
   );
 }
 
+/** "v1.10.1 " as "1.10.1", so a version matches however it's typed */
+const plainVersion = (text) => text.trim().replace(/^v/i, "").toLowerCase();
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("changelog")
-    .setDescription("what changed in each version of kafkaBot"),
+    .setDescription("what changed in each version of kafkaBot")
+    .addStringOption((option) =>
+      option
+        .setName("version")
+        .setDescription("open this version instead of the newest")
+        .setMaxLength(100)
+        .setAutocomplete(true),
+    ),
 
   async run({ interaction }) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -39,7 +49,14 @@ module.exports = {
       logger.error("/changelog: couldn't load the changelog:", error);
       return interaction.editReply("couldn't load the changelog right now, try again later");
     }
+    const wanted = interaction.getString("version");
     let index = 0;
+    if (wanted) {
+      index = versions.findIndex((entry) => plainVersion(entry.version) === plainVersion(wanted));
+      if (index === -1) {
+        return interaction.editReply(`there's no version ${wanted} in the changelog`);
+      }
+    }
     const view = () => ({
       embeds: [versionPage(versions[index], index, versions.length)],
       components: [buttons(index, versions.length)],
@@ -65,5 +82,23 @@ module.exports = {
         }
       }),
     );
+  },
+  /** the versions in the paste that contain what's typed, newest first */
+  async autocomplete({ interaction }) {
+    const typed = plainVersion(interaction.options.getFocused());
+    let versions;
+    try {
+      versions = await getChangelog();
+    } catch {
+      return interaction.respond([]).catch(() => { });
+    }
+    const choices = versions
+      .filter((entry) => plainVersion(entry.version).includes(typed))
+      .slice(0, 25)
+      .map((entry) => ({
+        name: [entry.version, entry.date].join(" · ").slice(0, 100),
+        value: entry.version,
+      }));
+    await interaction.respond(choices).catch(() => { });
   },
 };
