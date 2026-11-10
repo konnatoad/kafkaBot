@@ -27,17 +27,14 @@ for (const unit of Object.keys(MINUTES_PER)) {
     option.setName(unit).setDescription(`The number of ${unit}`).setMinValue(0),
   );
 }
-data.addStringOption((option) =>
-  option.setName("reason").setDescription("The reason for the ban"),
-);
+data.addStringOption((option) => option.setName("reason").setDescription("The reason for the ban"));
 
 module.exports = {
   data,
   run: async ({ interaction }) => {
     const user = interaction.options.getUser("user", true);
     const member = interaction.options.getMember("user");
-    const reason =
-      interaction.options.getString("reason") || "No reason provided";
+    const reason = interaction.options.getString("reason") || "No reason provided";
 
     const amounts = Object.keys(MINUTES_PER)
       .map((unit) => [unit, interaction.options.getInteger(unit) ?? 0])
@@ -53,10 +50,7 @@ module.exports = {
       });
     }
     const duration = amounts
-      .map(
-        ([unit, amount]) =>
-          `${amount} ${amount === 1 ? unit.slice(0, -1) : unit}`,
-      )
+      .map(([unit, amount]) => `${amount} ${amount === 1 ? unit.slice(0, -1) : unit}`)
       .join(", ");
 
     const refusal = member && whyCantModerate(interaction, member, "ban");
@@ -73,9 +67,7 @@ module.exports = {
     const dmEmbed = new EmbedBuilder()
       .setColor("#ff0000")
       .setTitle("You Have Been Temporarily Banned")
-      .setDescription(
-        `You have been temporarily banned from **${interaction.guild.name}**.`,
-      )
+      .setDescription(`You have been temporarily banned from **${interaction.guild.name}**.`)
       .addFields(
         { name: "Duration", value: `\`${duration}\`` },
         { name: "Reason", value: `\`${reason}\`` },
@@ -90,23 +82,27 @@ module.exports = {
       await interaction.guild.members.ban(user, { reason });
     } catch (error) {
       logger.error(`tempban: failed to ban ${user.id}: ${error}`);
-      return interaction.editReply(
-        `Failed to ban **${user.tag}**: ${error.message}`,
-      );
+      return interaction.editReply(`Failed to ban **${user.tag}**: ${error.message}`);
     }
 
-    await Ban.create({
-      userId: user.id,
-      expirationTime: new Date(Date.now() + totalMinutes * 60_000),
-      guildId: interaction.guildId,
-    });
+    try {
+      await Ban.deleteMany({ guildId: interaction.guildId, userId: user.id });
+      await Ban.create({
+        userId: user.id,
+        expirationTime: new Date(Date.now() + totalMinutes * 60_000),
+        guildId: interaction.guildId,
+      });
+    } catch (error) {
+      logger.error(`tempban: failed to save the unban of ${user.id}: ${error}`);
+      return interaction.editReply(
+        `**${user.tag}** is banned, but i couldn't save when to unban them, so unban them by hand`,
+      );
+    }
 
     const embed = new EmbedBuilder()
       .setColor("#ff0000")
       .setTitle("User Temporarily Banned")
-      .setDescription(
-        `**${user.tag}** has been temporarily banned from the server.`,
-      )
+      .setDescription(`**${user.tag}** has been temporarily banned from the server.`)
       .addFields(
         { name: "Duration", value: `\`${duration}\`` },
         { name: "Reason", value: `\`${reason}\`` },

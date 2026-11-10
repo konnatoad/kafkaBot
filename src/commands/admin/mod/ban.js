@@ -1,32 +1,23 @@
 const logger = require("../../../extra/logger");
-const {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  EmbedBuilder,
-} = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require("discord.js");
 const { whyCantModerate } = require("../../../utils/moderation");
+const Ban = require("../../../schemas/banschema.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("ban")
     .setDescription("bans a user")
     .addUserOption((option) =>
-      option
-        .setName("target-user")
-        .setDescription("user you want to ban")
-        .setRequired(true),
+      option.setName("target-user").setDescription("user you want to ban").setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
-    .addStringOption((option) =>
-      option.setName("reason").setDescription("reason for the ban"),
-    ),
+    .addStringOption((option) => option.setName("reason").setDescription("reason for the ban")),
 
   run: async ({ interaction }) => {
     const user = interaction.options.getUser("target-user", true);
     // null when they already left; Discord still lets us ban them by ID
     const member = interaction.options.getMember("target-user");
-    const reason =
-      interaction.options.getString("reason") || "no reason provided";
+    const reason = interaction.options.getString("reason") || "no reason provided";
 
     await interaction.deferReply();
 
@@ -38,6 +29,15 @@ module.exports = {
     } catch (error) {
       logger.error(`ban: failed to ban ${user.id}: ${error}`);
       return interaction.editReply(`failed to ban ${user}: ${error.message}`);
+    }
+
+    try {
+      await Ban.deleteMany({ guildId: interaction.guildId, userId: user.id });
+    } catch (error) {
+      logger.error(`ban: failed to drop the old unban of ${user.id}: ${error}`);
+      return interaction.editReply(
+        `${user} is banned, but an old tempban could still unban them, so run /ban again`,
+      );
     }
 
     const banEmbed = new EmbedBuilder()
