@@ -42,7 +42,9 @@ const server = async ({ interaction }) => {
 
   const embed = new EmbedBuilder()
     .setColor("DarkPurple")
-    .setDescription(`The xp system in your server has been reset! (${deletedCount} member(s))`);
+    .setDescription(
+      `The xp system in your server has been reset! (${deletedCount} member(s))`,
+    );
   await interaction.reply({ embeds: [embed] });
 };
 
