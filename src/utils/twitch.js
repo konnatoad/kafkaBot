@@ -1,5 +1,5 @@
 // Twitch Helix API with an app token from the client-credentials flow. Used by the
-// live check and /twitchnotify.
+// live check and /notify twitch.
 const axios = require("axios");
 const logger = require("../extra/logger");
 
