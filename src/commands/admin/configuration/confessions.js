@@ -226,7 +226,7 @@ const reply = (interaction, content) =>
   interaction.reply({ content, flags: MessageFlags.Ephemeral });
 
 // spoilered, with * escaped so Discord doesn't read it as italics
-const shown = (word) => `||${word.replace("*", "\\*")}||`;
+const shown = (word) => `||${word.replace(/\*/g, "\\*")}||`;
 
 const spoiler = (words) => (words.length ? words.map(shown).join(" ") : "none");
 

@@ -59,7 +59,10 @@ function wordsIn(text) {
 
 // the list entry the text hits first, or null
 function findBlockedWord(text, words) {
-  const patterns = words.map((w) => [w, toPattern(w)]);
+  const safeWords = words
+    .map((w) => cleanWord(String(w ?? "")))
+    .filter(Boolean);
+  const patterns = safeWords.map((w) => [w, toPattern(w)]);
   for (const word of wordsIn(text)) {
     const hit = patterns.find(([, p]) => p.test(word));
     if (hit) return hit[0];
