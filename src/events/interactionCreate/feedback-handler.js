@@ -1,64 +1,70 @@
 const logger = require("../../extra/logger");
-const { EmbedBuilder, MessageFlags } = require("discord.js");
+const {
+  EmbedBuilder,
+  MessageFlags,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} = require("discord.js");
+const { quote } = require("../../utils/ideas");
 
+// posts a /feedback idea to the feedback channel with buttons to approve or decline it
+// (the buttons are handled in idea-decision.js)
 module.exports = async (interaction, client) => {
   if (!interaction.guild || !interaction.isModalSubmit()) return;
+  if (interaction.customId !== "feedbackSubmit") return;
 
-  if (interaction.customId === "feedbackSubmit") {
-    const feature = interaction.fields.getTextInputValue("feature");
-    const feedbackDescription = interaction.fields.getTextInputValue(
-      "feedbackDescription",
-    );
+  const title = interaction.fields.getTextInputValue("ideaTitle").trim();
+  const how = interaction.fields.getTextInputValue("ideaHow").trim();
+  const why = interaction.fields.getTextInputValue("ideaWhy").trim();
+  const { user, guild } = interaction;
 
-    const member = interaction.member;
-    const userId = interaction.user.id;
-    const server = interaction.guild;
-
-    const feedbackChannel = client.channels.cache.get(process.env.FEEDBACK);
-    if (!feedbackChannel) {
-      return interaction.reply({
-        content: "Feedback channel is not configured.",
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    const feedbackEmbed = new EmbedBuilder()
-      .setColor("Green")
-      .setTitle("New Feedback Received!")
-      .addFields(
-        {
-          name: "Submitting Member",
-          value: `\`${member.user.username} (${userId})\``,
-        },
-        {
-          name: "Submitting Guild",
-          value: `\`${server.name} (${server.id})\``,
-        },
-        { name: "Feature/Topic", value: `> ${feature}` },
-        { name: "Feedback", value: `> ${feedbackDescription}` },
-      )
-      .setFooter({
-        text: "Feedback System",
-        iconURL: "https://vou.s-ul.eu/ts9RQjxl",
-      })
-      .setTimestamp();
-
-    const delivered = await feedbackChannel
-      .send({ embeds: [feedbackEmbed] })
-      .then(() => true)
-      .catch((err) => {
-        logger.error(
-          "feedback-handler: failed to send to feedback channel:",
-          err,
-        );
-        return false;
-      });
-
-    await interaction.reply({
-      content: delivered
-        ? "Thank you for your feedback! The developer will review it soon."
-        : "Sorry, your feedback couldn't be delivered. Please try again in a bit.",
+  const feedbackChannel = client.channels.cache.get(process.env.FEEDBACK);
+  if (!feedbackChannel) {
+    return interaction.reply({
+      content: "Ideas can't be sent right now.",
       flags: MessageFlags.Ephemeral,
     });
   }
+
+  const embed = new EmbedBuilder()
+    .setColor("Yellow")
+    .setTitle("💡 New idea")
+    .addFields(
+      { name: "Idea", value: quote(title) },
+      { name: "How it works", value: quote(how) },
+      ...(why ? [{ name: "Why", value: quote(why) }] : []),
+      { name: "From", value: `\`${user.username} (${user.id})\`` },
+      { name: "Server", value: `\`${guild.name} (${guild.id})\`` },
+    )
+    .setTimestamp();
+
+  const buttons = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`ideaApprove - ${user.id}`)
+      .setLabel("Approve")
+      .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId(`ideaDecline - ${user.id}`)
+      .setLabel("Decline")
+      .setStyle(ButtonStyle.Danger),
+  );
+
+  const delivered = await feedbackChannel
+    .send({ embeds: [embed], components: [buttons] })
+    .then(() => true)
+    .catch((err) => {
+      logger.error(
+        "feedback-handler: failed to send to feedback channel:",
+        err,
+      );
+      return false;
+    });
+
+  await interaction.reply({
+    content: delivered
+      ? "Thanks for the idea! The developer will look at it."
+      : "Sorry, your idea couldn't be delivered. Please try again in a bit.",
+    flags: MessageFlags.Ephemeral,
+  });
 };
