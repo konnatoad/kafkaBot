@@ -36,6 +36,20 @@ const data = new SlashCommandBuilder()
       .setName("disable")
       .setDescription("turn off anonymous confessions"),
   )
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName("log")
+      .setDescription("show mods who sent each confession, leave empty to stop")
+      .addChannelOption((opt) =>
+        opt
+          .setName("channel")
+          .setDescription("mod channel for the log")
+          .addChannelTypes(
+            ChannelType.GuildText,
+            ChannelType.GuildAnnouncement,
+          ),
+      ),
+  )
   .addSubcommandGroup((group) =>
     group
       .setName("words")
@@ -150,6 +164,59 @@ const disable = async ({ interaction }) => {
     logger.error("confessions disable error:", err);
     return interaction.reply({
       content: "Failed to disable confessions.",
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+};
+
+const log = async ({ interaction }) => {
+  if (!interaction.inGuild()) return notInGuild(interaction);
+  try {
+    const cfg = await ConfessionConfig.findOne({
+      guildId: interaction.guildId,
+    });
+    if (!cfg) {
+      return interaction.reply({
+        content: "Set up confessions first with `/confessions setup`.",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    const channel = interaction.options.getChannel("channel");
+    if (!channel) {
+      cfg.logChannelId = null;
+      await cfg.save();
+      return interaction.reply({
+        content:
+          "Confessions aren't logged anymore. Nobody can see who sent them.",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    const me = interaction.guild.members.me;
+    if (
+      !channel
+        .permissionsFor(me)
+        ?.has(["ViewChannel", "SendMessages", "EmbedLinks"])
+    ) {
+      return interaction.reply({
+        content: `I can't post in ${channel}. Pick a channel I can send embeds in.`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    cfg.logChannelId = channel.id;
+    await cfg.save();
+    return interaction.reply({
+      content:
+        `Confessions will be logged in ${channel} with who sent them. ` +
+        "Members still see them as anonymous, and `/confess` tells them mods can see who sent it.",
+      flags: MessageFlags.Ephemeral,
+    });
+  } catch (err) {
+    logger.error("confessions log error:", err);
+    return interaction.reply({
+      content: "Failed to save the log channel.",
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -282,6 +349,7 @@ module.exports = {
   subcommands: {
     setup,
     disable,
+    log,
     words: { add: addWord, remove: removeWord, list: listWords },
   },
 };
