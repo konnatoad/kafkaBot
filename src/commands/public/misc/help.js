@@ -8,6 +8,7 @@ const {
   ButtonBuilder,
   EmbedBuilder,
   MessageFlags,
+  ApplicationCommandOptionType,
 } = require("discord.js");
 
 const COMMANDS_DIR = path.join(__dirname, "../..");
@@ -25,28 +26,47 @@ function commandFiles(dir) {
   });
 }
 
+/** one line per subcommand, groups included: "`/welcome setup` Choose the channel..." */
+function subcommandLines(command) {
+  return (command.options || []).flatMap((option) => {
+    if (option.type === ApplicationCommandOptionType.Subcommand) {
+      return [`\`/${command.name} ${option.name}\` ${option.description}`];
+    }
+    if (option.type === ApplicationCommandOptionType.SubcommandGroup) {
+      return option.options.map(
+        (sub) =>
+          `\`/${command.name} ${option.name} ${sub.name}\` ${sub.description}`,
+      );
+    }
+    return [];
+  });
+}
+
 /** group -> embeds of PER_PAGE commands each. Commands only change on restart. */
 let pages;
 function helpPages() {
   if (pages) return pages;
   pages = {};
   for (const [group, { title, color }] of Object.entries(GROUPS)) {
-    const commands = commandFiles(path.join(COMMANDS_DIR, group)).map(
-      (file) => require(file).data,
+    const commands = commandFiles(path.join(COMMANDS_DIR, group)).map((file) =>
+      require(file).data.toJSON(),
     );
     const count = Math.ceil(commands.length / PER_PAGE);
     pages[group] = Array.from({ length: count }, (_, page) => {
-      const list = commands
+      // a field per command: one field for the whole page outgrew Discord's 1024 characters
+      const fields = commands
         .slice(page * PER_PAGE, (page + 1) * PER_PAGE)
-        .map(
-          (command) =>
-            `**/${command.name}**\n${command.description || "No description provided"}\n\n`,
-        )
-        .join("");
+        .map((command) => ({
+          name: `/${command.name}`,
+          value: [
+            command.description || "No description provided",
+            ...subcommandLines(command),
+          ].join("\n"),
+        }));
       return new EmbedBuilder()
         .setTitle(`***Commands for ${title}***`)
         .setDescription(`Page ${page + 1} of ${count}`)
-        .addFields({ name: "***Commands***", value: list })
+        .addFields(fields)
         .setColor(color);
     });
   }
