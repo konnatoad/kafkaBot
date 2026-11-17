@@ -1,6 +1,10 @@
 const { EmbedBuilder, MessageFlags } = require("discord.js");
 const ConfessionConfig = require("../../schemas/ConfessionConfig.js");
 const logger = require("../../extra/logger");
+const {
+  blockedWordsFor,
+  findBlockedWord,
+} = require("../../utils/blockedWords");
 
 module.exports = async (interaction, client) => {
   if (!interaction.isModalSubmit()) return;
@@ -21,6 +25,19 @@ module.exports = async (interaction, client) => {
     if (text.length > 4000) {
       return interaction.editReply({
         content: "too long",
+      });
+    }
+    const blocked = findBlockedWord(
+      text,
+      await blockedWordsFor(interaction.guildId),
+    );
+    if (blocked) {
+      // which server and which word, never who sent it
+      logger.info(
+        `confession rejected in guild "${interaction.guild?.name}" ${interaction.guildId}: matched "${blocked}"`,
+      );
+      return interaction.editReply({
+        content: "that can't be posted",
       });
     }
 
