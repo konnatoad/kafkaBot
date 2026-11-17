@@ -92,32 +92,38 @@ const idea = async ({ interaction }) => {
   if (!interaction.guild)
     return notInGuild(
       interaction,
-      "Please submit your feedback within a server!",
+      "Please send your idea from within a server!",
     );
 
   const modal = new ModalBuilder()
-    .setTitle("Feedback Submission")
+    .setTitle("Share an idea")
     .setCustomId("feedbackSubmit");
 
-  const feature = new TextInputBuilder()
-    .setCustomId("feature")
+  const title = new TextInputBuilder()
+    .setCustomId("ideaTitle")
     .setRequired(true)
-    .setPlaceholder(
-      "What feature or aspect of the bot are you giving feedback on?",
-    )
-    .setLabel("Feature or Topic")
+    .setPlaceholder("e.g. /remind that repeats every week")
+    .setLabel("Your idea in a few words")
     .setStyle(TextInputStyle.Short)
     .setMaxLength(100);
 
-  const feedbackDescription = new TextInputBuilder()
-    .setCustomId("feedbackDescription")
+  const how = new TextInputBuilder()
+    .setCustomId("ideaHow")
     .setRequired(true)
-    .setPlaceholder("Provide detailed feedback or suggestions")
-    .setLabel("Your Feedback")
+    .setPlaceholder("what it does and who would use it")
+    .setLabel("How would it work?")
     .setStyle(TextInputStyle.Paragraph)
     .setMaxLength(1000);
 
-  modal.addComponents(row(feature), row(feedbackDescription));
+  const why = new TextInputBuilder()
+    .setCustomId("ideaWhy")
+    .setRequired(false)
+    .setPlaceholder("what it makes easier or more fun")
+    .setLabel("Why would it be good?")
+    .setStyle(TextInputStyle.Paragraph)
+    .setMaxLength(1000);
+
+  modal.addComponents(row(title), row(how), row(why));
   await interaction.showModal(modal);
 };
 
