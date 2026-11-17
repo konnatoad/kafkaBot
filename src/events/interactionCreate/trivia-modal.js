@@ -1,5 +1,4 @@
 const { InteractionType, MessageFlags } = require("discord.js");
-const Fuse = require("fuse.js");
 const TriviaConfig = require("../../schemas/TriviaConfig");
 const TriviaStats = require("../../schemas/TriviaStats");
 const UserProfile = require("../../schemas/UserProfile");
@@ -10,6 +9,36 @@ const NUMERIC = /^-?\d[\d,\s]*(\.\d+)?$/;
 
 function normalize(str) {
   return str.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function toWords(str) {
+  const words = str
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/['’.]/g, "")
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
+  if (words.length > 1 && ["the", "a", "an"].includes(words[0])) words.shift();
+  return words;
+}
+function allowedTypos(word) {
+  if (word.length <= 4) return 0;
+  if (word.length <= 9) return 1;
+  return 2;
+}
+function typoDistance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+  }
+  return d[a.length][b.length];
 }
 
 function isCorrect(userAnswer, correctAnswer) {
@@ -25,11 +54,10 @@ function isCorrect(userAnswer, correctAnswer) {
 
   // short answers like "Au" have to match exactly
   if (answer.length <= 3) return false;
-
-  if (user.length < answer.length * 0.6) return false;
-  const fuse = new Fuse([answer], { threshold: 0.2, includeScore: true });
-  const results = fuse.search(user);
-  return results.length > 0 && results[0].score <= 0.2;
+  const userWords = toWords(user);
+  const answerWords = toWords(answer);
+  if (userWords.length !== answerWords.length) return false;
+  return answerWords.every((word, i) => typoDistance(userWords[i], word) <= allowedTypos(word));
 }
 
 module.exports = async (interaction) => {
@@ -54,8 +82,7 @@ module.exports = async (interaction) => {
     }
 
     const difficulty = cfg.questionDifficulty ?? "medium";
-    const userAnswer =
-      interaction.fields.getTextInputValue("trivia_answer_text") ?? "";
+    const userAnswer = interaction.fields.getTextInputValue("trivia_answer_text") ?? "";
 
     let stats = await TriviaStats.findOne({
       guildId,
@@ -98,8 +125,7 @@ module.exports = async (interaction) => {
         `❌ Have you considered not answering? **${nextPrize} rice grains** left.`,
       ];
       return interaction.editReply({
-        content:
-          wrongMessages[Math.floor(Math.random() * wrongMessages.length)],
+        content: wrongMessages[Math.floor(Math.random() * wrongMessages.length)],
       });
     }
 

@@ -18,6 +18,15 @@ module.exports = {
         .setRequired(true),
     ),
   run: async ({ interaction }) => {
+    // in DMs there's no server to keep the grains in, and the rep would be used up for nothing
+    if (!interaction.inGuild()) {
+      await interaction.reply({
+        content: "You can only run this command in a server!",
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
     try {
       const giver = interaction.user;
       const receiver = interaction.options.getUser("user");

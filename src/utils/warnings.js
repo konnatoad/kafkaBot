@@ -2,14 +2,7 @@ const warningSchema = require("../schemas/warnschema");
 
 // Warnings used to be stored per username too, so someone who renamed has more
 // than one document. Everything here goes by user ID and reads all of them.
-async function addWarning({
-  guildId,
-  userId,
-  userTag,
-  executerId,
-  executerTag,
-  reason,
-}) {
+async function addWarning({ guildId, userId, userTag, executerId, executerTag, reason }) {
   const entry = {
     ExecuterId: executerId,
     ExecuterTag: executerTag,
@@ -19,7 +12,7 @@ async function addWarning({
   return warningSchema.findOneAndUpdate(
     { GuildID: guildId, UserID: userId },
     { $push: { Content: entry }, $set: { UserNAME: userTag } },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
   );
 }
 
