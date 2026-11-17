@@ -142,6 +142,7 @@ Available placeholders: `{USER_MENTION}` `{USER_NAME}` `{SERVER_NAME}` `{SERVER_
 | `/reactor disable <channel>` / `/reactor remove-all` | Stop auto-reactions in one channel or all |
 | `/confessions setup <channel>`                       | Enable confessions                        |
 | `/confessions disable`                               | Disable confessions                       |
+| `/confessions log [channel]`                         | Log who sent each confession for mods     |
 | `/confessions words add <word>` / `remove <word>`    | Block or unblock a word in confessions    |
 | `/confessions words list`                            | Show the blocked words                    |
 | `/store-setup add <role> <cost>` / `remove <role>`   | Configure roles in the store              |

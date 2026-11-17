@@ -6,6 +6,30 @@ const {
   findBlockedWord,
 } = require("../../utils/blockedWords");
 
+// the mod copy, with who sent it; the confession is already out, so a failure here is only logged
+async function logConfession(client, cfg, interaction, posted) {
+  try {
+    const logChannel = await client.channels.fetch(cfg.logChannelId);
+    const embed = new EmbedBuilder()
+      .setColor("Grey")
+      .setTitle("Confession log")
+      .setDescription(posted.embeds[0]?.description ?? "")
+      .addFields(
+        {
+          name: "Sent by",
+          value: `${interaction.user} (${interaction.user.id})`,
+        },
+        { name: "Posted", value: posted.url },
+      )
+      .setTimestamp();
+    await logChannel.send({ embeds: [embed], allowedMentions: { parse: [] } });
+  } catch (err) {
+    logger.warn(
+      `confession-modal: couldn't post to the log channel of guild ${cfg.guildId}: ${err}`,
+    );
+  }
+}
+
 module.exports = async (interaction, client) => {
   if (!interaction.isModalSubmit()) return;
   if (interaction.customId !== "confession_modal_v1") return;
@@ -65,9 +89,11 @@ module.exports = async (interaction, client) => {
       .setDescription(text)
       .setTimestamp();
 
-    await channel.send({
+    const posted = await channel.send({
       embeds: [embed],
     });
+
+    if (cfg.logChannelId) await logConfession(client, cfg, interaction, posted);
 
     return interaction.editReply({
       content: "sent",
