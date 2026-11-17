@@ -135,15 +135,17 @@ function logChannelCommand({ name, description, logs }) {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
   const subcommands = {};
 
-  for (const { group, system, logged, model } of logs) {
+  for (const { group, logged, model } of logs) {
     data.addSubcommandGroup((subcommandGroup) =>
       subcommandGroup
         .setName(group)
-        .setDescription(`The ${system}`)
+        .setDescription(`log ${logged} messages`)
         .addSubcommand((command) =>
           command
             .setName("setup")
-            .setDescription(`Setup the ${system} system`)
+            .setDescription(
+              `choose the channel ${logged} messages are logged in`,
+            )
             .addChannelOption((option) =>
               option
                 .setName("channel")
@@ -155,7 +157,7 @@ function logChannelCommand({ name, description, logs }) {
         .addSubcommand((command) =>
           command
             .setName("disable")
-            .setDescription(`disable the ${system} system`),
+            .setDescription(`stop logging ${logged} messages`),
         ),
     );
     subcommands[group] = logChannelSubcommands(model);

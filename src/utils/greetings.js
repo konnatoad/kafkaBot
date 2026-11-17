@@ -104,12 +104,16 @@ function greetingCommand(kind) {
 
   const data = new SlashCommandBuilder()
     .setName(kind)
-    .setDescription(`Set up the ${kind} message for your server`)
+    .setDescription(
+      kind === "welcome"
+        ? "welcome messages for new members"
+        : "goodbye messages when members leave",
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((subcommand) =>
       subcommand
         .setName("setup")
-        .setDescription(`Choose the channel ${kind} messages are sent to`)
+        .setDescription(`choose the channel ${kind} messages are sent to`)
         .addChannelOption((option) =>
           option
             .setName("channel")
@@ -126,11 +130,7 @@ function greetingCommand(kind) {
     .addSubcommand((subcommand) =>
       subcommand
         .setName("message")
-        .setDescription(
-          kind === "welcome"
-            ? "Set the welcome message for new members"
-            : "Set the goodbye message for members who leave",
-        )
+        .setDescription(`set the ${kind} message`)
         .addStringOption((option) =>
           option
             .setName("message")
@@ -145,14 +145,10 @@ function greetingCommand(kind) {
         ),
     )
     .addSubcommand((subcommand) =>
-      subcommand
-        .setName("test")
-        .setDescription(`Test the ${kind} message for the server.`),
+      subcommand.setName("test").setDescription(`send a test ${kind} message`),
     )
     .addSubcommand((subcommand) =>
-      subcommand
-        .setName("disable")
-        .setDescription(`Disable the ${kind} message feature`),
+      subcommand.setName("disable").setDescription(`turn off ${kind} messages`),
     );
 
   const setup = async ({ interaction }) => {

@@ -8,15 +8,15 @@ const levelSchema = require("../../../schemas/level");
 
 const data = new SlashCommandBuilder()
   .setName("xp-reset")
-  .setDescription("Reset XP for the whole server or one member")
+  .setDescription("reset XP for the whole server or one member")
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addSubcommand((subcommand) =>
-    subcommand.setName("server").setDescription("Reset ALL of the server's XP"),
+    subcommand.setName("server").setDescription("reset all of the server's XP"),
   )
   .addSubcommand((subcommand) =>
     subcommand
       .setName("user")
-      .setDescription("Reset one member's XP")
+      .setDescription("reset one member's XP")
       .addUserOption((option) =>
         option
           .setName("user")

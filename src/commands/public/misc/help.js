@@ -149,7 +149,7 @@ function buttons(group, canSwitch) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("help")
-    .setDescription("Displays list of available commands"),
+    .setDescription("list the commands you can use and how they work"),
 
   async run({ interaction }) {
     const all = helpPages(interaction);

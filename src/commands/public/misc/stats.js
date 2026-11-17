@@ -9,7 +9,7 @@ const GAMES = {
 
 const data = new SlashCommandBuilder()
   .setName("stats")
-  .setDescription("Retrieve game stats from chosen game");
+  .setDescription("game stats for Valorant, TFT and osu!");
 for (const game of Object.values(GAMES)) data.addSubcommand(game.subcommand);
 
 const subcommands = {};

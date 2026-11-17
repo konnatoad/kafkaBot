@@ -8,9 +8,7 @@ const REP_AMOUNT = 25;
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("rep")
-    .setDescription(
-      `Give ${REP_AMOUNT} rice grains to another user once per day`,
-    )
+    .setDescription(`give another member ${REP_AMOUNT} rice grains, once a day`)
     .addUserOption((option) =>
       option
         .setName("user")

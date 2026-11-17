@@ -93,12 +93,12 @@ const sendDailyQuote = async (client) => {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("dailyquote")
-    .setDescription("Manage the daily quote feature")
+    .setDescription("post a saved quote every day")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((subcommand) =>
       subcommand
         .setName("enable")
-        .setDescription("Enable daily quotes and set a channel")
+        .setDescription("turn on daily quotes in a channel")
         .addChannelOption((option) =>
           option
             .setName("channel")
@@ -107,9 +107,7 @@ module.exports = {
         ),
     )
     .addSubcommand((subcommand) =>
-      subcommand
-        .setName("disable")
-        .setDescription("Disable daily quotes for this server"),
+      subcommand.setName("disable").setDescription("turn off daily quotes"),
     ),
 
   async run({ interaction }) {

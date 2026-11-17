@@ -16,12 +16,12 @@ const MAX_DESCRIPTION = 4000;
 
 const data = new SlashCommandBuilder()
   .setName("warn")
-  .setDescription("Warn members, and see or clear their warnings")
+  .setDescription("warn members, and see or clear their warnings")
   .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
   .addSubcommand((subcommand) =>
     subcommand
       .setName("add")
-      .setDescription("Warn a member")
+      .setDescription("warn a member")
       .addUserOption((option) =>
         option
           .setName("user")
@@ -38,7 +38,7 @@ const data = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName("list")
-      .setDescription("See a member's warnings")
+      .setDescription("see a member's warnings")
       .addUserOption((option) =>
         option
           .setName("user")
@@ -49,7 +49,7 @@ const data = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName("clear")
-      .setDescription("Clear all of a member's warnings")
+      .setDescription("clear all of a member's warnings")
       .addUserOption((option) =>
         option
           .setName("user")

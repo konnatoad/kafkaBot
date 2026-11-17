@@ -9,12 +9,12 @@ const { whyBotCantGive } = require("../../../utils/roles");
 
 const data = new SlashCommandBuilder()
   .setName("autorole")
-  .setDescription("Give new members a role when they join.")
+  .setDescription("give new members a role when they join")
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addSubcommand((subcommand) =>
     subcommand
       .setName("setup")
-      .setDescription("Configure your auto-role for this server.")
+      .setDescription("pick the role new members get")
       .addRoleOption((option) =>
         option
           .setName("role")
@@ -25,7 +25,7 @@ const data = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName("disable")
-      .setDescription("Disable auto-role in this server."),
+      .setDescription("stop giving new members a role"),
   );
 
 const setup = async ({ interaction }) => {

@@ -5,15 +5,15 @@ const { shuffle } = require("../../../utils/random");
 
 const data = new SlashCommandBuilder()
   .setName("random")
-  .setDescription("A random cat, dog or witchii video")
+  .setDescription("a random cat, dog or witchii video")
   .addSubcommand((subcommand) =>
-    subcommand.setName("cat").setDescription("Locally sourced cat pics."),
+    subcommand.setName("cat").setDescription("locally sourced cat pics"),
   )
   .addSubcommand((subcommand) =>
-    subcommand.setName("dog").setDescription("Locally sourced dog pics."),
+    subcommand.setName("dog").setDescription("locally sourced dog pics"),
   )
   .addSubcommand((subcommand) =>
-    subcommand.setName("video").setDescription("random witchii video"),
+    subcommand.setName("video").setDescription("a random witchii video"),
   );
 
 const cat = ({ interaction }) =>

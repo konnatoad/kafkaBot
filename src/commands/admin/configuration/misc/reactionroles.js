@@ -10,11 +10,11 @@ const { whyBotCantGive } = require("../../../../utils/roles");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("reaction-roles")
-    .setDescription("Manage your reaction roles system")
+    .setDescription("roles members get by reacting to a message")
     .addSubcommand((command) =>
       command
         .setName("add")
-        .setDescription("Add a reaction role to a message")
+        .setDescription("add a reaction role to a message")
         .addStringOption((option) =>
           option
             .setName("message-id")
@@ -38,7 +38,7 @@ module.exports = {
     .addSubcommand((command) =>
       command
         .setName("remove")
-        .setDescription("Remove a reaction role from a message")
+        .setDescription("remove a reaction role from a message")
         .addStringOption((option) =>
           option
             .setName("message-id")

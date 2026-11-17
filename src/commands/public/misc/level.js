@@ -15,11 +15,11 @@ let font;
 
 const data = new SlashCommandBuilder()
   .setName("level")
-  .setDescription("Levels and XP in this server")
+  .setDescription("levels and XP in this server")
   .addSubcommand((subcommand) =>
     subcommand
       .setName("rank")
-      .setDescription("Gets a members rank in the server")
+      .setDescription("show a member's rank card")
       .addUserOption((option) =>
         option
           .setName("user")
@@ -30,7 +30,7 @@ const data = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName("leaderboard")
-      .setDescription("This gets a servers xp leaderboard."),
+      .setDescription("the server's XP leaderboard"),
   );
 
 // levels belong to a server; in DMs there is no member and no guild to read

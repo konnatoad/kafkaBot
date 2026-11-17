@@ -17,7 +17,7 @@ const MINUTES_PER = {
 
 const data = new SlashCommandBuilder()
   .setName("ban")
-  .setDescription("bans a user, for good or for a set time")
+  .setDescription("ban a member, for good or for a set time")
   .addUserOption((option) =>
     option
       .setName("target-user")

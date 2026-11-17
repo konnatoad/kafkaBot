@@ -9,7 +9,7 @@ const {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("confess")
-    .setDescription("send an anonymous confession."),
+    .setDescription("send an anonymous confession"),
   run: async ({ interaction }) => {
     const modal = new ModalBuilder()
       .setCustomId("confession_modal_v1")

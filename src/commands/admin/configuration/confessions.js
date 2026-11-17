@@ -10,12 +10,12 @@ const logger = require("../../../extra/logger");
 
 const data = new SlashCommandBuilder()
   .setName("confessions")
-  .setDescription("Anonymous confessions in this server.")
+  .setDescription("anonymous confessions in this server")
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .addSubcommand((subcommand) =>
     subcommand
       .setName("setup")
-      .setDescription("Set the channel where anonymous confessions are posted.")
+      .setDescription("set the channel confessions are posted in")
       .addChannelOption((opt) =>
         opt
           .setName("channel")
@@ -27,7 +27,7 @@ const data = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName("disable")
-      .setDescription("Disable anonymous confessions in this server."),
+      .setDescription("turn off anonymous confessions"),
   );
 
 const notInGuild = (interaction) =>

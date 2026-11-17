@@ -15,12 +15,12 @@ const { fetchCategories } = require("../../../utils/trivia");
 
 const data = new SlashCommandBuilder()
   .setName("trivia")
-  .setDescription("The daily trivia question for this server.")
+  .setDescription("a daily trivia question for this server")
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .addSubcommand((subcommand) =>
     subcommand
       .setName("setup")
-      .setDescription("Configure the daily trivia system for this server.")
+      .setDescription("set the channel, time and difficulty")
       .addChannelOption((opt) =>
         opt
           .setName("channel")
@@ -57,9 +57,7 @@ const data = new SlashCommandBuilder()
       ),
   )
   .addSubcommand((subcommand) =>
-    subcommand
-      .setName("disable")
-      .setDescription("Disable the daily trivia system for this server."),
+    subcommand.setName("disable").setDescription("turn off daily trivia"),
   );
 
 const setup = async ({ interaction }) => {

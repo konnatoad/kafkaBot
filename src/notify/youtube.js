@@ -14,7 +14,7 @@ const subcommandGroup = (group) =>
     .addSubcommand((subcommand) =>
       subcommand
         .setName("add")
-        .setDescription("Setup youtube notifications for a channel")
+        .setDescription("post a channel's new YouTube uploads")
         .addStringOption((option) =>
           option
             .setName("youtube-id")
@@ -42,7 +42,7 @@ const subcommandGroup = (group) =>
     .addSubcommand((subcommand) =>
       subcommand
         .setName("remove")
-        .setDescription("Turn off youtube notifications for a channel.")
+        .setDescription("stop posting a channel's YouTube uploads")
         .addStringOption((option) =>
           option
             .setName("youtube-id")

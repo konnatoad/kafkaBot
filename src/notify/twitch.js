@@ -13,7 +13,7 @@ const subcommandGroup = (group) =>
     .addSubcommand((subcommand) =>
       subcommand
         .setName("add")
-        .setDescription("Setup Twitch live notification system")
+        .setDescription("post when a Twitch streamer goes live")
         .addStringOption((option) =>
           option
             .setName("twitch_url")
@@ -42,7 +42,7 @@ const subcommandGroup = (group) =>
     .addSubcommand((subcommand) =>
       subcommand
         .setName("remove")
-        .setDescription("Remove Twitch live notification setup")
+        .setDescription("stop posting when a Twitch streamer goes live")
         .addStringOption((option) =>
           option
             .setName("twitch_url")

@@ -9,16 +9,16 @@ const {
 
 const data = new SlashCommandBuilder()
   .setName("feedback")
-  .setDescription("Send a bug report or an idea to the bot developer")
+  .setDescription("send a bug report or an idea to the bot developer")
   .addSubcommand((subcommand) =>
     subcommand
       .setName("bug")
-      .setDescription("Sends a bug report to the bot dev!"),
+      .setDescription("report a bug to the bot developer"),
   )
   .addSubcommand((subcommand) =>
     subcommand
       .setName("idea")
-      .setDescription("Send feedback to the bot developer!"),
+      .setDescription("send an idea or feedback to the bot developer"),
   );
 
 // both forms are read in a server channel, so they only open inside a server
