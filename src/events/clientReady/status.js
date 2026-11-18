@@ -7,7 +7,7 @@ module.exports = (client) => {
       {
         type: ActivityType.Custom,
         name: "Custom Status", // discord ignores it for custom statuses but requires it
-        state: "💜 be good and wait for v2 · /help",
+        state: "tidied up · /help 💜",
       },
     ],
   });
