@@ -26,6 +26,10 @@ function getCurrentHHMM(timezone) {
   }).format(new Date());
 }
 
+// guilds whose question couldn't be fetched, by the day it failed; retried every few minutes that day
+const retryDates = new Map();
+const RETRY_EVERY_MINUTES = 5;
+
 module.exports = (client) => {
   cron.schedule("* * * * *", async () => {
     let configs;
@@ -38,11 +42,14 @@ module.exports = (client) => {
 
     for (const cfg of configs) {
       try {
-        const currentTime = getCurrentHHMM(cfg.timezone);
-        if (currentTime !== cfg.time) continue;
-
         const today = getTodayInTimezone(cfg.timezone);
         if (cfg.lastSentDate === today) continue;
+
+        const isScheduledMinute = getCurrentHHMM(cfg.timezone) === cfg.time;
+        const isRetryMinute =
+          retryDates.get(cfg.guildId) === today &&
+          new Date().getMinutes() % RETRY_EVERY_MINUTES === 0;
+        if (!isScheduledMinute && !isRetryMinute) continue;
 
         const guild =
           client.guilds.cache.get(cfg.guildId) ||
@@ -61,6 +68,28 @@ module.exports = (client) => {
           );
           continue;
         }
+
+        const categoryId = cfg.categoryIds.length
+          ? pickOne(cfg.categoryIds)
+          : null;
+        const effectiveDifficulty =
+          cfg.difficulty === "random"
+            ? pickOne(["easy", "medium", "hard"])
+            : cfg.difficulty;
+
+        // fetch first, so a failed fetch doesn't post yesterday's results without a question
+        let question;
+        try {
+          question = await fetchQuestion(effectiveDifficulty, categoryId);
+        } catch (err) {
+          retryDates.set(cfg.guildId, today);
+          logger.error(
+            `trivia-scheduler: failed to fetch question for guild ${cfg.guildId}, retrying in ${RETRY_EVERY_MINUTES} min:`,
+            err,
+          );
+          continue;
+        }
+        retryDates.delete(cfg.guildId);
 
         // Announce previous day's winners before posting new question
         if (cfg.lastSentDate) {
@@ -99,25 +128,6 @@ module.exports = (client) => {
               err,
             );
           }
-        }
-
-        const categoryId = cfg.categoryIds.length
-          ? pickOne(cfg.categoryIds)
-          : null;
-        const effectiveDifficulty =
-          cfg.difficulty === "random"
-            ? pickOne(["easy", "medium", "hard"])
-            : cfg.difficulty;
-
-        let question;
-        try {
-          question = await fetchQuestion(effectiveDifficulty, categoryId);
-        } catch (err) {
-          logger.error(
-            `trivia-scheduler: failed to fetch question for guild ${cfg.guildId}:`,
-            err,
-          );
-          continue;
         }
 
         const { correctAnswer } = question;

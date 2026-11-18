@@ -148,11 +148,11 @@ module.exports = {
       await saveUnban(interaction.guildId, user.id, length.minutes);
     } catch (error) {
       logger.error(`ban: failed to save the unban of ${user.id}: ${error}`);
-      if (length.minutes) {
-        return interaction.editReply(
-          `${user} is banned, but i couldn't save when to unban them, so unban them by hand`,
-        );
-      }
+      return interaction.editReply(
+        length.minutes
+          ? `${user} is banned, but i couldn't save when to unban them, so unban them by hand`
+          : `${user} is banned, but an old tempban could still unban them, so run /ban again`,
+      );
     }
 
     const embed = length.minutes

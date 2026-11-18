@@ -19,7 +19,7 @@ async function addWarning({
   return warningSchema.findOneAndUpdate(
     { GuildID: guildId, UserID: userId },
     { $push: { Content: entry }, $set: { UserNAME: userTag } },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
   );
 }
 
