@@ -13,15 +13,15 @@ const OPEN_FOR = 5 * 60 * 1000;
 function buttons(index, total) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId("changelog_older")
-      .setLabel("Older")
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(index >= total - 1),
-    new ButtonBuilder()
       .setCustomId("changelog_newer")
       .setLabel("Newer")
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(index <= 0),
+    new ButtonBuilder()
+      .setCustomId("changelog_older")
+      .setLabel("Older")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(index >= total - 1),
   );
 }
 
@@ -47,14 +47,20 @@ module.exports = {
       versions = await getChangelog();
     } catch (error) {
       logger.error("/changelog: couldn't load the changelog:", error);
-      return interaction.editReply("couldn't load the changelog right now, try again later");
+      return interaction.editReply(
+        "couldn't load the changelog right now, try again later",
+      );
     }
     const wanted = interaction.options.getString("version");
     let index = 0;
     if (wanted) {
-      index = versions.findIndex((entry) => plainVersion(entry.version) === plainVersion(wanted));
+      index = versions.findIndex(
+        (entry) => plainVersion(entry.version) === plainVersion(wanted),
+      );
       if (index === -1) {
-        return interaction.editReply(`there's no version ${wanted} in the changelog`);
+        return interaction.editReply(
+          `there's no version ${wanted} in the changelog`,
+        );
       }
     }
     const view = () => ({
@@ -73,7 +79,9 @@ module.exports = {
       if (button.customId === "changelog_newer") index = Math.max(index - 1, 0);
       await button
         .update(view())
-        .catch((error) => logger.error("/changelog: failed to change page:", error));
+        .catch((error) =>
+          logger.error("/changelog: failed to change page:", error),
+        );
     });
     collector.on("end", () =>
       interaction.editReply({ components: [] }).catch((error) => {
@@ -90,7 +98,7 @@ module.exports = {
     try {
       versions = await getChangelog();
     } catch {
-      return interaction.respond([]).catch(() => { });
+      return interaction.respond([]).catch(() => {});
     }
     const choices = versions
       .filter((entry) => plainVersion(entry.version).includes(typed))
@@ -99,6 +107,6 @@ module.exports = {
         name: [entry.version, entry.date].join(" · ").slice(0, 100),
         value: entry.version,
       }));
-    await interaction.respond(choices).catch(() => { });
+    await interaction.respond(choices).catch(() => {});
   },
 };
