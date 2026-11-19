@@ -2,7 +2,9 @@ const NotificationConfig = require("../../schemas/NotificationConfig");
 const logger = require("../../extra/logger");
 const { latestUpload, describeApiError } = require("../../utils/youtube");
 
-const CHECK_EVERY_MS = 60 * 1000;
+// each check costs 1 of YouTube's 10,000 free units a day per channel: every 5 min
+// leaves room for ~34 followed channels, every minute ran out past 6
+const CHECK_EVERY_MS = 5 * 60 * 1000;
 // Discord's answer when a channel really is gone
 const UNKNOWN_CHANNEL = 10003;
 
