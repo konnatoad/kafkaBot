@@ -223,7 +223,7 @@ module.exports = {
   testOnly: true,
   data: new SlashCommandBuilder()
     .setName("map")
-    .setDescription("osu! beatmap info + potential PP")
+    .setDescription("osu! beatmap info and potential PP")
     .addStringOption((opt) =>
       opt
         .setName("map")

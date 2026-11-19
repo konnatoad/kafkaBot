@@ -5,11 +5,11 @@ const logger = require("../../../extra/logger");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("remind")
-    .setDescription("Manage your daily reminders.")
+    .setDescription("your daily reminders")
     .addSubcommand((subcommand) =>
       subcommand
         .setName("set")
-        .setDescription("Set a reminder for dailies.")
+        .setDescription("remind you to collect your dailies")
         .addStringOption((option) =>
           option
             .setName("time")
@@ -20,7 +20,7 @@ module.exports = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName("disable")
-        .setDescription("Disable your daily reminder."),
+        .setDescription("turn off your daily reminder"),
     ),
 
   run: async ({ interaction }) => {

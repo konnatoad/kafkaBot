@@ -17,11 +17,11 @@ const looksLikeEmoji = (text) =>
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("reactor")
-    .setDescription("Manage your auto reaction system")
+    .setDescription("react to every message in chosen channels")
     .addSubcommand((command) =>
       command
         .setName("setup")
-        .setDescription("Setup your auto reactor system")
+        .setDescription("pick a channel and the emojis to react with")
         .addStringOption((option) =>
           option
             .setName("emojis")
@@ -41,7 +41,7 @@ module.exports = {
     .addSubcommand((command) =>
       command
         .setName("disable")
-        .setDescription("Disable your auto reactor for one channel")
+        .setDescription("stop reacting in one channel")
         .addChannelOption((option) =>
           option
             .setName("channel")
@@ -53,9 +53,7 @@ module.exports = {
     .addSubcommand((command) =>
       command
         .setName("remove-all")
-        .setDescription(
-          "Remove all of your auto reactor channels in the entire server",
-        ),
+        .setDescription("stop reacting in every channel"),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 

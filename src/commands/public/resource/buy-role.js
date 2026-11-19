@@ -6,7 +6,7 @@ const logger = require("../../../extra/logger");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("buy-role")
-    .setDescription("Buy a role from the rice grains store")
+    .setDescription("buy a role from the rice grain store")
     .addRoleOption((option) =>
       option.setName("role").setDescription("The role you want to buy").setRequired(true),
     ),

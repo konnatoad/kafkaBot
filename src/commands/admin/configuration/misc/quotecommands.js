@@ -296,12 +296,12 @@ const removeAllQuotes = async (interaction) => {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("quote")
-    .setDescription("Manage quotes")
+    .setDescription("save and manage quotes")
     .setDefaultMemberPermissions(PermissionFlagsBits.CreateGuildExpressions)
     .addSubcommand((subcommand) =>
       subcommand
         .setName("add")
-        .setDescription("Add a quote")
+        .setDescription("save a message as a quote")
         .addStringOption((option) =>
           option
             .setName("messageid")
@@ -312,7 +312,7 @@ module.exports = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName("remove")
-        .setDescription("Remove a quote")
+        .setDescription("remove a quote")
         .addStringOption((option) =>
           option
             .setName("quoteid")
@@ -323,7 +323,7 @@ module.exports = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName("list")
-        .setDescription("List all quotes")
+        .setDescription("list the saved quotes")
         .addUserOption((option) =>
           option
             .setName("user")
@@ -334,7 +334,7 @@ module.exports = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName("removeall")
-        .setDescription("Remove all quotes from the server"),
+        .setDescription("remove every quote in this server"),
     ),
   async run({ interaction }) {
     try {

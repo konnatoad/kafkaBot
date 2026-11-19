@@ -5,7 +5,7 @@ const { replyWithLeaderboard } = require("../../../utils/leaderboard");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("ricetop")
-    .setDescription("This gets a servers rice grain leaderboard."),
+    .setDescription("the server's rice grain leaderboard"),
 
   run: async ({ interaction }) => {
     const top = await UserProfile.find({ Guild: interaction.guildId })
