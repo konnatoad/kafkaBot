@@ -8,10 +8,7 @@ module.exports = {
     .setName("buy-role")
     .setDescription("Buy a role from the rice grains store")
     .addRoleOption((option) =>
-      option
-        .setName("role")
-        .setDescription("The role you want to buy")
-        .setRequired(true),
+      option.setName("role").setDescription("The role you want to buy").setRequired(true),
     ),
   run: async ({ interaction }) => {
     const role = interaction.options.getRole("role");
@@ -25,7 +22,10 @@ module.exports = {
       return interaction.reply("This role is not available for purchase.");
     }
     if (interaction.member.roles.cache.has(role.id)) {
-      return interaction.reply(`You already have the ${role} role.`);
+      return interaction.reply({
+        content: `You already have the ${role} role.`,
+        allowedMentions: { parse: [] },
+      });
     }
 
     // takes the cost only if they have it at the moment it's taken
@@ -34,9 +34,7 @@ module.exports = {
       { $inc: { balance: -storeItem.cost } },
     );
     if (!paid) {
-      return interaction.reply(
-        "You do not have enough rice grains to buy this role.",
-      );
+      return interaction.reply("You do not have enough rice grains to buy this role.");
     }
 
     try {
@@ -53,8 +51,9 @@ module.exports = {
       return interaction.reply("An error occurred while giving you the role.");
     }
 
-    return interaction.reply(
-      `Congratulations! You have successfully purchased the ${role} role.`,
-    );
+    return interaction.reply({
+      content: `Congratulations! You have successfully purchased the ${role} role.`,
+      allowedMentions: { parse: [] },
+    });
   },
 };
