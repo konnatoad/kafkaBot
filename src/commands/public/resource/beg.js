@@ -148,5 +148,5 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("beg")
-    .setDescription("Beg for a chance to get some extra currency."),
+    .setDescription("beg for a chance at some extra rice grains"),
 };

@@ -46,7 +46,7 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("balance")
-    .setDescription("Check your balance")
+    .setDescription("check your or someone's rice grain balance")
     .addUserOption((option) =>
       option
         .setName("target-user")

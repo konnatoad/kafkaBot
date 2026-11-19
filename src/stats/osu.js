@@ -8,7 +8,7 @@ const { beatmapText } = require("../utils/osuBeatmaps");
 const subcommand = (subcommand) =>
   subcommand
     .setName("osu")
-    .setDescription("Get osu! player stats")
+    .setDescription("an osu! player's top or recent plays")
     .addStringOption((option) =>
       option
         .setName("player")

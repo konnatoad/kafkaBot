@@ -2,7 +2,7 @@ const AutoRole = require("../../schemas/AutoRole");
 const logger = require("../../extra/logger");
 
 // what Discord answers when the role was deleted or moved above the bot since
-// /autorole-configure checked it: fixing that is up to the server's admins
+// /autorole setup checked it: fixing that is up to the server's admins
 const ADMIN_FIXABLE = {
   10011: "the role was deleted",
   50013: "the role is above mine",

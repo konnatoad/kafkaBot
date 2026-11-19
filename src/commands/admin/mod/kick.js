@@ -9,7 +9,7 @@ const { whyCantModerate } = require("../../../utils/moderation");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("kick")
-    .setDescription("kicks a user")
+    .setDescription("kick a member")
     .addUserOption((option) =>
       option
         .setName("target-user")
