@@ -142,7 +142,12 @@ module.exports = async (interaction) => {
     let won;
     try {
       won = await TriviaStats.findOneAndUpdate(
-        { guildId, questionId, userId: interaction.user.id, solved: { $ne: true } },
+        {
+          guildId,
+          questionId,
+          userId: interaction.user.id,
+          solved: { $ne: true },
+        },
         { $set: { solved: true }, $setOnInsert: { wrongAttempts: 0 } },
         { upsert: true, returnDocument: "after" },
       );
@@ -204,3 +209,6 @@ module.exports = async (interaction) => {
     }
   }
 };
+
+// for test/trivia-answers.test.js; djs-commander only calls the function above
+module.exports.isCorrect = isCorrect;

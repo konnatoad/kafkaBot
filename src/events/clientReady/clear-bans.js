@@ -34,7 +34,9 @@ async function liftExpiredBans(client) {
     for (const ban of expired) {
       if (!(await lift(client, ban))) continue;
       if (failing.delete(String(ban._id)))
-        logger.info(`tempban: unbanned ${ban.userId} in ${ban.guildId} after earlier failures`);
+        logger.info(
+          `tempban: unbanned ${ban.userId} in ${ban.guildId} after earlier failures`,
+        );
       await Ban.deleteOne({ _id: ban._id });
     }
   } catch (error) {
