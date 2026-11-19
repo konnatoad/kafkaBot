@@ -109,7 +109,7 @@ async function henrik(path) {
 const subcommand = (subcommand) =>
   subcommand
     .setName("valorant")
-    .setDescription("Get valorant player stats")
+    .setDescription("a Valorant player's rank and MMR")
     .addStringOption((option) =>
       option
         .setName("player")

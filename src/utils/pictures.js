@@ -1,4 +1,4 @@
-// /cat, /dog and /kafka: a random picture from a folder in src/static.
+// /random cat, /random dog and /kafka: a random picture from a folder in src/static.
 const fs = require("fs");
 const path = require("path");
 const { pickOne } = require("./random");

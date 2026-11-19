@@ -21,7 +21,7 @@ const dayString = (date) => date.toLocaleDateString("fi-FI");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("daily")
-    .setDescription("Collect your dailies!"),
+    .setDescription("collect your daily rice grains"),
 
   run: async ({ interaction }) => {
     if (!interaction.inGuild()) {

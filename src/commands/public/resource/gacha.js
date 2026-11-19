@@ -137,5 +137,5 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("gacha")
-    .setDescription(`Rice gachapon | Cost: ${COST} rice grains.`),
+    .setDescription(`rice gachapon, costs ${COST} rice grains`),
 };

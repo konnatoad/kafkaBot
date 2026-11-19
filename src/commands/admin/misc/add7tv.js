@@ -84,7 +84,7 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("add7tv")
-    .setDescription("Add a 7TV emote to this server")
+    .setDescription("add a 7TV emote to this server")
     .addStringOption((option) =>
       option
         .setName("link")

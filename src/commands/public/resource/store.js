@@ -9,7 +9,7 @@ const logger = require("../../../extra/logger");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("store")
-    .setDescription("View the roles available for purchase in the store"),
+    .setDescription("roles you can buy with rice grains"),
   run: async ({ interaction }) => {
     try {
       const guildName = interaction.guild.name;
