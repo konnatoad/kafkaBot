@@ -9,12 +9,12 @@ const { whyBotCantGive } = require("../../../../utils/roles");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("store-setup")
-    .setDescription("Configure the store system for rice grains")
+    .setDescription("roles members can buy with rice grains")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand((subcommand) =>
       subcommand
         .setName("add")
-        .setDescription("Add a role to the rice store")
+        .setDescription("add a role to the rice store")
         .addRoleOption((option) =>
           option
             .setName("role")
@@ -33,7 +33,7 @@ module.exports = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName("remove")
-        .setDescription("Remove a role from the rice store")
+        .setDescription("remove a role from the rice store")
         .addRoleOption((option) =>
           option
             .setName("role")

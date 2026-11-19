@@ -102,7 +102,7 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("gamble")
-    .setDescription("Gamble some of your rice grains.")
+    .setDescription("gamble some of your rice grains")
     .addIntegerOption((option) =>
       option
         .setName("amount")

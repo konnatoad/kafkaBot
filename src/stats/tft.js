@@ -27,7 +27,7 @@ const ROUTES = {
 const subcommand = (subcommand) =>
   subcommand
     .setName("tft")
-    .setDescription("Get TFT player stats")
+    .setDescription("a TFT player's ranked stats")
     .addStringOption((option) =>
       option
         .setName("player")

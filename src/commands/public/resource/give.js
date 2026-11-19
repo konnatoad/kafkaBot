@@ -4,7 +4,7 @@ const UserProfile = require("../../../schemas/UserProfile");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("give")
-    .setDescription("Give your rice grains to another user")
+    .setDescription("give your rice grains to another member")
     .addUserOption((option) =>
       option
         .setName("user")

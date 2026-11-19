@@ -9,11 +9,11 @@ const GAMES = {
 
 const data = new SlashCommandBuilder()
   .setName("stats")
-  .setDescription("Retrieve game stats from chosen game");
+  .setDescription("game stats for Valorant, TFT and osu!");
 for (const game of Object.values(GAMES)) data.addSubcommand(game.subcommand);
 
-module.exports = {
-  data,
-  run: ({ interaction }) =>
-    GAMES[interaction.options.getSubcommand()].run(interaction),
-};
+const subcommands = {};
+for (const [name, game] of Object.entries(GAMES))
+  subcommands[name] = ({ interaction }) => game.run(interaction);
+
+module.exports = { data, subcommands };

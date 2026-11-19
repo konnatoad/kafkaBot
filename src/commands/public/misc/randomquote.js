@@ -25,7 +25,7 @@ function pickFresh(guildId, quotes) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("randomquote")
-    .setDescription("Get a random quote")
+    .setDescription("a random saved quote")
     .addUserOption((option) =>
       option
         .setName("user")

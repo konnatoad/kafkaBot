@@ -33,7 +33,11 @@ function typoDistance(a, b) {
   for (let i = 1; i <= a.length; i++) {
     for (let j = 1; j <= b.length; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      d[i][j] = Math.min(
+        d[i - 1][j] + 1,
+        d[i][j - 1] + 1,
+        d[i - 1][j - 1] + cost,
+      );
       if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
         d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
     }
@@ -57,7 +61,9 @@ function isCorrect(userAnswer, correctAnswer) {
   const userWords = toWords(user);
   const answerWords = toWords(answer);
   if (userWords.length !== answerWords.length) return false;
-  return answerWords.every((word, i) => typoDistance(userWords[i], word) <= allowedTypos(word));
+  return answerWords.every(
+    (word, i) => typoDistance(userWords[i], word) <= allowedTypos(word),
+  );
 }
 
 module.exports = async (interaction) => {
@@ -82,7 +88,8 @@ module.exports = async (interaction) => {
     }
 
     const difficulty = cfg.questionDifficulty ?? "medium";
-    const userAnswer = interaction.fields.getTextInputValue("trivia_answer_text") ?? "";
+    const userAnswer =
+      interaction.fields.getTextInputValue("trivia_answer_text") ?? "";
 
     let stats = await TriviaStats.findOne({
       guildId,
@@ -125,7 +132,8 @@ module.exports = async (interaction) => {
         `❌ Have you considered not answering? **${nextPrize} rice grains** left.`,
       ];
       return interaction.editReply({
-        content: wrongMessages[Math.floor(Math.random() * wrongMessages.length)],
+        content:
+          wrongMessages[Math.floor(Math.random() * wrongMessages.length)],
       });
     }
 

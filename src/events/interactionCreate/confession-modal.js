@@ -1,6 +1,34 @@
 const { EmbedBuilder, MessageFlags } = require("discord.js");
 const ConfessionConfig = require("../../schemas/ConfessionConfig.js");
 const logger = require("../../extra/logger");
+const {
+  blockedWordsFor,
+  findBlockedWord,
+} = require("../../utils/blockedWords");
+
+// the mod copy, with who sent it; the confession is already out, so a failure here is only logged
+async function logConfession(client, cfg, interaction, posted) {
+  try {
+    const logChannel = await client.channels.fetch(cfg.logChannelId);
+    const embed = new EmbedBuilder()
+      .setColor("Grey")
+      .setTitle("Confession log")
+      .setDescription(posted.embeds[0]?.description ?? "")
+      .addFields(
+        {
+          name: "Sent by",
+          value: `${interaction.user} (${interaction.user.id})`,
+        },
+        { name: "Posted", value: posted.url },
+      )
+      .setTimestamp();
+    await logChannel.send({ embeds: [embed], allowedMentions: { parse: [] } });
+  } catch (err) {
+    logger.warn(
+      `confession-modal: couldn't post to the log channel of guild ${cfg.guildId}: ${err}`,
+    );
+  }
+}
 
 module.exports = async (interaction, client) => {
   if (!interaction.isModalSubmit()) return;
@@ -21,6 +49,19 @@ module.exports = async (interaction, client) => {
     if (text.length > 4000) {
       return interaction.editReply({
         content: "too long",
+      });
+    }
+    const blocked = findBlockedWord(
+      text,
+      await blockedWordsFor(interaction.guildId),
+    );
+    if (blocked) {
+      // which server and which word, never who sent it
+      logger.info(
+        `confession rejected in guild "${interaction.guild?.name}" ${interaction.guildId}: matched "${blocked}"`,
+      );
+      return interaction.editReply({
+        content: "that can't be posted",
       });
     }
 
@@ -48,9 +89,11 @@ module.exports = async (interaction, client) => {
       .setDescription(text)
       .setTimestamp();
 
-    await channel.send({
+    const posted = await channel.send({
       embeds: [embed],
     });
+
+    if (cfg.logChannelId) await logConfession(client, cfg, interaction, posted);
 
     return interaction.editReply({
       content: "sent",
