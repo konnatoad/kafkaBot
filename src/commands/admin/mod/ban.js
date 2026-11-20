@@ -59,14 +59,9 @@ function banLength(options) {
 
 // A new ban replaces a temporary one still running, so the old unban can't
 // lift it early (or at all, when it's now permanent).
-async function saveUnban(guildId, userId, minutes) {
+async function saveUnban(guildId, userId, expirationTime) {
   await Ban.deleteMany({ guildId, userId });
-  if (!minutes) return;
-  await Ban.create({
-    userId,
-    expirationTime: new Date(Date.now() + minutes * 60_000),
-    guildId,
-  });
+  if (expirationTime) await Ban.create({ guildId, userId, expirationTime });
 }
 
 const banEmbed = (user, reason) =>
@@ -123,6 +118,15 @@ module.exports = {
     const reason =
       interaction.options.getString("reason") || "no reason provided";
     const length = banLength(interaction.options);
+    const expirationTime = length.minutes
+      ? new Date(Date.now() + length.minutes * 60_000)
+      : null;
+    if (expirationTime && Number.isNaN(expirationTime.getTime())) {
+      return interaction.reply({
+        content: "that ban duration is too long",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
     await interaction.deferReply();
 
@@ -145,7 +149,7 @@ module.exports = {
     }
 
     try {
-      await saveUnban(interaction.guildId, user.id, length.minutes);
+      await saveUnban(interaction.guildId, user.id, expirationTime);
     } catch (error) {
       logger.error(`ban: failed to save the unban of ${user.id}: ${error}`);
       return interaction.editReply(
