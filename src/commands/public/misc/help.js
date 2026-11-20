@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const logger = require("../../../extra/logger");
-const { witchServers } = require("../../../../config.json");
+const { witchServers, testServer } = require("../../../../config.json");
 const {
   SlashCommandBuilder,
   ButtonStyle,
@@ -72,6 +72,7 @@ function helpEntries() {
         const data = command.data.toJSON();
         return {
           witchOnly: Boolean(command.witchOnly),
+          testOnly: Boolean(command.testOnly),
           permissions: data.default_member_permissions ?? null,
           // a field per command: one field for the whole page outgrew Discord's 1024 characters
           field: {
@@ -91,11 +92,12 @@ function helpEntries() {
 /**
  * Whether whoever asked can use the command where they asked: its default Discord
  * permission (a role given access in the server's Integrations settings isn't known here)
- * and witchOnly, the same flag validations/witchonly.js checks.
+ * witchOnly and testOnly, the same flags validations/witchonly.js and test-only.js check.
  */
 function canUse(entry, interaction) {
   if (entry.witchOnly && !witchServers.includes(interaction.guildId))
     return false;
+  if (entry.testOnly && interaction.guildId !== testServer) return false;
   if (!entry.permissions) return true;
   return Boolean(interaction.memberPermissions?.has(BigInt(entry.permissions)));
 }
