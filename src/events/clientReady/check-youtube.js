@@ -40,11 +40,17 @@ function uploadMessage(setup, video) {
   if (!setup.customMessage) {
     return `New upload by ${video.channelTitle}\n${video.link}`;
   }
-  return setup.customMessage
-    .replaceAll("{VIDEO_URL}", video.link)
-    .replaceAll("{VIDEO_TITLE}", video.title)
-    .replaceAll("{CHANNEL_URL}", video.channelLink)
-    .replaceAll("{CHANNEL_NAME}", video.channelTitle);
+  const values = {
+    "{VIDEO_URL}": video.link,
+    "{VIDEO_TITLE}": video.title,
+    "{CHANNEL_URL}": video.channelLink,
+    "{CHANNEL_NAME}": video.channelTitle,
+  };
+  // one pass with a function: "$&" in a title stays text and a title can't hold a tag that gets filled in again
+  return setup.customMessage.replace(
+    /\{(?:VIDEO_URL|VIDEO_TITLE|CHANNEL_URL|CHANNEL_NAME)\}/g,
+    (tag) => values[tag],
+  );
 }
 
 async function announce(client, setup, video) {
