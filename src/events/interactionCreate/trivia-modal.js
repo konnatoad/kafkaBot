@@ -137,23 +137,36 @@ module.exports = async (interaction) => {
       });
     }
 
-    // Correct answer
-    const wrongAttempts = stats?.wrongAttempts ?? 0;
-    const prize = currentPrize(difficulty, wrongAttempts);
-    const attempts = wrongAttempts + 1;
-
-    if (stats) {
-      stats.solved = true;
-      await stats.save();
-    } else {
-      await TriviaStats.create({
-        guildId,
-        questionId,
-        userId: interaction.user.id,
-        wrongAttempts: 0,
-        solved: true,
+    // Correct answer: the win is claimed in one step, so two right answers sent at
+    // the same moment can't both get paid
+    let won;
+    try {
+      won = await TriviaStats.findOneAndUpdate(
+        {
+          guildId,
+          questionId,
+          userId: interaction.user.id,
+          solved: { $ne: true },
+        },
+        { $set: { solved: true }, $setOnInsert: { wrongAttempts: 0 } },
+        { upsert: true, returnDocument: "after" },
+      );
+    } catch (err) {
+      // already solved: the filter missed and the upsert hit the unique index
+      if (err.code !== 11000) throw err;
+    }
+    if (!won) {
+      logger.info(
+        `trivia-modal: second right answer from ${interaction.user.id} in guild ${guildId} not paid`,
+      );
+      return interaction.editReply({
+        content: "you already got this one. don't get greedy.",
       });
     }
+
+    const wrongAttempts = won.wrongAttempts ?? 0;
+    const prize = currentPrize(difficulty, wrongAttempts);
+    const attempts = wrongAttempts + 1;
 
     await UserProfile.findOneAndUpdate(
       { userId: interaction.user.id, Guild: guildId },
@@ -196,3 +209,6 @@ module.exports = async (interaction) => {
     }
   }
 };
+
+// for test/trivia-answers.test.js; djs-commander only calls the function above
+module.exports.isCorrect = isCorrect;

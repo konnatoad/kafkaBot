@@ -1,6 +1,6 @@
 {
   "name": "kafkaBot",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A multi-purpose Discord bot",
   "keywords": [
     "bot",
@@ -24,7 +24,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test test/"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.1.1",

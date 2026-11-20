@@ -202,6 +202,13 @@ const addQuote = async (interaction, messageId) => {
 
   try {
     const message = await interaction.channel.messages.fetch(messageId);
+    if (!message.content.trim()) {
+      return handleError(
+        interaction,
+        "That message has no text to quote, only attachments or an embed.",
+        { log: "add: message has no text", level: "warn" },
+      );
+    }
     const quote = new Quote({
       guildId: interaction.guildId,
       author: message.author.tag,
@@ -212,8 +219,12 @@ const addQuote = async (interaction, messageId) => {
     });
 
     await quote.save();
+    const preview =
+      message.content.length > MAX_QUOTE_LENGTH
+        ? `${message.content.slice(0, MAX_QUOTE_LENGTH)}…`
+        : message.content;
     await interaction.reply({
-      content: `Quote added: "${message.content}" by ${message.author.tag}`,
+      content: `Quote added: "${preview}" by ${message.author.tag}`,
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {

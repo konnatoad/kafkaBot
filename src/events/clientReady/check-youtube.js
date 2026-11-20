@@ -2,7 +2,9 @@ const NotificationConfig = require("../../schemas/NotificationConfig");
 const logger = require("../../extra/logger");
 const { latestUpload, describeApiError } = require("../../utils/youtube");
 
-const CHECK_EVERY_MS = 60 * 1000;
+// each check costs 1 of YouTube's 10,000 free units a day per channel: every 5 min
+// leaves room for ~34 followed channels, every minute ran out past 6
+const CHECK_EVERY_MS = 5 * 60 * 1000;
 // Discord's answer when a channel really is gone
 const UNKNOWN_CHANNEL = 10003;
 
@@ -38,11 +40,17 @@ function uploadMessage(setup, video) {
   if (!setup.customMessage) {
     return `New upload by ${video.channelTitle}\n${video.link}`;
   }
-  return setup.customMessage
-    .replaceAll("{VIDEO_URL}", video.link)
-    .replaceAll("{VIDEO_TITLE}", video.title)
-    .replaceAll("{CHANNEL_URL}", video.channelLink)
-    .replaceAll("{CHANNEL_NAME}", video.channelTitle);
+  const values = {
+    "{VIDEO_URL}": video.link,
+    "{VIDEO_TITLE}": video.title,
+    "{CHANNEL_URL}": video.channelLink,
+    "{CHANNEL_NAME}": video.channelTitle,
+  };
+  // one pass with a function: "$&" in a title stays text and a title can't hold a tag that gets filled in again
+  return setup.customMessage.replace(
+    /\{(?:VIDEO_URL|VIDEO_TITLE|CHANNEL_URL|CHANNEL_NAME)\}/g,
+    (tag) => values[tag],
+  );
 }
 
 async function announce(client, setup, video) {

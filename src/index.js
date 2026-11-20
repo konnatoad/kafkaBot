@@ -5,6 +5,9 @@ const logger = require("./extra/logger");
 const { Client, IntentsBitField, Partials } = require("discord.js");
 const mongoose = require("mongoose");
 const { CommandHandler } = require("djs-commander");
+// axios waits forever by default; a hung YouTube or Twitch check would overlap the next one
+// and post the same alert twice. Calls that set their own timeout keep it.
+require("axios").defaults.timeout = 15_000;
 
 const client = new Client({
   intents: [
