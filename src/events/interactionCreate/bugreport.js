@@ -7,6 +7,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 const axios = require("axios");
+const { hasOffensiveReportText } = require("../../utils/bugReportWords");
 
 module.exports = async (interaction, client) => {
   if (!interaction.guild || !interaction.isModalSubmit()) return;
@@ -19,6 +20,17 @@ module.exports = async (interaction, client) => {
     const severity = interaction.fields
       .getTextInputValue("severity")
       .toLowerCase();
+
+    if (
+      [feature, description, steps, expected, severity].some(
+        hasOffensiveReportText,
+      )
+    ) {
+      return interaction.reply({
+        content: "please remove offensive language and submit the report again",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
     const id = interaction.user.id;
     const member = interaction.member;
