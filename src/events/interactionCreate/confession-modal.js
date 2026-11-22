@@ -56,9 +56,9 @@ module.exports = async (interaction, client) => {
       await blockedWordsFor(interaction.guildId),
     );
     if (blocked) {
-      // which server and which word, never who sent it
+      // Only log the server, without the matched text or sender.
       logger.info(
-        `confession rejected in guild "${interaction.guild?.name}" ${interaction.guildId}: matched "${blocked}"`,
+        `confession rejected in guild "${interaction.guild?.name}" ${interaction.guildId}`,
       );
       return interaction.editReply({
         content: "that can't be posted",

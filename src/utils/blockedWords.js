@@ -1,6 +1,33 @@
+const { readFileSync } = require("node:fs");
+const { resolve } = require("node:path");
 const BlockedWords = require("../schemas/BlockedWords");
 
-const DEFAULT_WORDS = [];
+function loadDefaultWords() {
+  const file =
+    process.env.CONFESSION_WORDS_FILE ??
+    resolve(__dirname, "../../confession-words.json");
+  try {
+    const words = JSON.parse(readFileSync(file, "utf8"));
+    if (
+      Array.isArray(words) &&
+      words.length &&
+      words.every(
+        (word) => typeof word === "string" && cleanWord(word) === word,
+      )
+    ) {
+      return words;
+    }
+  } catch {
+    // The error below omits file contents and JSON parser excerpts.
+  }
+  throw new Error("Private confession wordlist is missing or invalid.");
+}
+
+let confessionWords;
+function defaultWords() {
+  confessionWords ??= loadDefaultWords();
+  return confessionWords;
+}
 
 const MAX_ADDED = 100;
 
@@ -31,6 +58,7 @@ function cleanWord(input) {
   return /^[a-z]{2,32}\*?$/.test(word) ? word : null;
 }
 
+// Allow repeated letters and plural endings. A trailing * matches a prefix.
 function toPattern(word) {
   const prefix = word.endsWith("*");
   const letters = [...word.replace(/\*$/, "")].map((c) => `${c}+`).join("");
@@ -42,6 +70,7 @@ function wordsIn(text) {
     .split(/[^a-z]+/)
     .filter(Boolean);
 
+  // Join runs of single-letter tokens split by spaces or punctuation.
   const joined = [];
   let run = "";
   for (const token of tokens) {
@@ -72,16 +101,14 @@ function findBlockedWord(text, words) {
 
 // the defaults minus what the server turned off, plus what it added
 async function blockedWordsFor(guildId) {
+  const defaults = defaultWords();
   const doc = await BlockedWords.findOne({ guildId }).lean();
   const removed = new Set(doc?.removed ?? []);
-  return [
-    ...DEFAULT_WORDS.filter((w) => !removed.has(w)),
-    ...(doc?.added ?? []),
-  ];
+  return [...defaults.filter((w) => !removed.has(w)), ...(doc?.added ?? [])];
 }
 
 module.exports = {
-  DEFAULT_WORDS,
+  defaultWords,
   MAX_ADDED,
   cleanWord,
   findBlockedWord,

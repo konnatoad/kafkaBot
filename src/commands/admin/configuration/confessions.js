@@ -9,7 +9,7 @@ const {
 const ConfessionConfig = require("../../../schemas/ConfessionConfig");
 const BlockedWords = require("../../../schemas/BlockedWords");
 const {
-  DEFAULT_WORDS,
+  defaultWords,
   MAX_ADDED,
   cleanWord,
 } = require("../../../utils/blockedWords");
@@ -247,10 +247,11 @@ const addWord = async ({ interaction }) => {
   const word = wordOption(interaction);
   if (!word) return;
   try {
+    const defaults = defaultWords();
     const guildId = interaction.guildId;
     const doc = await BlockedWords.findOne({ guildId }).lean();
 
-    if (DEFAULT_WORDS.includes(word)) {
+    if (defaults.includes(word)) {
       if (!doc?.removed.includes(word)) {
         return reply(interaction, `${shown(word)} is already blocked.`);
       }
@@ -284,6 +285,7 @@ const removeWord = async ({ interaction }) => {
   const word = wordOption(interaction);
   if (!word) return;
   try {
+    const defaults = defaultWords();
     const guildId = interaction.guildId;
     const doc = await BlockedWords.findOne({ guildId }).lean();
 
@@ -291,7 +293,7 @@ const removeWord = async ({ interaction }) => {
       await BlockedWords.updateOne({ guildId }, { $pull: { added: word } });
       return reply(interaction, `${shown(word)} isn't blocked anymore.`);
     }
-    if (DEFAULT_WORDS.includes(word) && !doc?.removed.includes(word)) {
+    if (defaults.includes(word) && !doc?.removed.includes(word)) {
       await BlockedWords.updateOne(
         { guildId },
         { $addToSet: { removed: word } },
@@ -327,7 +329,7 @@ const listWords = async ({ interaction }) => {
       .addFields(
         {
           name: "Default",
-          value: spoiler(DEFAULT_WORDS.filter((w) => !removed.includes(w))),
+          value: spoiler(defaultWords().filter((w) => !removed.includes(w))),
         },
         { name: "Added here", value: spoiler(added) },
         { name: "Defaults turned off", value: spoiler(removed) },
