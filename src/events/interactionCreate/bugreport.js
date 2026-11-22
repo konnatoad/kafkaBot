@@ -97,6 +97,13 @@ function issuePayload(embed) {
   };
 }
 
+function resolveButton(userId) {
+  return new ButtonBuilder()
+    .setCustomId(`bugSolved - ${userId}`)
+    .setStyle(ButtonStyle.Danger)
+    .setLabel("Mark as solved");
+}
+
 async function approve(interaction, message, embed, userId) {
   const { GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO } = process.env;
   const githubName = /^[A-Za-z0-9_.-]+$/;
@@ -165,10 +172,7 @@ async function approve(interaction, message, embed, userId) {
   }
 
   const buttons = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`bugSolved - ${userId}`)
-      .setStyle(ButtonStyle.Danger)
-      .setLabel("Mark as solved"),
+    resolveButton(userId),
     new ButtonBuilder()
       .setStyle(ButtonStyle.Link)
       .setLabel("View on GitHub")
@@ -232,7 +236,9 @@ async function review(interaction, client, decision, userId) {
             .setColor("Red")
             .setTitle("Bug report declined"),
         ],
-        components: [],
+        components: [
+          new ActionRowBuilder().addComponents(resolveButton(userId)),
+        ],
       });
       await interaction.editReply("Report declined.");
     }
