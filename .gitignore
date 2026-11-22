@@ -2,6 +2,8 @@ node_modules
 video-urls.json
 .env
 config.json
+/bug-report-words.json
+/confession-words.json
 static
 kafkaavi.jpg
 1761220886563279135_1.jpg
