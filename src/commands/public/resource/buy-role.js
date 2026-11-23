@@ -17,24 +17,24 @@ module.exports = {
     const role = interaction.options.getRole("role");
     const owner = { userId: interaction.user.id, Guild: interaction.guild.id };
 
-    // taken before any await, so a second submit can't slip past the checks below
     const key = `${owner.Guild}:${owner.userId}:${role.id}`;
     if (buying.has(key)) {
       return interaction.reply("Your purchase of this role is already being processed.");
     }
     buying.add(key);
     try {
+      await interaction.deferReply();
       const storeItem = await StoreItem.findOne({
         guildId: interaction.guild.id,
         roleId: role.id,
       });
       if (!storeItem) {
-        return interaction.reply("This role is not available for purchase.");
+        return interaction.editReply("This role is not available for purchase.");
       }
       // forced fetch: the cached member stays stale after roles.add
       const member = await interaction.member.fetch(true);
       if (member.roles.cache.has(role.id)) {
-        return interaction.reply({
+        return interaction.editReply({
           content: `You already have the ${role} role.`,
           allowedMentions: { parse: [] },
         });
@@ -46,7 +46,7 @@ module.exports = {
         { $inc: { balance: -storeItem.cost } },
       );
       if (!paid) {
-        return interaction.reply("You do not have enough rice grains to buy this role.");
+        return interaction.editReply("You do not have enough rice grains to buy this role.");
       }
 
       try {
@@ -55,18 +55,18 @@ module.exports = {
         await UserProfile.updateOne(owner, { $inc: { balance: storeItem.cost } });
         // 50013: Missing Permissions
         if (error.code === 50013) {
-          return interaction.reply(
+          return interaction.editReply(
             "I don't have permission to give you that role. Please contact a server administrator.",
           );
         }
         logger.error("buy-role: failed to add role:", error);
-        return interaction.reply("An error occurred while giving you the role.");
+        return interaction.editReply("An error occurred while giving you the role.");
       }
     } finally {
       buying.delete(key);
     }
 
-    return interaction.reply({
+    return interaction.editReply({
       content: `Congratulations! You have successfully purchased the ${role} role.`,
       allowedMentions: { parse: [] },
     });
