@@ -108,7 +108,10 @@ test("submission and decline only write to Discord", async (t) => {
   await decide("Decline");
   await decide("Approve");
   assert.equal(message.embeds[0].title, "Bug report declined");
-  assert.deepEqual(message.components, []);
+  assert.deepEqual(
+    message.components[0].components.map(({ custom_id }) => custom_id),
+    [`bugSolved - ${reporter}`],
+  );
   assert.equal(post.mock.callCount(), 0);
 });
 

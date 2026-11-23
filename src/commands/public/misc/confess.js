@@ -20,7 +20,11 @@ module.exports = {
       : null;
 
     const modal = new ModalBuilder()
-      .setCustomId("confession_modal_v1")
+      .setCustomId(
+        cfg?.logChannelId
+          ? "confession_modal_v1:logged"
+          : "confession_modal_v1:anon",
+      )
       .setTitle("Anonymous Confession");
 
     const input = new TextInputBuilder()

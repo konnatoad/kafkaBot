@@ -32,7 +32,8 @@ async function logConfession(client, cfg, interaction, posted) {
 
 module.exports = async (interaction, client) => {
   if (!interaction.isModalSubmit()) return;
-  if (interaction.customId !== "confession_modal_v1") return;
+  if (!interaction.customId.startsWith("confession_modal_v1")) return;
+  const shownLogged = interaction.customId === "confession_modal_v1:logged";
   if (!interaction.guildId) return;
 
   try {
@@ -80,6 +81,14 @@ module.exports = async (interaction, client) => {
     if (!channel) {
       return interaction.editReply({
         content: "Confessions channel missing",
+      });
+    }
+
+    // logging was switched on after this form was opened, so the warning was never shown
+    if (cfg.logChannelId && !shownLogged) {
+      return interaction.editReply({
+        content:
+          "logging was turned on after you opened this form. reopen /confess to see the warning first.",
       });
     }
 
