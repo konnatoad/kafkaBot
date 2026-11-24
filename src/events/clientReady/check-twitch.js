@@ -21,13 +21,15 @@ async function announce(client, setup) {
         .catch(() => null)));
   if (!channel) {
     logger.warn(`check-twitch: no channel to announce ${where}`);
-    return;
+    return false;
   }
-  await channel
-    .send(liveMessage(setup))
-    .catch((err) =>
-      logger.error(`check-twitch: failed to announce ${where}:`, err),
-    );
+  try {
+    await channel.send(liveMessage(setup));
+    return true;
+  } catch (err) {
+    logger.error(`check-twitch: failed to announce ${where}:`, err);
+    return false;
+  }
 }
 
 async function checkTwitch(client) {
@@ -46,11 +48,13 @@ async function checkTwitch(client) {
     const isLive = live.has(setup.twitchUserId);
     if (isLive === setup.isLivePreviously) continue;
     try {
-      // saved first, so a failed send doesn't repeat the announcement every check
+      // saved only after the send worked, so a failed send is tried again next check
+      if (isLive) {
+        if (!(await announce(client, setup))) continue;
+        setup.lastNotificationSentAt = new Date();
+      }
       setup.isLivePreviously = isLive;
-      if (isLive) setup.lastNotificationSentAt = new Date();
       await setup.save();
-      if (isLive) await announce(client, setup);
     } catch (error) {
       logger.error(`check-twitch: failed for ${setup.twitchUsername}:`, error);
     }
