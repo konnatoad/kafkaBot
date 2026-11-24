@@ -1,16 +1,17 @@
 const NotificationConfig = require("../../schemas/twitchNotificationSchema");
 const logger = require("../../extra/logger");
-const { liveUserIds } = require("../../utils/twitch");
+const { liveStreams } = require("../../utils/twitch");
 
 const CHECK_EVERY_MS = 5 * 60 * 1000;
 
-function liveMessage(setup) {
+// the stream carries the current name and login; the saved ones go stale on a rename
+function liveMessage(setup, stream) {
   return setup.customMessage
-    .replaceAll("{USERNAME}", setup.twitchUsername)
-    .replaceAll("{URL}", `https://twitch.tv/${setup.twitchUsername}`);
+    .replaceAll("{USERNAME}", stream.user_name)
+    .replaceAll("{URL}", `https://twitch.tv/${stream.user_login}`);
 }
 
-async function announce(client, setup) {
+async function announce(client, setup, stream) {
   const where = `${setup.twitchUsername} (guild ${setup.guildId}, channel ${setup.notificationChannelId})`;
   const guild = client.guilds.cache.get(setup.guildId);
   const channel =
@@ -24,7 +25,7 @@ async function announce(client, setup) {
     return false;
   }
   try {
-    await channel.send(liveMessage(setup));
+    await channel.send(liveMessage(setup, stream));
     return true;
   } catch (err) {
     logger.error(`check-twitch: failed to announce ${where}:`, err);
@@ -38,19 +39,20 @@ async function checkTwitch(client) {
   try {
     setups = await NotificationConfig.find();
     if (!setups.length) return;
-    live = await liveUserIds([...new Set(setups.map((s) => s.twitchUserId))]);
+    live = await liveStreams([...new Set(setups.map((s) => s.twitchUserId))]);
   } catch (error) {
     logger.error("check-twitch: failed:", error.response?.data ?? error);
     return;
   }
 
   for (const setup of setups) {
-    const isLive = live.has(setup.twitchUserId);
+    const stream = live.get(setup.twitchUserId);
+    const isLive = Boolean(stream);
     if (isLive === setup.isLivePreviously) continue;
     try {
       // saved only after the send worked, so a failed send is tried again next check
       if (isLive) {
-        if (!(await announce(client, setup))) continue;
+        if (!(await announce(client, setup, stream))) continue;
         setup.lastNotificationSentAt = new Date();
       }
       setup.isLivePreviously = isLive;
