@@ -1,12 +1,8 @@
 # kafkaBot
 
-A multi-purpose Discord bot with YouTube/Twitch notifications, a leveling system, a rice grain economy, daily trivia, game stats, auto-moderation, moderation tools, and more.
+discord bot. youtube and twitch alerts, xp and leveling, rice grain economy, daily trivia, game stats, automod and mod tools.
 
-**Links**
-
-- [Invite kafkaBot](https://discord.com/oauth2/authorize?client_id=1238981186035122257)
-- [Terms of Service](https://konnatoad.github.io/kafkaBot-Terms-of-Service/)
-- [Privacy Policy](https://konnatoad.github.io/kafkaBot-Privacy-Policy/)
+[invite](https://discord.com/oauth2/authorize?client_id=1238981186035122257) · [terms](https://konnatoad.github.io/kafkaBot-Terms-of-Service/) · [privacy](https://konnatoad.github.io/kafkaBot-Privacy-Policy/)
 
 ---
 
@@ -21,26 +17,6 @@ A multi-purpose Discord bot with YouTube/Twitch notifications, a leveling system
 | Logging         | winston (optional Discord webhook transport)                                 |
 | Scheduling      | node-cron                                                                    |
 | Process manager | PM2                                                                          |
-
----
-
-## Features
-
-- **Notifications** — YouTube upload alerts and Twitch live alerts per server, with custom messages
-- **Leveling** — XP per message, rank cards, server leaderboard
-- **Economy** — Rice grain currency with dailies, daily reminders, begging, rep, gambling, gacha, and a role store
-- **Daily trivia** — Scheduled trivia question per server with configurable time, timezone, and difficulty
-- **Game stats** — Valorant MMR, TFT rankings, osu! top/recent plays
-- **Auto-moderation** — Discord AutoMod rules (spam, profanity, slurs, sexual content, mention limit, custom words) with automatic warns
-- **Moderation** — Ban (for good or for a set time), kick, warn system with history
-- **Welcome / Goodbye** — Customizable messages (plain or embed) with template placeholders
-- **Reaction roles** — Users self-assign roles by reacting to a message
-- **Auto-role** — Assign a role automatically on member join
-- **Auto-reactor** — Automatically react to every message in chosen channels
-- **Quotes** — Save messages as quotes, pull random ones, and post a daily quote
-- **Logging** — Message deletion and edit logs
-- **Confessions** — Anonymous submissions to a dedicated channel
-- **7TV emotes** — Add a 7TV emote to the server from a link
 
 ---
 
@@ -107,7 +83,7 @@ A multi-purpose Discord bot with YouTube/Twitch notifications, a leveling system
 | `/goodbye test`                          | Send a test goodbye message  |
 | `/goodbye disable`                       | Disable goodbye messages     |
 
-Available placeholders: `{USER_MENTION}` `{USER_NAME}` `{SERVER_NAME}` `{SERVER_MEMBER}`
+Placeholders: `{USER_MENTION}` `{USER_NAME}` `{SERVER_NAME}` `{SERVER_MEMBER}`
 
 **Notifications**
 
@@ -152,31 +128,23 @@ Available placeholders: `{USER_MENTION}` `{USER_NAME}` `{SERVER_NAME}` `{SERVER_
 
 **Moderation**
 
-| Command                                                                                                               | Description                              |
-| --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| `/automod setup <log-channel> [spam] [profanity] [slurs] [sexual-content] [mention-limit] [custom-words] [auto-warn]` | Turn on AutoMod                          |
-| `/automod disable`                                                                                                    | Turn off AutoMod                         |
-| `/ban <target-user> [reason] [weeks] [days] [hours] [minutes]`                                                        | Ban a member, for good or for a set time |
-| `/kick <target-user> [reason]`                                                                                        | Kick a member                            |
-| `/warn add <user> [reason]`                                                                                           | Warn a member                            |
-| `/warn list <user>`                                                                                                   | View warning history                     |
-| `/warn clear <user>`                                                                                                  | Clear all warnings for a user            |
-| `/xp-reset server`                                                                                                    | Reset XP for the entire server           |
-| `/xp-reset user <user>`                                                                                               | Reset XP for a specific user             |
+| Command                                                                                                               | Description                                 |
+| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `/automod setup <log-channel> [spam] [profanity] [slurs] [sexual-content] [mention-limit] [custom-words] [auto-warn]` | Turn on AutoMod                             |
+| `/automod disable`                                                                                                    | Turn off AutoMod                            |
+| `/ban <target-user> [reason] [weeks] [days] [hours] [minutes]`                                                        | Ban a member, permanently or for a set time |
+| `/kick <target-user> [reason]`                                                                                        | Kick a member                               |
+| `/warn add <user> [reason]`                                                                                           | Warn a member                               |
+| `/warn list <user>`                                                                                                   | View warning history                        |
+| `/warn clear <user>`                                                                                                  | Clear all warnings for a user               |
+| `/xp-reset server`                                                                                                    | Reset XP for the entire server              |
+| `/xp-reset user <user>`                                                                                               | Reset XP for a specific user                |
 
 ---
 
 ## Self-hosting
 
-### Prerequisites
-
-- Node.js v22+
-- MongoDB instance
-- A Discord application with a bot token ([Discord Developer Portal](https://discord.com/developers/applications))
-
-### Setup
-
-**1. Clone and install**
+you need node 22+, a mongo instance and a bot token from the [developer portal](https://discord.com/developers/applications).
 
 ```bash
 git clone https://github.com/konnatoad/kafkaBot.git
@@ -184,47 +152,33 @@ cd kafkaBot
 npm install
 ```
 
-**2. Create your `.env` file**
+make a `.env`. the bot won't start without the first four. the rest are optional, missing ones just log a warning.
 
 ```env
-# Required
 TOKEN=
 MONGODB_URI=
 DEV_ID=
 TESTSERVER=
 
-# Logging (optional) — ships logs to a Discord webhook, errors ping the user ID
-LOG_WEBHOOK_URL=
+LOG_WEBHOOK_URL=       # logs to a discord webhook, errors ping LOG_PING_USER_ID
 LOG_PING_USER_ID=
-
-# Feedback / bug report channels (optional)
-FEEDBACK=
-BUG=
-
-# Bug reports as GitHub issues (optional)
-GITHUB_TOKEN=
+FEEDBACK=              # feedback channel
+BUG=                   # bug report channel
+GITHUB_TOKEN=          # bug reports as github issues
 GITHUB_OWNER=
 GITHUB_REPO=
-
-# Notifications (optional)
 YOUTUBE_API_KEY=
 TWITCH_CLIENT_ID=
 TWITCH_CLIENT_SECRET=
-
-# Game APIs (optional)
 VALORANT=
 RIOT_API=
 OSU_CLIENT_ID=
 OSU_CLIENT_SECRET=
-
-# User IDs skipped by goodbye messages (optional)
-MAIN=
+MAIN=                  # user IDs goodbye messages skip
 ALT=
 ```
 
-The bot exits on startup if any required variable is missing, and logs a warning for unset optional ones.
-
-**3. Create `config.json`** in the project root
+`config.json` in the project root:
 
 ```json
 {
@@ -235,78 +189,33 @@ The bot exits on startup if any required variable is missing, and logs a warning
 }
 ```
 
-**4. Local-only files**
-
-Some files are gitignored and must be provided yourself:
-
-- `src/static/kafka/` — image folder for `/kafka`
-
-**5. Start the bot**
+`src/static/kafka/` is gitignored, so put your `/kafka` images there yourself.
 
 ```bash
-npm start
-```
-
-For development with auto-reload:
-
-```bash
-npm run dev
-```
-
-Or with PM2:
-
-```bash
+npm start      # or npm run dev for nodemon
 pm2 start ecosystem.config.js
 ```
 
-> **Note:** `ecosystem.config.js` has hardcoded `cwd` and log paths. Update them to match your own project directory before using PM2.
+the pm2 config has hardcoded paths, change `cwd` and the log paths first.
 
-### Scripts
+Scripts: `npm run lint` / `lint:fix`, `npm run format` / `format:check`.
 
-| Script                            | Description      |
-| --------------------------------- | ---------------- |
-| `npm start`                       | Run the bot      |
-| `npm run dev`                     | Run with nodemon |
-| `npm run lint` / `lint:fix`       | ESLint           |
-| `npm run format` / `format:check` | Prettier         |
-
-### First-time configuration
-
-After inviting the bot to your server, use these commands to set things up:
-
-- `/welcome setup` / `/goodbye setup` — welcome and goodbye messages
-- `/autorole setup` — auto-join role
-- `/automod setup` — AutoMod rules
-- `/notify youtube add` — YouTube upload alerts
-- `/notify twitch add` — Twitch live alerts
-- `/trivia setup` — daily trivia
-- `/confessions setup` — anonymous confessions
-- `/message-log deleted setup` / `/message-log edited setup` — message logs
-- `/reaction-roles add` — self-assignable roles
-- `/store-setup add` — purchasable roles
-
-All settings are stored per-server in MongoDB.
+after you invite the bot, the setup commands are `/welcome setup`, `/goodbye setup`, `/autorole setup`, `/automod setup`, `/notify youtube add`, `/notify twitch add`, `/trivia setup`, `/confessions setup`, `/message-log deleted setup`, `/message-log edited setup`, `/reaction-roles add`, `/store-setup add`. settings are saved per server in mongo.
 
 ---
 
 ## Deployment
 
-Pushes to `main` deploy automatically via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) on a self-hosted runner: it pulls the latest code, runs `npm ci`, and restarts the `kafka` PM2 process.
+pushes to `main` deploy through [`deploy.yml`](.github/workflows/deploy.yml) on a self-hosted runner. it pulls, runs `npm ci` and restarts the `kafka` pm2 process.
 
 ---
 
-## Required Discord Intents
+## Intents
 
-- Guilds
-- GuildMembers
-- GuildMessages
-- MessageContent
-- GuildMessageReactions
-- GuildModeration
-- AutoModerationExecution
+GuildMembers, GuildMessages, GuildMessageReactions, GuildModeration, MessageContent, AutoModerationExecution, Guilds
 
 ---
 
 ## License
 
-Licensed under the [GNU General Public License v3.0 or later](LICENSE). Feel free to fork and self-host.
+[GPL-3.0-or-later](LICENSE). fork it, self-host it.
