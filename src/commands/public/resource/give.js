@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const UserProfile = require("../../../schemas/UserProfile");
+const logger = require("../../../extra/logger");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -43,11 +44,22 @@ module.exports = {
     }
 
     // Atomically credit receiver, creating their profile if needed
-    await UserProfile.findOneAndUpdate(
-      { userId: receiver.id, Guild: guildId },
-      { $inc: { balance: amount } },
-      { upsert: true },
-    );
+    try {
+      await UserProfile.findOneAndUpdate(
+        { userId: receiver.id, Guild: guildId },
+        { $inc: { balance: amount } },
+        { upsert: true },
+      );
+    } catch (error) {
+      await UserProfile.updateOne(
+        { userId: giver.id, Guild: guildId },
+        { $inc: { balance: amount } },
+      );
+      logger.error("give: failed to credit receiver:", error);
+      return interaction.reply(
+        "Something went wrong, your rice grains were not taken.",
+      );
+    }
 
     return interaction.reply({
       content: `${giver.toString()} has given ${amount} rice grains to ${receiver.toString()}!`,
