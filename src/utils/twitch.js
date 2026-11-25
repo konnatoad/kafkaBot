@@ -48,15 +48,15 @@ async function findUser(login) {
   return user ?? null;
 }
 
-/** The ids of `userIds` that are live right now. */
-async function liveUserIds(userIds) {
-  const live = new Set();
+/** The live streams for `userIds`, keyed by user id. */
+async function liveStreams(userIds) {
+  const live = new Map();
   // Helix takes at most 100 ids per request
   for (let i = 0; i < userIds.length; i += 100) {
     const params = new URLSearchParams();
     for (const id of userIds.slice(i, i + 100)) params.append("user_id", id);
     for (const stream of await helix("streams", params))
-      live.add(stream.user_id);
+      live.set(stream.user_id, stream);
   }
   return live;
 }
@@ -70,4 +70,4 @@ function loginFromUrl(input) {
   return login ? login.toLowerCase() : null;
 }
 
-module.exports = { findUser, liveUserIds, loginFromUrl };
+module.exports = { findUser, liveStreams, loginFromUrl };
