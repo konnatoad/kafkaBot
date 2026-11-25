@@ -63,7 +63,7 @@ async function announce(client, setup, video) {
       (await guild.channels.fetch(setup.notificationChannelId));
   } catch (err) {
     // only a channel Discord says is deleted removes the setup; anything else
-    // (an outage, a timeout) just waits for the next upload
+    // (an outage, a timeout) just waits for the next check
     if (err.code === UNKNOWN_CHANNEL) {
       await NotificationConfig.deleteOne({ _id: setup._id });
       logger.info(
@@ -74,14 +74,16 @@ async function announce(client, setup, video) {
         `check-youtube: couldn't fetch the channel for ${where}: ${err}`,
       );
     }
-    return;
+    return false;
   }
 
-  await channel
-    .send(uploadMessage(setup, video))
-    .catch((err) =>
-      logger.error(`check-youtube: failed to announce ${where}:`, err),
-    );
+  try {
+    await channel.send(uploadMessage(setup, video));
+    return true;
+  } catch (err) {
+    logger.error(`check-youtube: failed to announce ${where}:`, err);
+    return false;
+  }
 }
 
 async function checkYoutube(client) {
@@ -111,10 +113,11 @@ async function checkYoutube(client) {
     if (!isNew) continue;
 
     try {
-      // saved first, so a failed send doesn't announce the same video every minute
-      setup.lastCheckedVid = { id: video.id, pubDate: video.pubDate };
-      await setup.save();
-      await announce(client, setup, video);
+      // saved only after the send worked, so a failed send is tried again next check
+      if (await announce(client, setup, video)) {
+        setup.lastCheckedVid = { id: video.id, pubDate: video.pubDate };
+        await setup.save();
+      }
     } catch (error) {
       logger.error(`check-youtube: failed for ${setup.ytChannelId}:`, error);
     }
